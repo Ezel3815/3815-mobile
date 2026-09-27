@@ -1,4 +1,5 @@
 import 'package:upgrade/controllers/progress_controller.dart';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:upgrade/controllers/card_controller.dart';
 import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/entity/card_entity.dart';
+import 'package:upgrade/entity/mosaic_entity.dart';
 import 'package:upgrade/entity/shape_creator_entity.dart';
 import 'package:upgrade/extension.dart';
 import 'package:upgrade/main.dart';
@@ -26,6 +28,14 @@ class CardViewController extends GetxController {
   int sessionCorrect = 0;
   int sessionWrong = 0;
   final List<CardEntity> sessionMistakes = [];
+
+  /// Every mosaic piece earned by ANY answer during this session, collected
+  /// silently — never shown to the user until the session actually ends.
+  /// The backend can release pieces incrementally (one per daily-step
+  /// crossed), so a single session's reward can arrive across several
+  /// answerCard() responses; the ceremony must represent the whole session
+  /// as one moment, not each individual crossing.
+  final List<MosaicAwardedPiece> _sessionMosaicPieces = [];
 
   void _recordAnswer(String answer, CardEntity card) {
     if (answer == "GOOD" || answer == "EASY") {
@@ -51,6 +61,52 @@ class CardViewController extends GetxController {
       },
     );
   }
+
+  /// Submits one card's answer and folds its effects into the running
+  /// session state. Never navigates — callers decide when the session ends.
+  /// Safe to call without awaiting for any card except the session's last
+  /// one, where the caller MUST await this before flushing/navigating so
+  /// that card's mosaic pieces (if any) are never lost to the navigation
+  /// race described below.
+  Future<void> _submitAnswer(String answer, CardEntity card) async {
+    final result = await ApiController.answerCard(cardID: card.id, answer: answer);
+    if (result != null) showCelebration(result);
+    if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
+      _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
+    }
+    if (Get.isRegistered<CardController>()) {
+      Get.find<CardController>().getCard();
+    }
+    Get.find<YearsController>().getAllDeck();
+    if (Get.isRegistered<ProgressController>()) {
+      Get.find<ProgressController>().loadQuests();
+    }
+  }
+
+  /// Moves every mosaic piece accumulated this session into ONE daily
+  /// reward batch (only if any were actually earned), then navigates to the
+  /// session result screen, which is where that single ceremony is shown.
+  /// This is called ONLY after the final card's _submitAnswer has already
+  /// been awaited, so it can never fire before that card's pieces (if any)
+  /// have been collected — that ordering is what actually prevents the
+  /// race, rather than any timing/delay workaround.
+  void _finishSession() {
+    if (_sessionMosaicPieces.isNotEmpty) {
+      final total = sessionCorrect + sessionWrong;
+      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
+      (Get.isRegistered<MosaicController>()
+              ? Get.find<MosaicController>()
+              : Get.put(MosaicController()))
+          .queueDailyReward(
+        List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
+        cardsStudied: total,
+        accuracyPercent: accuracy,
+      );
+      _sessionMosaicPieces.clear();
+    }
+    _goToSessionResult();
+  }
+
   final Rx<ShapeCreatorEntity> _data = ShapeCreatorModel().toDomain().obs;
   late PageController pageController;
 
@@ -226,6 +282,7 @@ class CardViewController extends GetxController {
   onTapOnStatusButton(String answer) async {
     _recordAnswer(answer, cards[pageViewIndex]);
     Get.find<YearsController>().rememberSubjectForDeck(cards[pageViewIndex].deckId);
+    final answeredCard = cards[pageViewIndex];
 
     if (cards[pageViewIndex].type == "OCCLUSION") {
       if(answer == "AGAIN") {
@@ -239,6 +296,7 @@ class CardViewController extends GetxController {
       if (currentIndex < data.shapes.length - 1) {
         showAnswer = false;
         currentIndex += 1;
+        unawaited(_submitAnswer(answer, answeredCard));
       } else {
         if (pageViewIndex < cards.length - 1) {
           showAnswer = false;
@@ -250,8 +308,13 @@ class CardViewController extends GetxController {
           getOCCData();
 
           _cards.refresh();
+          unawaited(_submitAnswer(answer, answeredCard));
         } else {
-          _goToSessionResult();
+          // Last card of the session: this answer's mosaic pieces (if any)
+          // must be collected BEFORE we flush and navigate, or they'd be
+          // lost to the exact race this restructuring exists to prevent.
+          await _submitAnswer(answer, answeredCard);
+          _finishSession();
         }
       }
     } else {
@@ -269,32 +332,12 @@ class CardViewController extends GetxController {
         if (cards[pageViewIndex].type == "OCCLUSION") {
           getOCCData();
         }
+        unawaited(_submitAnswer(answer, answeredCard));
       } else {
-        _goToSessionResult();
+        // Same reasoning as above: await the final answer before finishing.
+        await _submitAnswer(answer, answeredCard);
+        _finishSession();
       }
-    }
-    final result = await ApiController.answerCard(
-        cardID: cards[pageViewIndex].id, answer: answer);
-    if (result != null) showCelebration(result);
-    // Queued (not shown inline here) because the LAST card's answer resolves
-    // AFTER _goToSessionResult() has already navigated away. The mosaic
-    // screen/result screen read this reactively, so the piece is never lost
-    // regardless of that ordering, and it's already persisted server-side
-    // either way.
-    if (result?.mosaic != null) {
-      final total = sessionCorrect + sessionWrong;
-      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
-      (Get.isRegistered<MosaicController>()
-              ? Get.find<MosaicController>()
-              : Get.put(MosaicController()))
-          .queueDailyReward(result!.mosaic, cardsStudied: total, accuracyPercent: accuracy);
-    }
-    if (Get.isRegistered<CardController>()) {
-      Get.find<CardController>().getCard();
-    }
-    Get.find<YearsController>().getAllDeck();
-    if (Get.isRegistered<ProgressController>()) {
-      Get.find<ProgressController>().loadQuests();
     }
   }
 
