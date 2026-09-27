@@ -7,6 +7,8 @@ import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
 
 /// Shown after finishing every card in a study session. Reads its data
 /// straight from the arguments CardViewController passes when the last
@@ -46,6 +48,35 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       duration: const Duration(milliseconds: 2600),
       vsync: this,
     )..forward();
+
+    // The daily piece(s) earned by THIS session may still be in flight from
+    // the server (the last card's answer resolves after this screen has
+    // already opened — see card_view_controller.dart). Poll briefly rather
+    // than fire once, so the reward ceremony still appears even when it
+    // lands a beat late; it's a no-op once the batch has already shown.
+    _watchForDailyReward();
+  }
+
+  void _watchForDailyReward() {
+    var attempts = 0;
+    void tick() {
+      if (!mounted) return;
+      final mosaic = Get.isRegistered<MosaicController>()
+          ? Get.find<MosaicController>()
+          : Get.put(MosaicController());
+      final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
+      if (index != -1) {
+        final batch = mosaic.rewardQueue.removeAt(index);
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => RewardFlowScreen.daily(batch: batch)),
+        );
+        return;
+      }
+      attempts += 1;
+      if (attempts < 20) Future.delayed(const Duration(milliseconds: 300), tick);
+    }
+
+    Future.delayed(const Duration(milliseconds: 900), tick);
   }
 
   @override
@@ -188,43 +219,6 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                     opacity: _contentFade,
                     child: Column(
                       children: [
-                        Obx(() {
-                          final mosaic = Get.isRegistered<MosaicController>()
-                              ? Get.find<MosaicController>()
-                              : Get.put(MosaicController());
-                          final earned = mosaic.pendingReveal;
-                          if (earned.isEmpty) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: 52,
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    Get.toNamed(AppRoutes.mosaicRoute),
-                                icon: const Icon(Icons.auto_awesome,
-                                    color: Color(0xFFD8B65A)),
-                                label: Text(
-                                  earned.length == 1
-                                      ? "لقد ربحت قطعة جديدة من لوحتك! شاهد لوحتك الفسيفسائية"
-                                      : "لقد ربحت ${earned.length} قطع جديدة! شاهد لوحتك الفسيفسائية",
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColor.textPrimary,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                      color: Color(0xFFD8B65A)),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
                         if (mistakes.isNotEmpty) ...[
                           SizedBox(
                             width: double.infinity,
