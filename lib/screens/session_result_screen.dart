@@ -54,29 +54,27 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     // already opened — see card_view_controller.dart). Poll briefly rather
     // than fire once, so the reward ceremony still appears even when it
     // lands a beat late; it's a no-op once the batch has already shown.
-    _watchForDailyReward();
+    // _finishSession() in CardViewController flushes the whole session's
+    // accumulated mosaic pieces into the queue SYNCHRONOUSLY, before it
+    // navigates here — so by the time this screen exists, the batch (if
+    // any) is already present. No polling needed; the short delay below is
+    // purely cosmetic pacing, letting the confetti/entrance play first.
+    _showDailyRewardIfEarned();
   }
 
-  void _watchForDailyReward() {
-    var attempts = 0;
-    void tick() {
+  void _showDailyRewardIfEarned() {
+    final mosaic = Get.isRegistered<MosaicController>()
+        ? Get.find<MosaicController>()
+        : Get.put(MosaicController());
+    final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
+    if (index == -1) return; // No pieces earned this session — no ceremony.
+    final batch = mosaic.rewardQueue.removeAt(index);
+    Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      final mosaic = Get.isRegistered<MosaicController>()
-          ? Get.find<MosaicController>()
-          : Get.put(MosaicController());
-      final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
-      if (index != -1) {
-        final batch = mosaic.rewardQueue.removeAt(index);
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => RewardFlowScreen.daily(batch: batch)),
-        );
-        return;
-      }
-      attempts += 1;
-      if (attempts < 20) Future.delayed(const Duration(milliseconds: 300), tick);
-    }
-
-    Future.delayed(const Duration(milliseconds: 900), tick);
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => RewardFlowScreen.daily(batch: batch)),
+      );
+    });
   }
 
   @override
