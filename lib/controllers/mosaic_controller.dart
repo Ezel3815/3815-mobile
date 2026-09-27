@@ -1,3 +1,4 @@
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/entity/mosaic_entity.dart';
@@ -21,8 +22,24 @@ class MosaicController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    refresh();
+    _syncTimezoneThenRefresh();
     MosaicArtworkGeometry.load().then((g) => geometry.value = g);
+  }
+
+  /// The mosaic season needs the device's real IANA timezone before the
+  /// server will start it (see mosaic.time.ts — it never guesses). Sending
+  /// this is safe to repeat on every app open: the backend only uses it to
+  /// set User.timezone, and a season's own timezone is frozen at creation
+  /// regardless of later calls here.
+  Future<void> _syncTimezoneThenRefresh() async {
+    try {
+      final tz = await FlutterTimezone.getLocalTimezone();
+      await ApiController.updateTimezone(tz);
+    } catch (_) {
+      // Best-effort — if this fails, getMosaic() below will just report
+      // status "timezone_required" and the UI hides itself, same as today.
+    }
+    await refresh();
   }
 
   Future<void> refresh() async {
