@@ -282,10 +282,12 @@ class CardViewController extends GetxController {
     // regardless of that ordering, and it's already persisted server-side
     // either way.
     if (result?.mosaic != null) {
+      final total = sessionCorrect + sessionWrong;
+      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
       (Get.isRegistered<MosaicController>()
               ? Get.find<MosaicController>()
               : Get.put(MosaicController()))
-          .handleAward(result!.mosaic);
+          .queueDailyReward(result!.mosaic, cardsStudied: total, accuracyPercent: accuracy);
     }
     if (Get.isRegistered<CardController>()) {
       Get.find<CardController>().getCard();
