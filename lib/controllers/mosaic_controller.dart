@@ -58,15 +58,15 @@ class MosaicController extends GetxController {
     loading.value = false;
   }
 
-  /// Called after a study-session answer. A single answerCard() response
-  /// already contains every piece earned by that one request (the backend
-  /// computes the day's release in one shot), so this is naturally one
-  /// complete daily batch — never split across multiple reward windows.
-  void queueDailyReward(MosaicAward? award, {int? cardsStudied, int? accuracyPercent}) {
-    if (award == null || award.newPieces.isEmpty) return;
+  /// Called once, when a study session actually ends, with every mosaic
+  /// piece earned across the whole session (however many separate
+  /// answerCard() responses they arrived in). This is the single "Daily
+  /// Complete" moment — it must never be called mid-session per answer.
+  void queueDailyReward(List<MosaicAwardedPiece> pieces, {int? cardsStudied, int? accuracyPercent}) {
+    if (pieces.isEmpty) return;
     rewardQueue.add(PendingRewardBatch(
       source: RewardSource.daily,
-      pieces: award.newPieces,
+      pieces: pieces,
       cardsStudied: cardsStudied,
       accuracyPercent: accuracyPercent,
     ));
