@@ -1,16 +1,21 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/entity/mosaic_entity.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_artwork.dart';
-import 'package:upgrade/widgets/mosaic/mosaic_reveal_overlay.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 
 /// The premium mosaic hero screen: "I'm building this." The artwork stays
 /// the visual focus — no dashboard chrome, no confetti, nothing gamified.
+///
+/// Reward reveals themselves (daily or chest) always happen in
+/// RewardFlowScreen, not here — this screen only ever shows the artwork as
+/// it currently stands. If the app was closed mid-animation and a batch is
+/// still queued, this screen picks it up and launches that same flow so
+/// nothing is silently lost.
 class MosaicScreen extends StatefulWidget {
   const MosaicScreen({super.key});
 
@@ -19,9 +24,8 @@ class MosaicScreen extends StatefulWidget {
 }
 
 class _MosaicScreenState extends State<MosaicScreen> {
-  final _artworkKey = GlobalKey();
   late final MosaicController _c;
-  bool _revealing = false;
+  bool _checkedQueue = false;
 
   @override
   void initState() {
@@ -29,39 +33,34 @@ class _MosaicScreenState extends State<MosaicScreen> {
     _c = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePlayReveal());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resumeAnyPendingBatch());
   }
 
-  Future<void> _maybePlayReveal() async {
-    if (_revealing || _c.pendingReveal.isEmpty || _c.geometry.value == null) return;
-    final box = _artworkKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) {
-      // Artwork not laid out yet (e.g. still loading state) — retry next frame.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      if (mounted) _maybePlayReveal();
-      return;
-    }
-    _revealing = true;
-    final rect = box.localToGlobal(Offset.zero) & box.size;
-    // Fire pending pieces one at a time so each flight is legible.
-    while (_c.pendingReveal.isNotEmpty) {
-      final piece = _c.pendingReveal.first;
-      final geo = _c.geometry.value!.pieces[piece.pieceId];
-      if (geo == null) {
-        _c.markRevealed(piece);
-        continue;
-      }
-      await showMosaicPieceReveal(
-        context,
-        piece: geo,
-        sourceCenter: rect.center, // reward "source": the artwork's own center
-        artworkRect: rect,
-        canvasWidth: _c.geometry.value!.canvasWidth,
-      );
-      _c.markRevealed(piece);
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-    }
-    _revealing = false;
+  /// Resumes a batch left over from before the app was closed (or from a
+  /// chest claim response that arrived while this screen was already open).
+  /// Runs once per screen visit; RewardFlowScreen itself removes the batch
+  /// from the queue the moment it starts showing it.
+  void _resumeAnyPendingBatch() {
+    if (_checkedQueue || !mounted) return;
+    if (_c.rewardQueue.isEmpty) return;
+    _checkedQueue = true;
+    final batch = _c.rewardQueue.removeAt(0);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => batch.source == RewardSource.daily
+            ? RewardFlowScreen.daily(batch: batch)
+            : RewardFlowScreen.chest(batch: batch),
+      ),
+    );
+  }
+
+  Future<void> _openChest(MosaicChest chest) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RewardFlowScreen.chestGate(chestId: chest.id, pieceCount: chest.pieces),
+      ),
+    );
+    _c.refresh();
   }
 
   @override
@@ -91,11 +90,10 @@ class _MosaicScreenState extends State<MosaicScreen> {
             if (state == null || geometry == null) {
               return const Center(child: Text("تعذر تحميل اللوحة"));
             }
-            WidgetsBinding.instance.addPostFrameCallback((_) => _maybePlayReveal());
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
               children: [
-                Text(
+                const Text(
                   "Garden by the Sea",
                   style: TextStyle(
                     fontSize: 22,
@@ -113,15 +111,13 @@ class _MosaicScreenState extends State<MosaicScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                MosaicArtwork(
-                  key: _artworkKey,
-                  geometry: geometry,
-                  ownedPieceIds: _c.ownedPieceIds,
-                ),
+                MosaicArtwork(geometry: geometry, ownedPieceIds: _c.ownedPieceIds),
                 const SizedBox(height: 24),
                 if (state.today != null) _TodayProgress(today: state.today!),
                 const SizedBox(height: 20),
-                ...state.chests.map((chest) => _ChestRow(chest: chest, onClaim: () => _c.claimChest(chest.id))),
+                ...state.chests.map(
+                  (chest) => _ChestRow(chest: chest, onOpen: () => _openChest(chest)),
+                ),
               ],
             );
           }),
@@ -190,10 +186,13 @@ class _TodayProgress extends StatelessWidget {
   }
 }
 
+/// Only ever offers to OPEN the reward gate screen — never calls the claim
+/// endpoint itself. The actual server claim happens only after the user
+/// explicitly taps "Open Chest" inside RewardFlowScreen.chestGate.
 class _ChestRow extends StatelessWidget {
   final MosaicChest chest;
-  final VoidCallback onClaim;
-  const _ChestRow({required this.chest, required this.onClaim});
+  final VoidCallback onOpen;
+  const _ChestRow({required this.chest, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +222,7 @@ class _ChestRow extends StatelessWidget {
               const Text("تم الفتح", style: TextStyle(fontSize: 13, color: AppColor.textSecondary))
             else if (chest.ready)
               TextButton(
-                onPressed: onClaim,
+                onPressed: onOpen,
                 child: const Text("افتح", style: TextStyle(fontWeight: FontWeight.w700)),
               )
             else
