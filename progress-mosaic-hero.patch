@@ -1,0 +1,612 @@
+diff -ruN o/lib/screens/progress_screen.dart n/lib/screens/progress_screen.dart
+--- a/lib/screens/progress_screen.dart	2026-09-28 13:25:00.622785539 +0000
++++ b/lib/screens/progress_screen.dart	2026-09-28 13:25:00.625013252 +0000
+@@ -64,7 +64,7 @@
+               ],
+             ),
+             const SizedBox(height: 18),
+-            const _MosaicTeaser(),
++            const _MosaicHero(),
+             const SizedBox(height: 18),
+             Obx(
+               () => Row(
+@@ -652,17 +652,23 @@
+   }
+ }
+ 
+-/// Compact hero teaser: real artwork thumbnail + "N/100", linking to the
+-/// full mosaic screen. Deliberately small here — the full premium
+-/// experience lives on its own screen (see mosaic_screen.dart).
+-class _MosaicTeaser extends StatefulWidget {
+-  const _MosaicTeaser();
++const Color _mosaicGold = Color(0xFFD8B65A);
++
++/// Garden by the Sea hero — the user's 30-day mosaic season, front and centre
++/// on the Progress screen. It replaces both the old small teaser and the
++/// separate Monthly Challenge card: the painting IS the monthly challenge.
++///
++/// Nothing here is a second mosaic implementation. Count, day and artwork all
++/// come from the existing MosaicController (server-driven state), the artwork
++/// is the existing MosaicArtwork, and tapping opens the existing MosaicScreen.
++class _MosaicHero extends StatefulWidget {
++  const _MosaicHero();
+ 
+   @override
+-  State<_MosaicTeaser> createState() => _MosaicTeaserState();
++  State<_MosaicHero> createState() => _MosaicHeroState();
+ }
+ 
+-class _MosaicTeaserState extends State<_MosaicTeaser> {
++class _MosaicHeroState extends State<_MosaicHero> {
+   late final MosaicController _c;
+ 
+   @override
+@@ -678,77 +684,233 @@
+     return Obx(() {
+       final state = _c.state.value;
+       final geometry = _c.geometry.value;
+-      if (state == null || geometry == null || state.status == 'timezone_required') {
+-        return const SizedBox.shrink();
++      if (state?.status == 'timezone_required') return const SizedBox.shrink();
++      if (state == null) {
++        // First load: hold the hero's space so the screen doesn't jump.
++        // A failed load hides the hero, exactly as the old teaser did.
++        return _c.loading.value
++            ? const _MosaicHeroPlaceholder()
++            : const SizedBox.shrink();
+       }
+-      return InkWell(
+-        borderRadius: BorderRadius.circular(18),
+-        onTap: () => Get.toNamed(AppRoutes.mosaicRoute),
+-        // TEMPORARY DEMO: long-press plays the daily reward ceremony with 3 fake pieces (no backend).
+-        onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
+-          builder: (_) => RewardFlowScreen.daily(
+-            batch: PendingRewardBatch(
+-              source: RewardSource.daily,
+-              pieces: [
+-                MosaicAwardedPiece(pieceId: 56, slot: 1, kind: 'SCHEDULED'),
+-                MosaicAwardedPiece(pieceId: 45, slot: 2, kind: 'SCHEDULED'),
+-                MosaicAwardedPiece(pieceId: 46, slot: 3, kind: 'SCHEDULED'),
++      if (geometry == null) return const _MosaicHeroPlaceholder();
++
++      final earned = state.piecesEarned;
++      final total = state.totalPieces;
++      final fraction = total <= 0 ? 0.0 : (earned / total).clamp(0.0, 1.0).toDouble();
++      final seasonDays = state.seasonDays < 1 ? 30 : state.seasonDays;
++      final dayLine = state.seasonDay > 0
++          ? 'اليوم ${state.seasonDay.clamp(1, seasonDays).toInt()} من $seasonDays'
++          : '$seasonDays يوماً';
++
++      return Semantics(
++        button: true,
++        label: 'Garden by the Sea, $earned / $total',
++        child: Material(
++          color: Colors.transparent,
++          child: Ink(
++            decoration: BoxDecoration(
++              gradient: const LinearGradient(
++                begin: Alignment.topCenter,
++                end: Alignment.bottomCenter,
++                colors: [Color(0xFFFFFDF6), AppColor.surfaceColor],
++              ),
++              borderRadius: BorderRadius.circular(28),
++              border: Border.all(color: _mosaicGold.withOpacity(0.55)),
++              boxShadow: [
++                BoxShadow(
++                  color: AppColor.darkGreenColor.withOpacity(0.08),
++                  blurRadius: 24,
++                  offset: const Offset(0, 10),
++                ),
+               ],
+-              cardsStudied: 12,
+-              accuracyPercent: 92,
+             ),
+-          ),
+-        )),
+-        child: Container(
+-          padding: const EdgeInsets.all(14),
+-          decoration: BoxDecoration(
+-            color: Colors.white,
+-            borderRadius: BorderRadius.circular(18),
+-            border: Border.all(color: const Color(0xFFEDE6D6)),
+-          ),
+-          child: Row(
+-            children: [
+-              SizedBox(
+-                width: 64,
+-                height: 64,
+-                child: ClipRRect(
+-                  borderRadius: BorderRadius.circular(12),
+-                  child: MosaicArtwork(
+-                    geometry: geometry,
+-                    ownedPieceIds: _c.ownedPieceIds,
++            child: InkWell(
++              borderRadius: BorderRadius.circular(28),
++              onTap: () => Get.toNamed(AppRoutes.mosaicRoute),
++              // TEMPORARY DEMO: long-press plays the daily reward ceremony with 3 fake pieces (no backend).
++              onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
++                builder: (_) => RewardFlowScreen.daily(
++                  batch: PendingRewardBatch(
++                    source: RewardSource.daily,
++                    pieces: [
++                      MosaicAwardedPiece(pieceId: 56, slot: 1, kind: 'SCHEDULED'),
++                      MosaicAwardedPiece(pieceId: 45, slot: 2, kind: 'SCHEDULED'),
++                      MosaicAwardedPiece(pieceId: 46, slot: 3, kind: 'SCHEDULED'),
++                    ],
++                    cardsStudied: 12,
++                    accuracyPercent: 92,
+                   ),
+                 ),
+-              ),
+-              const SizedBox(width: 14),
+-              Expanded(
+-                child: Column(
+-                  crossAxisAlignment: CrossAxisAlignment.start,
+-                  children: [
+-                    const Text(
+-                      "لوحتك الفسيفسائية",
+-                      style: TextStyle(
+-                        fontSize: 14,
+-                        fontWeight: FontWeight.w700,
+-                        color: AppColor.textPrimary,
++              )),
++              child: Padding(
++                padding: const EdgeInsets.all(12),
++                child: LayoutBuilder(builder: (context, c) {
++                  final art = (c.maxWidth * 0.52).clamp(128.0, 280.0).toDouble();
++                  return Row(
++                    crossAxisAlignment: CrossAxisAlignment.center,
++                    children: [
++                      // The real, live mosaic: earned pieces in colour, the
++                      // rest dimmed, real piece structure visible.
++                      SizedBox(
++                        width: art,
++                        height: art,
++                        child: MosaicArtwork(
++                          geometry: geometry,
++                          ownedPieceIds: _c.ownedPieceIds,
++                        ),
+                       ),
+-                    ),
+-                    const SizedBox(height: 4),
+-                    Text(
+-                      "${state.piecesEarned} / ${state.totalPieces}",
+-                      style: const TextStyle(
+-                        fontSize: 13,
+-                        fontWeight: FontWeight.w600,
+-                        color: AppColor.greenColor,
++                      const SizedBox(width: 14),
++                      Expanded(
++                        child: Column(
++                          crossAxisAlignment: CrossAxisAlignment.start,
++                          mainAxisSize: MainAxisSize.min,
++                          children: [
++                            const Text(
++                              'Garden by the Sea',
++                              maxLines: 2,
++                              overflow: TextOverflow.ellipsis,
++                              style: TextStyle(
++                                fontSize: 20,
++                                fontWeight: FontWeight.w800,
++                                height: 1.15,
++                                color: AppColor.darkGreenColor,
++                              ),
++                            ),
++                            const SizedBox(height: 4),
++                            const Text(
++                              'لوحتك الفسيفسائية',
++                              style: TextStyle(
++                                fontSize: 13,
++                                fontWeight: FontWeight.w600,
++                                color: AppColor.textSecondary,
++                              ),
++                            ),
++                            const SizedBox(height: 12),
++                            FittedBox(
++                              fit: BoxFit.scaleDown,
++                              alignment: AlignmentDirectional.centerStart,
++                              child: Row(
++                                mainAxisSize: MainAxisSize.min,
++                                children: [
++                                  const MozaikMarkIcon(
++                                    color: AppColor.greenColor,
++                                    size: 22,
++                                  ),
++                                  const SizedBox(width: 8),
++                                  // Forced LTR so "17 / 100" never renders
++                                  // as "100 / 17" inside an RTL layout.
++                                  Text(
++                                    '$earned / $total',
++                                    textDirection: TextDirection.ltr,
++                                    style: const TextStyle(
++                                      fontSize: 26,
++                                      fontWeight: FontWeight.w800,
++                                      color: AppColor.darkGreenColor,
++                                    ),
++                                  ),
++                                ],
++                              ),
++                            ),
++                            const SizedBox(height: 8),
++                            ClipRRect(
++                              borderRadius: BorderRadius.circular(20),
++                              child: TweenAnimationBuilder<double>(
++                                tween: Tween<double>(begin: 0, end: fraction),
++                                duration: const Duration(milliseconds: 700),
++                                curve: Curves.easeOutCubic,
++                                builder: (context, v, _) =>
++                                    LinearProgressIndicator(
++                                  value: v,
++                                  minHeight: 8,
++                                  backgroundColor: AppColor.lightGreenColor,
++                                  valueColor: const AlwaysStoppedAnimation(
++                                      AppColor.greenColor),
++                                ),
++                              ),
++                            ),
++                            const SizedBox(height: 12),
++                            Row(
++                              children: [
++                                const Icon(
++                                  Icons.calendar_month_rounded,
++                                  size: 18,
++                                  color: AppColor.darkGreenColor,
++                                ),
++                                const SizedBox(width: 6),
++                                Flexible(
++                                  child: Text(
++                                    dayLine,
++                                    overflow: TextOverflow.ellipsis,
++                                    style: const TextStyle(
++                                      fontSize: 13,
++                                      fontWeight: FontWeight.w700,
++                                      color: AppColor.textSecondary,
++                                    ),
++                                  ),
++                                ),
++                              ],
++                            ),
++                            const SizedBox(height: 10),
++                            Row(
++                              crossAxisAlignment: CrossAxisAlignment.start,
++                              children: [
++                                Container(
++                                  width: 16,
++                                  height: 2,
++                                  margin: const EdgeInsets.only(top: 8),
++                                  color: _mosaicGold,
++                                ),
++                                const SizedBox(width: 8),
++                                const Flexible(
++                                  child: Text(
++                                    'Piece by piece, it clicks.',
++                                    style: TextStyle(
++                                      fontSize: 13,
++                                      fontStyle: FontStyle.italic,
++                                      fontWeight: FontWeight.w600,
++                                      height: 1.3,
++                                      color: AppColor.darkGreenColor,
++                                    ),
++                                  ),
++                                ),
++                              ],
++                            ),
++                          ],
++                        ),
+                       ),
+-                    ),
+-                  ],
+-                ),
++                    ],
++                  );
++                }),
+               ),
+-              const Icon(Icons.chevron_left, color: AppColor.textSecondary),
+-            ],
++            ),
+           ),
+         ),
+       );
+     });
+   }
+ }
++
++class _MosaicHeroPlaceholder extends StatelessWidget {
++  const _MosaicHeroPlaceholder();
++
++  @override
++  Widget build(BuildContext context) {
++    return Container(
++      height: 200,
++      decoration: BoxDecoration(
++        color: AppColor.surfaceColor,
++        borderRadius: BorderRadius.circular(28),
++        border: Border.all(color: _mosaicGold.withOpacity(0.35)),
++      ),
++      alignment: Alignment.center,
++      child: const SizedBox(
++        width: 24,
++        height: 24,
++        child: CircularProgressIndicator(
++          strokeWidth: 2.5,
++          color: AppColor.greenColor,
++        ),
++      ),
++    );
++  }
++}
+diff -ruN o/lib/widgets/quests_view.dart n/lib/widgets/quests_view.dart
+--- a/lib/widgets/quests_view.dart	2026-09-28 13:25:00.623901352 +0000
++++ b/lib/widgets/quests_view.dart	2026-09-28 13:25:00.626347311 +0000
+@@ -8,11 +8,6 @@
+ import 'package:upgrade/widgets/app_image.dart';
+ import 'package:upgrade/widgets/app_snack_bar.dart';
+ 
+-const List<String> _months = [
+-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+-];
+-
+ const Color _trackLight = Color(0xFFE6EBD8);
+ const Color _cardBorder = Color(0xFFDDE4CC);
+ 
+@@ -47,7 +42,9 @@
+   }
+ }
+ 
+-/// Duolingo-style "Quests" page: monthly quest, friends quest, daily quests.
++/// Duolingo-style "Quests" page: friends quest, daily quests.
++/// (The monthly quest card was replaced by the Garden by the Sea mosaic hero
++/// at the top of the Progress screen.)
+ class QuestsBody extends StatelessWidget {
+   final ProgressController controller;
+   const QuestsBody({super.key, required this.controller});
+@@ -70,8 +67,6 @@
+       return Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+-          _MonthlyCard(q: q, controller: controller),
+-          const SizedBox(height: 26),
+           _SectionHeader(title: 'تحدي الأصدقاء', hours: q.friendsHoursLeft),
+           const SizedBox(height: 12),
+           _FriendsCard(q: q, controller: controller),
+@@ -156,240 +151,6 @@
+     );
+   }
+ }
+-
+-// ───────────────────────── Monthly quest ─────────────────────────
+-
+-class _MonthlyCard extends StatelessWidget {
+-  final QuestsData q;
+-  final ProgressController controller;
+-  const _MonthlyCard({required this.q, required this.controller});
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final monthName = _months[(q.month - 1).clamp(0, 11).toInt()];
+-    return Container(
+-      padding: const EdgeInsets.all(18),
+-      decoration: BoxDecoration(
+-        gradient: const LinearGradient(
+-          begin: Alignment.topCenter,
+-          end: Alignment.bottomCenter,
+-          colors: [AppColor.greenColor, Color(0xFF2F7A57)],
+-        ),
+-        borderRadius: BorderRadius.circular(26),
+-      ),
+-      child: Column(
+-        children: [
+-          Row(
+-            children: [
+-              Expanded(
+-                child: Column(
+-                  crossAxisAlignment: CrossAxisAlignment.start,
+-                  children: [
+-                    Container(
+-                      padding: const EdgeInsets.symmetric(
+-                          horizontal: 12, vertical: 5),
+-                      decoration: BoxDecoration(
+-                        color: Colors.white,
+-                        borderRadius: BorderRadius.circular(10),
+-                      ),
+-                      child: Text(
+-                        monthName,
+-                        style: const TextStyle(
+-                          fontSize: 13,
+-                          fontWeight: FontWeight.w800,
+-                          color: AppColor.greenColor,
+-                        ),
+-                      ),
+-                    ),
+-                    const SizedBox(height: 10),
+-                    const Text(
+-                      'تحدي الشهر',
+-                      style: TextStyle(
+-                        fontSize: 26,
+-                        fontWeight: FontWeight.w800,
+-                        color: Colors.white,
+-                        height: 1.15,
+-                      ),
+-                    ),
+-                    const SizedBox(height: 8),
+-                    Row(
+-                      children: [
+-                        Icon(Icons.schedule_rounded,
+-                            size: 16, color: Colors.white.withOpacity(0.75)),
+-                        const SizedBox(width: 5),
+-                        Text(
+-                          'باقي ${q.daysLeft} ${q.daysLeft == 1 ? 'يوم' : 'أيام'}',
+-                          style: TextStyle(
+-                            fontSize: 13,
+-                            fontWeight: FontWeight.w700,
+-                            color: Colors.white.withOpacity(0.75),
+-                          ),
+-                        ),
+-                      ],
+-                    ),
+-                  ],
+-                ),
+-              ),
+-              Container(
+-                width: 92,
+-                height: 92,
+-                decoration: BoxDecoration(
+-                  color: Colors.white.withOpacity(0.16),
+-                  shape: BoxShape.circle,
+-                  border: Border.all(color: Colors.white, width: 3),
+-                ),
+-                child: const Icon(Icons.emoji_events_rounded,
+-                    size: 50, color: Color(0xFFFFD25A)),
+-              ),
+-            ],
+-          ),
+-          const SizedBox(height: 18),
+-          Container(
+-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+-            decoration: BoxDecoration(
+-              color: AppColor.darkGreenColor,
+-              borderRadius: BorderRadius.circular(22),
+-            ),
+-            child: Column(
+-              children: [
+-                Row(
+-                  children: [
+-                    Expanded(
+-                      child: Text(
+-                        'اجمع ${q.monthTarget} نقطة',
+-                        style: const TextStyle(
+-                          fontSize: 16,
+-                          fontWeight: FontWeight.w800,
+-                          color: Colors.white,
+-                        ),
+-                      ),
+-                    ),
+-                    Text(
+-                      '${q.monthPoints} / ${q.monthTarget}',
+-                      style: const TextStyle(
+-                        fontSize: 16,
+-                        fontWeight: FontWeight.w800,
+-                        color: AppColor.freshGreenColor,
+-                      ),
+-                    ),
+-                  ],
+-                ),
+-                const SizedBox(height: 14),
+-                _MonthlyBar(q: q, controller: controller),
+-                const SizedBox(height: 10),
+-                Text(
+-                  'كل بطاقة تراجعها هذا الشهر = نقطة',
+-                  style: TextStyle(
+-                    fontSize: 11.5,
+-                    color: Colors.white.withOpacity(0.6),
+-                  ),
+-                ),
+-              ],
+-            ),
+-          ),
+-        ],
+-      ),
+-    );
+-  }
+-}
+-
+-class _MonthlyBar extends StatelessWidget {
+-  final QuestsData q;
+-  final ProgressController controller;
+-  const _MonthlyBar({required this.q, required this.controller});
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    const node = 36.0;
+-    return LayoutBuilder(builder: (context, c) {
+-      final w = c.maxWidth;
+-      final frac = (q.monthPoints / q.monthTarget).clamp(0.0, 1.0).toDouble();
+-      return SizedBox(
+-        height: node,
+-        child: Stack(
+-          alignment: AlignmentDirectional.centerStart,
+-          children: [
+-            Container(
+-              height: 20,
+-              decoration: BoxDecoration(
+-                color: AppColor.forestGreenColor,
+-                borderRadius: BorderRadius.circular(10),
+-              ),
+-            ),
+-            if (frac > 0)
+-              FractionallySizedBox(
+-                alignment: AlignmentDirectional.centerStart,
+-                widthFactor: frac,
+-                child: const SizedBox(
+-                  height: 20,
+-                  child: _BarFill(color: AppColor.freshGreenColor),
+-                ),
+-              ),
+-            for (final chest in q.monthChests)
+-              PositionedDirectional(
+-                start: (chest.at / q.monthTarget).clamp(0.0, 1.0).toDouble() *
+-                    (w - node),
+-                top: 0,
+-                child: _MilestoneNode(
+-                  chest: chest,
+-                  size: node,
+-                  controller: controller,
+-                ),
+-              ),
+-          ],
+-        ),
+-      );
+-    });
+-  }
+-}
+-
+-class _MilestoneNode extends StatelessWidget {
+-  final QuestChest chest;
+-  final double size;
+-  final ProgressController controller;
+-  const _MilestoneNode(
+-      {required this.chest, required this.size, required this.controller});
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    Widget inner;
+-    Color bg;
+-    if (chest.claimed) {
+-      bg = AppColor.greenColor;
+-      inner = const Icon(Icons.check_rounded, size: 20, color: Colors.white);
+-    } else if (chest.reached) {
+-      bg = const Color(0xFFFFD25A);
+-      inner = _Chest(tier: 'gold', size: 22);
+-    } else {
+-      bg = AppColor.forestGreenColor;
+-      inner = Icon(Icons.lock_rounded,
+-          size: 16, color: Colors.white.withOpacity(0.5));
+-    }
+-    return GestureDetector(
+-      onTap: chest.claimable ? () => _claim(controller, chest.id) : null,
+-      child: Container(
+-        width: size,
+-        height: size,
+-        alignment: Alignment.center,
+-        decoration: BoxDecoration(
+-          color: bg,
+-          shape: BoxShape.circle,
+-          border: Border.all(color: AppColor.darkGreenColor, width: 3),
+-          boxShadow: chest.claimable
+-              ? [
+-                  BoxShadow(
+-                    color: const Color(0xFFFFD25A).withOpacity(0.7),
+-                    blurRadius: 12,
+-                    spreadRadius: 1,
+-                  ),
+-                ]
+-              : null,
+-        ),
+-        child: inner,
+-      ),
+-    );
+-  }
+-}
+ 
+ // ───────────────────────── Friends quest ─────────────────────────
