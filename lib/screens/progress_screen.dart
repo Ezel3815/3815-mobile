@@ -11,6 +11,9 @@ import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_artwork.dart';
+import 'package:upgrade/entity/mosaic_entity.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
+import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
 import 'package:upgrade/main.dart' show AppRoutes;
 
 const List<Color> _subjectAccentColors = [
@@ -681,6 +684,21 @@ class _MosaicTeaserState extends State<_MosaicTeaser> {
       return InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () => Get.toNamed(AppRoutes.mosaicRoute),
+        // TEMPORARY DEMO: long-press plays the daily reward ceremony with 3 fake pieces (no backend).
+        onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => RewardFlowScreen.daily(
+            batch: PendingRewardBatch(
+              source: RewardSource.daily,
+              pieces: [
+                MosaicAwardedPiece(pieceId: 56, slot: 1, kind: 'SCHEDULED'),
+                MosaicAwardedPiece(pieceId: 45, slot: 2, kind: 'SCHEDULED'),
+                MosaicAwardedPiece(pieceId: 46, slot: 3, kind: 'SCHEDULED'),
+              ],
+              cardsStudied: 12,
+              accuracyPercent: 92,
+            ),
+          ),
+        )),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
