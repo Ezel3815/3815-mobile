@@ -49,11 +49,6 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       vsync: this,
     )..forward();
 
-    // The daily piece(s) earned by THIS session may still be in flight from
-    // the server (the last card's answer resolves after this screen has
-    // already opened — see card_view_controller.dart). Poll briefly rather
-    // than fire once, so the reward ceremony still appears even when it
-    // lands a beat late; it's a no-op once the batch has already shown.
     // _finishSession() in CardViewController flushes the whole session's
     // accumulated mosaic pieces into the queue SYNCHRONOUSLY, before it
     // navigates here — so by the time this screen exists, the batch (if
