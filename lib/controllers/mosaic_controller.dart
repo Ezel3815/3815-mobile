@@ -9,6 +9,9 @@ import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 /// (the server ledger), never invented client-side — that's what keeps a
 /// second device or a reinstalled app showing the same painting.
 class MosaicController extends GetxController {
+  /// TEMPORARY: last session-end diagnostic, shown as a snackbar on the result screen.
+  static String diag = 'finishSession never ran';
+
   final state = Rxn<MosaicState>();
   final geometry = Rxn<MosaicArtworkGeometry>();
   final loading = true.obs;
