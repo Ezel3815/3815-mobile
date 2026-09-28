@@ -11,6 +11,9 @@ import 'package:upgrade/widgets/mosaic/mosaic_reveal_overlay.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 
 const _gold = Color(0xFFD8B65A);
+const _cream = Color(0xFFF6F5EA);
+const _forest = Color(0xFF0F3D2E);
+const _serif = 'ELMESSIRI';
 
 /// The premium reward ceremony: Study Complete / Weekly Chest intro →
 /// "New Piece Unlocked" / "Chest Reward" for each earned piece, one at a
@@ -137,12 +140,15 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
+    // Explicit LTR: the app can run under an RTL locale, which would flip
+    // English punctuation ("!") and numbers ("3 / 100") in these windows.
+    final light = (_step == _Step.intro && widget.source == RewardSource.daily) || _step == _Step.finished;
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: PopScope(
       canPop: _step == _Step.chestClosed || _step == _Step.finished,
       child: Scaffold(
-        backgroundColor: _step == _Step.intro && widget.source == RewardSource.daily
-            ? AppColor.scaffoldBackgroundColor
-            : AppColor.darkGreenColor,
+        backgroundColor: light ? _cream : AppColor.darkGreenColor,
         body: SafeArea(
           child: switch (_step) {
             _Step.chestClosed => _closedChest(),
@@ -152,6 +158,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
             _Step.finished => _finished(),
           },
         ),
+      ),
       ),
     );
   }
@@ -181,7 +188,9 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
   Widget _intro() {
     final b = _batch!;
     if (widget.source == RewardSource.daily) {
+      final g = _mosaic.geometry.value;
       return _lightCard(
+        heroAsset: g?.pieces[b.pieces.first.pieceId]?.assetPath,
         title: "Study Complete!",
         subtitle: "Great job! You've finished your daily study session.",
         stats: [
@@ -189,7 +198,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
           if (b.accuracyPercent != null) ("${b.accuracyPercent}%", "Accuracy"),
           ("+${b.pieces.length}", b.pieces.length == 1 ? "Mosaic Piece" : "Mosaic Pieces"),
         ],
-        button: _button("Continue", _startReveals),
+        button: _button("Continue", _startReveals, arrow: true),
       );
     }
     return _darkCard(
@@ -214,9 +223,9 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
         const SizedBox(height: 8),
         Text(
           widget.source == RewardSource.daily ? "New Piece Unlocked!" : "Chest Reward",
-          style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontFamily: _serif, color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           "You earned a new piece for Garden by the Sea",
           textAlign: TextAlign.center,
@@ -231,6 +240,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Text(
             "$earnedSoFar / $total pieces discovered",
+            textDirection: TextDirection.ltr,
             style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ),
@@ -240,9 +250,9 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: geometry == null
-                ? const SizedBox(height: 140)
+                ? const SizedBox(height: 170)
                 : SizedBox(
-                    height: 140,
+                    height: 170,
                     child: MosaicArtwork(key: _artworkKey, geometry: geometry, ownedPieceIds: owned),
                   ),
           ),
@@ -252,74 +262,129 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
     );
   }
 
-  Widget _finished() => _darkCard(
-        icon: Icons.check_circle_rounded,
-        iconGlow: false,
-        title: "Keep going!",
-        subtitle: "Every piece brings you closer to completing Garden by the Sea.",
-        button: _button("Back to Home", () => Navigator.of(context).pop()),
-        onCloseTap: null,
-      );
+  Widget _finished() {
+    final geometry = _mosaic.geometry.value;
+    final owned = _mosaic.ownedPieceIds.union(_justLanded);
+    final total = _mosaic.state.value?.totalPieces ?? 100;
+    final earned = _mosaic.state.value?.piecesEarned ?? owned.length;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: _gold.withOpacity(0.45), width: 1.5),
+              boxShadow: [BoxShadow(color: _gold.withOpacity(0.28), blurRadius: 36, spreadRadius: 2)],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: geometry == null
+                  ? const SizedBox(height: 200)
+                  : MosaicArtwork(geometry: geometry, ownedPieceIds: owned),
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text("$earned / $total", textDirection: TextDirection.ltr, style: const TextStyle(fontFamily: _serif, fontSize: 18, fontWeight: FontWeight.w600, color: AppColor.greenColor)),
+        const SizedBox(height: 10),
+        const Text("Keep going!", style: TextStyle(fontFamily: _serif, fontSize: 34, fontWeight: FontWeight.w700, color: _forest)),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32),
+          child: Text("Your painting is growing. Keep building it.", textAlign: TextAlign.center, style: TextStyle(fontFamily: _serif, fontSize: 16, color: AppColor.textSecondary)),
+        ),
+        const Spacer(),
+        _button("Back to Home", () => Navigator.of(context).pop()),
+      ],
+    );
+  }
 
   // ---------------------------------------------------------------- shared UI
 
-  Widget _button(String label, VoidCallback onTap) => Padding(
+  Widget _button(String label, VoidCallback onTap, {bool arrow = false}) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: SizedBox(
+        child: Container(
           width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.greenColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(colors: [Color(0xFF3C8F66), Color(0xFF1F6B47)]),
+            boxShadow: [BoxShadow(color: _forest.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),
+              onTap: onTap,
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(label, style: const TextStyle(fontFamily: _serif, color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                if (arrow) ...[const SizedBox(width: 10), const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20)],
+              ]),
             ),
-            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
           ),
         ),
       );
 
   Widget _lightCard({
+    required String? heroAsset,
     required String title,
     required String subtitle,
     required List<(String, String)> stats,
     required Widget button,
   }) =>
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.eco_rounded, size: 56, color: AppColor.greenColor),
-          const SizedBox(height: 20),
-          Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColor.textPrimary)),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: AppColor.textSecondary)),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final s in stats)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFEDE6D6)),
+      Stack(children: [
+        Positioned(top: -30, left: -30, child: _leaf(150, -0.5)),
+        Positioned(bottom: 60, left: -30, child: _leaf(120, 0.6)),
+        Positioned(top: 220, right: -30, child: _leaf(110, 2.6)),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _MaterializingPiece(assetPath: heroAsset, light: true),
+            const SizedBox(height: 4),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontFamily: _serif, fontSize: 34, fontWeight: FontWeight.w700, color: _forest)),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontFamily: _serif, fontSize: 16, color: AppColor.greenColor)),
+            ),
+            const SizedBox(height: 26),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  for (final s in stats)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.75),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: _gold.withOpacity(0.35)),
+                            boxShadow: [BoxShadow(color: _forest.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 6))],
+                          ),
+                          child: Column(children: [
+                            Text(s.$1, textDirection: TextDirection.ltr, style: const TextStyle(fontFamily: _serif, fontSize: 26, fontWeight: FontWeight.w700, color: _forest)),
+                            const SizedBox(height: 2),
+                            Text(s.$2, textAlign: TextAlign.center, style: const TextStyle(fontFamily: _serif, fontSize: 12.5, color: AppColor.greenColor)),
+                          ]),
+                        ),
+                      ),
                     ),
-                    child: Column(children: [
-                      Text(s.$1, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColor.textPrimary)),
-                      Text(s.$2, style: const TextStyle(fontSize: 11, color: AppColor.textSecondary)),
-                    ]),
-                  ),
-                ),
-            ],
-          ),
-          button,
-        ],
+                ],
+              ),
+            ),
+            button,
+          ],
+        ),
+      ]);
+
+  Widget _leaf(double size, double angle) => IgnorePointer(
+        child: Transform.rotate(angle: angle, child: Icon(Icons.eco_rounded, size: size, color: AppColor.greenColor.withOpacity(0.14))),
       );
 
   Widget _darkCard({
@@ -336,7 +401,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
           children: [
             _GlowIcon(icon: icon, glow: iconGlow),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white)),
+            Text(title, style: const TextStyle(fontFamily: _serif, fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -391,7 +456,8 @@ class _GlowIconState extends State<_GlowIcon> with SingleTickerProviderStateMixi
 /// the piece the flight animation will pick up from here by its GlobalKey.
 class _MaterializingPiece extends StatefulWidget {
   final String? assetPath;
-  const _MaterializingPiece({super.key, required this.assetPath});
+  final bool light;
+  const _MaterializingPiece({super.key, required this.assetPath, this.light = false});
   @override
   State<_MaterializingPiece> createState() => _MaterializingPieceState();
 }
@@ -418,21 +484,23 @@ class _MaterializingPieceState extends State<_MaterializingPiece> with SingleTic
         final floatY = sin(t * 2 * pi) * 6;
         final rotate = sin(t * 2 * pi) * 0.05;
         return SizedBox(
-          width: 180,
-          height: 180,
+          width: widget.light ? 230 : 300,
+          height: widget.light ? 230 : 300,
           child: Stack(alignment: Alignment.center, children: [
             for (final d in _particleDirs)
               Transform.translate(
-                offset: d * (40 + 20 * ((t + 0.3) % 1.0)),
+                offset: d * (95 + 30 * ((t + 0.3) % 1.0)),
                 child: Opacity(
                   opacity: (1 - ((t + 0.3) % 1.0)).clamp(0.0, 1.0) * 0.6,
-                  child: Container(width: 5, height: 5, decoration: const BoxDecoration(color: _gold, shape: BoxShape.circle)),
+                  child: Container(width: 7, height: 7, decoration: const BoxDecoration(color: _gold, shape: BoxShape.circle)),
                 ),
               ),
             Container(
+              width: widget.light ? 130 : 180,
+              height: widget.light ? 130 : 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: _gold.withOpacity(0.45), blurRadius: 40, spreadRadius: 8)],
+                boxShadow: [BoxShadow(color: _gold.withOpacity(0.35 + 0.15 * sin(t * 2 * pi)), blurRadius: 70, spreadRadius: 18)],
               ),
             ),
             Transform.translate(
@@ -441,7 +509,7 @@ class _MaterializingPieceState extends State<_MaterializingPiece> with SingleTic
                 angle: rotate,
                 child: widget.assetPath == null
                     ? const SizedBox(width: 96, height: 96)
-                    : Image.asset(widget.assetPath!, width: 96, height: 96, fit: BoxFit.contain),
+                    : Image.asset(widget.assetPath!, width: widget.light ? 140 : 210, height: widget.light ? 140 : 210, fit: BoxFit.contain),
               ),
             ),
           ]),
