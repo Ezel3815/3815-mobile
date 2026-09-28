@@ -37,6 +37,12 @@ class CardViewController extends GetxController {
   /// as one moment, not each individual crossing.
   final List<MosaicAwardedPiece> _sessionMosaicPieces = [];
 
+  /// Set the first time _finishSession() runs, so a rapid double-tap on the
+  /// last card can't queue the reward or navigate twice. Lives on this
+  /// controller instance, so a new study session (a new controller) starts
+  /// with it false again.
+  bool _sessionFinished = false;
+
   void _recordAnswer(String answer, CardEntity card) {
     if (answer == "GOOD" || answer == "EASY") {
       sessionCorrect += 1;
@@ -91,6 +97,8 @@ class CardViewController extends GetxController {
   /// have been collected — that ordering is what actually prevents the
   /// race, rather than any timing/delay workaround.
   void _finishSession() {
+    if (_sessionFinished) return;
+    _sessionFinished = true;
     if (_sessionMosaicPieces.isNotEmpty) {
       final total = sessionCorrect + sessionWrong;
       final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
