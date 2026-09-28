@@ -97,6 +97,7 @@ class CardViewController extends GetxController {
   /// have been collected — that ordering is what actually prevents the
   /// race, rather than any timing/delay workaround.
   void _finishSession() {
+    debugPrint('[MOSAIC-DIAG] _finishSession START pieces=${_sessionMosaicPieces.length} ids=${_sessionMosaicPieces.map((p) => p.pieceId).toList()} alreadyFinished=$_sessionFinished');
     if (_sessionFinished) return;
     _sessionFinished = true;
     if (_sessionMosaicPieces.isNotEmpty) {
@@ -110,6 +111,7 @@ class CardViewController extends GetxController {
         cardsStudied: total,
         accuracyPercent: accuracy,
       );
+      debugPrint('[MOSAIC-DIAG] daily batch QUEUED');
       _sessionMosaicPieces.clear();
     }
     _goToSessionResult();
