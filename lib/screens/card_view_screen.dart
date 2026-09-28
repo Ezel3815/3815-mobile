@@ -1,647 +1,387 @@
-import 'dart:math' as math;
-import 'package:upgrade/strings.dart';
+import 'package:upgrade/controllers/progress_controller.dart';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:get/get.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:upgrade/api.dart';
-import 'package:upgrade/controllers/card_view_controller.dart';
+import 'package:upgrade/controllers/api_controller.dart';
+import 'package:upgrade/controllers/card_controller.dart';
+import 'package:upgrade/controllers/years_controller.dart';
+import 'package:upgrade/controllers/mosaic_controller.dart';
+import 'package:upgrade/entity/card_entity.dart';
+import 'package:upgrade/entity/mosaic_entity.dart';
 import 'package:upgrade/entity/shape_creator_entity.dart';
+import 'package:upgrade/extension.dart';
+import 'package:upgrade/main.dart';
+import 'package:upgrade/mapper/app_mapper.dart';
+import 'package:upgrade/models/shape_creator_model.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/widgets/app_image.dart';
-import 'package:upgrade/widgets/download_dialog.dart';
+import 'package:upgrade/widgets/celebration.dart';
+import 'package:upgrade/services/notification_service.dart';
 
-import 'document_screen.dart';
+class CardViewController extends GetxController {
+  late bool isView;
 
-/// On tablets the card stays a readable column of this width, with larger
-/// text, instead of tiny text floating in a huge empty screen.
-const double _tabletContentWidth = 760;
-const double _tabletTextScale = 1.3;
+  // Session tracking — additive only, does not change the existing
+  // grading buttons, the answerCard API call, or OCCLUSION logic.
+  DateTime _sessionStart = DateTime.now();
+  int sessionCorrect = 0;
+  int sessionWrong = 0;
+  final List<CardEntity> sessionMistakes = [];
 
-class CardViewScreen extends GetView<CardViewController> {
-  const CardViewScreen({super.key});
+  /// Every mosaic piece earned by ANY answer during this session, collected
+  /// silently — never shown to the user until the session actually ends.
+  /// The backend can release pieces incrementally (one per daily-step
+  /// crossed), so a single session's reward can arrive across several
+  /// answerCard() responses; the ceremony must represent the whole session
+  /// as one moment, not each individual crossing.
+  final List<MosaicAwardedPiece> _sessionMosaicPieces = [];
 
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final height = MediaQuery.sizeOf(context).height;
+  /// Set the first time _finishSession() runs, so a rapid double-tap on the
+  /// last card can't queue the reward or navigate twice. Lives on this
+  /// controller instance, so a new study session (a new controller) starts
+  /// with it false again.
+  bool _sessionFinished = false;
 
-    final bool isTablet = width >= 600;
-    // Width of the area the card content really lives in.
-    final double areaWidth =
-        isTablet ? math.min(width, _tabletContentWidth) : width;
-    // Sideways padding that centres the content on wide screens while the
-    // whole width still scrolls.
-    final double hPad =
-        20.0 + (isTablet ? math.max(0.0, (width - _tabletContentWidth) / 2) : 0.0);
-    final double textScale = isTablet ? _tabletTextScale : 1.0;
-
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            color: AppColor.scaffoldBackgroundColor,
-          ),
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            // Progress line: how far through the session you are.
-            bottom: controller.isView
-                ? null
-                : PreferredSize(
-                    preferredSize: const Size.fromHeight(30),
-                    child: _StudyProgress(
-                      controller: controller,
-                      sidePadding: hPad,
-                    ),
-                  ),
-          ),
-          body: SafeArea(
-            child: Obx(
-              () => PageView.builder(
-                itemBuilder: (context, index) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: hPad, vertical: 20),
-                    child: Obx(
-                      () => Column(
-                        children: [
-                          if (controller.cards[index].type == "OCCLUSION") ...[
-                            HtmlWidget(
-                              '''
-  <div style="text-align:${controller.getFrontAlign()};" dir="${controller.isArabic(controller.getFrontText()) ? 'rtl' : 'ltr'}">
-    ${controller.getFrontText().replaceAll('\n', '<br>')}
-  </div>
-  ''',
-                              textStyle: TextStyle(
-                                fontSize: controller.getFrontSize() * textScale,
-                                color: AppColor.textPrimary,
-                              ),
-                            ),
-                            if (controller.data.image.isNotEmpty) ...[
-                              const SizedBox(height: 14),
-                              SizedBox(
-                                width:
-                                    controller.data.imageData.width * areaWidth,
-                                height:
-                                    controller.data.imageData.height * height,
-                                child: Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: AppImage(
-                                        image: controller.data.image,
-                                      ),
-                                    ),
-                                    Stack(
-                                      children: List.generate(
-                                        controller.data.shapes.length,
-                                        (index) {
-                                          return Obx(() {
-                                            final item =
-                                                controller.data.shapes[index];
-                                            return ShapesWidget(
-                                              item: item,
-                                              areaWidth: areaWidth,
-                                              onTap: () => controller
-                                                  .onTapOnShape(index),
-                                            );
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            if (controller.showAnswer) ...[
-                              if (controller.getBackText().isNotEmpty) ...[
-                                const SizedBox(height: 14),
-                                Divider(
-                                  height: 0,
-                                  thickness: 1,
-                                  color: Colors.black.withOpacity(0.08),
-                                ),
-                                const SizedBox(height: 14),
-                                HtmlWidget(
-                                  '''
-  <div style="text-align:${controller.getBackAlign()};" dir="${controller.isArabic(controller.getBackText()) ? 'rtl' : 'ltr'}">
-    ${controller.getBackText().replaceAll('\n', '<br>')}
-  </div>
-  ''',
-                                  textStyle: TextStyle(
-                                    fontSize:
-                                        controller.getBackSize() * textScale,
-                                    color: AppColor.textPrimary,
-                                  ),
-                                ),
-                              ],
-                              if (controller.getCommentText().isNotEmpty) ...[
-                                const SizedBox(height: 14),
-                                Divider(
-                                  height: 0,
-                                  thickness: 1,
-                                  color: Colors.black.withOpacity(0.08),
-                                ),
-                                const SizedBox(height: 14),
-                                HtmlWidget(
-                                  '''
-  <div style="text-align:${controller.getCommentAlign()};" dir="${controller.isArabic(controller.getCommentText()) ? 'rtl' : 'ltr'}">
-    ${controller.getCommentText().replaceAll('\n', '<br>')}
-  </div>
-  ''',
-                                  textStyle: TextStyle(
-                                    fontSize:
-                                        controller.getCommentSize() * textScale,
-                                    color: AppColor.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                              ],
-                            ],
-                          ] else ...[
-                            HtmlWidget(
-                              '''
-  <div style="text-align:${controller.getFrontAlign()};" dir="${controller.isArabic(controller.getFrontText()) ? 'rtl' : 'ltr'}">
-    ${controller.getFrontText().replaceAll('\n', '<br>')}
-  </div>
-  ''',
-                              textStyle: TextStyle(
-                                fontSize: controller.getFrontSize() * textScale,
-                                color: AppColor.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            if (controller
-                                .cards[index].frontImageUrl.isNotEmpty)
-                              AspectRatio(
-                                aspectRatio: 4 / 3,
-                                child: AppImage(
-                                  image: controller.cards[index].frontImageUrl,
-                                  radius: 16,
-                                ),
-                              ),
-                            if (controller.showAnswer) ...[
-                              const SizedBox(height: 14),
-                              Divider(
-                                height: 0,
-                                thickness: 1,
-                                color: Colors.black.withOpacity(0.08),
-                              ),
-                              const SizedBox(height: 14),
-                              HtmlWidget(
-                                '''
-  <div style="text-align:${controller.getBackAlign()};" dir="${controller.isArabic(controller.getBackText()) ? 'rtl' : 'ltr'}">
-    ${controller.getBackText().replaceAll('\n', '<br>')}
-  </div>
-  ''',
-                                textStyle: TextStyle(
-                                  fontSize: controller.getBackSize() * textScale,
-                                  color: AppColor.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              if (controller
-                                  .cards[index].backImageUrl.isNotEmpty)
-                                AspectRatio(
-                                  aspectRatio: 4 / 3,
-                                  child: AppImage(
-                                    image: controller.cards[index].backImageUrl,
-                                    radius: 16,
-                                  ),
-                                ),
-                            ],
-                          ],
-                          if (controller
-                              .cards[index].documentTitle.isNotEmpty) ...[
-                            const SizedBox(height: 14),
-                            InkWell(
-                              onTap: () async {
-                                if (await isFileValid(controller
-                                    .cards[index].documentUrl)) {
-                                  final dir =
-                                  await getApplicationDocumentsDirectory();
-                                  final fileName = controller
-                                      .cards[index].documentUrl
-                                      .split("/")
-                                      .last;
-                                  final filePath =
-                                      "${dir.path}/$fileName";
-                                  OpenFilex.open(filePath);
-                                } else {
-                                  Get.dialog(DownloadDialog(
-                                      file: "${Api.imageUrl}/${controller
-                                          .cards[index].documentUrl}"));
-                                }
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: AppColor.surfaceColor,
-                                  borderRadius: BorderRadius.circular(14),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: AppStrings.attachedFile,
-                                        style: TextStyle(
-                                          color: AppColor.textSecondary,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: controller.cards[index].documentTitle,
-                                        style: const TextStyle(
-                                          color: AppColor.greenColor,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                          ],
-                          const Divider(
-                            height: 0,
-                            color: Colors.transparent,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                itemCount: controller.cards.length,
-                onPageChanged: controller.onChangePageViewIndex,
-                physics: const NeverScrollableScrollPhysics(),
-                controller: controller.pageController,
-              ),
-            ),
-          ),
-          bottomNavigationBar: Obx(
-            () {
-              if (controller.isView) {
-                return InkWell(
-                  onTap: controller.toggleAnswer,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: AppColor.greenColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        topRight: Radius.circular(24),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          controller.showAnswer ? AppStrings.hideAnswer : AppStrings.showAnswer,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              } else {
-                if (controller.showAnswer) {
-                  return Container(
-                    decoration: const BoxDecoration(
-                      color: AppColor.scaffoldBackgroundColor,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (controller.cards[controller.pageViewIndex].type ==
-                            "OCCLUSION") ...[
-                          const SizedBox(height: 10),
-                          InkWell(
-                            onTap: controller.changeToggleMask,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColor.greenColor,
-                                  width: 1.2,
-                                ),
-                                color: AppColor.surfaceColor,
-                              ),
-                              child: Text(
-                                AppStrings.toggleMask,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColor.greenColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                                maxWidth: isTablet ? _tabletContentWidth : width),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(14, 14, 14, 18),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Expanded(
-                                    child: _GradeButton(
-                                      label: AppStrings.again,
-                                      color: const Color(0xFFE4574C),
-                                      textColor: Colors.white,
-                                      onTap: () => controller
-                                          .onTapOnStatusButton("AGAIN"),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _GradeButton(
-                                      label: AppStrings.hard,
-                                      color: const Color(0xFFE8A33D),
-                                      textColor: Colors.white,
-                                      onTap: () => controller
-                                          .onTapOnStatusButton("HARD"),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _GradeButton(
-                                      label: AppStrings.good,
-                                      color: AppColor.greenColor,
-                                      textColor: Colors.white,
-                                      onTap: () => controller
-                                          .onTapOnStatusButton("GOOD"),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _GradeButton(
-                                      label: AppStrings.easy,
-                                      color: AppColor.lightGreenColor,
-                                      textColor: AppColor.textPrimary,
-                                      onTap: () => controller
-                                          .onTapOnStatusButton("EASY"),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  return InkWell(
-                    onTap: controller.toggleAnswer,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: AppColor.greenColor,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          topRight: Radius.circular(24),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            controller.showAnswer
-                                ? AppStrings.hideAnswer
-                                : AppStrings.showAnswer,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-        ),
-      ],
-    );
+  void _recordAnswer(String answer, CardEntity card) {
+    if (answer == "GOOD" || answer == "EASY") {
+      sessionCorrect += 1;
+    } else if (answer == "AGAIN" || answer == "HARD") {
+      sessionWrong += 1;
+      if (!sessionMistakes.any((c) => c.id == card.id)) {
+        sessionMistakes.add(card);
+      }
+    }
   }
-}
 
-/// A thin line under the top bar showing how far through the session you
-/// are, with "3 / 12" and how many cards are left.
-class _StudyProgress extends StatelessWidget {
-  final CardViewController controller;
-  final double sidePadding;
-  const _StudyProgress({required this.controller, required this.sidePadding});
-
-  @override
-  Widget build(BuildContext context) {
-    final pc = controller.pageController;
-    return AnimatedBuilder(
-      // Rebuilds whenever the pager moves to another card.
-      animation: pc,
-      builder: (context, _) {
-        final total = controller.cards.length;
-        if (total == 0) return const SizedBox.shrink();
-
-        int index = controller.pageViewIndex;
-        if (pc.hasClients) {
-          final page = pc.page;
-          if (page != null) index = page.round();
-        }
-        index = math.max(0, math.min(index, total - 1));
-        final left = total - index - 1;
-
-        return Padding(
-          padding: EdgeInsets.fromLTRB(sidePadding, 0, sidePadding, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: index / total,
-                    minHeight: 7,
-                    backgroundColor: AppColor.lightGreenColor,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColor.greenColor),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '${index + 1} / $total',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColor.textPrimary,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                left == 0 ? AppStrings.lastCard : AppStrings.remaining(left),
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColor.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        );
+  void _goToSessionResult() {
+    NotificationService.instance.markStudiedToday();
+    Get.offNamed(
+      AppRoutes.sessionResultRoute,
+      arguments: {
+        'correct': sessionCorrect,
+        'wrong': sessionWrong,
+        'minutes': DateTime.now().difference(_sessionStart).inMinutes,
+        'mistakes': sessionMistakes,
+        'isView': isView,
       },
     );
   }
-}
 
-class _GradeButton extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color textColor;
-  final VoidCallback onTap;
-
-  const _GradeButton({
-    required this.label,
-    required this.color,
-    required this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  /// Submits one card's answer and folds its effects into the running
+  /// session state. Never navigates — callers decide when the session ends.
+  /// Safe to call without awaiting for any card except the session's last
+  /// one, where the caller MUST await this before flushing/navigating so
+  /// that card's mosaic pieces (if any) are never lost to the navigation
+  /// race described below.
+  Future<void> _submitAnswer(String answer, CardEntity card) async {
+    final result = await ApiController.answerCard(cardID: card.id, answer: answer);
+    if (result != null) showCelebration(result);
+    if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
+      _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
+    }
+    if (Get.isRegistered<CardController>()) {
+      Get.find<CardController>().getCard();
+    }
+    Get.find<YearsController>().getAllDeck();
+    if (Get.isRegistered<ProgressController>()) {
+      Get.find<ProgressController>().loadQuests();
+    }
   }
-}
 
-class ShapesWidget extends StatefulWidget {
-  final ShapeCreatorShapesEntity item;
-  final void Function()? onTap;
+  /// Moves every mosaic piece accumulated this session into ONE daily
+  /// reward batch (only if any were actually earned), then navigates to the
+  /// session result screen, which is where that single ceremony is shown.
+  /// This is called ONLY after the final card's _submitAnswer has already
+  /// been awaited, so it can never fire before that card's pieces (if any)
+  /// have been collected — that ordering is what actually prevents the
+  /// race, rather than any timing/delay workaround.
+  void _finishSession() {
+    if (_sessionFinished) return;
+    _sessionFinished = true;
+    if (_sessionMosaicPieces.isNotEmpty) {
+      final total = sessionCorrect + sessionWrong;
+      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
+      (Get.isRegistered<MosaicController>()
+              ? Get.find<MosaicController>()
+              : Get.put(MosaicController()))
+          .queueDailyReward(
+        List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
+        cardsStudied: total,
+        accuracyPercent: accuracy,
+      );
+      _sessionMosaicPieces.clear();
+    }
+    _goToSessionResult();
+  }
 
-  /// Width the positions/sizes are measured against. Defaults to the
-  /// screen width (as before); the card viewer passes the width of its
-  /// content column on tablets.
-  final double? areaWidth;
+  final Rx<ShapeCreatorEntity> _data = ShapeCreatorModel().toDomain().obs;
+  late PageController pageController;
 
-  const ShapesWidget({
-    super.key,
-    required this.item,
-    this.onTap,
-    this.areaWidth,
-  });
+  final RxBool _showAnswer = false.obs;
+  final RxBool _toggleMask = false.obs;
+  final RxInt _currentIndex = 0.obs;
+  final RxInt _pageViewIndex = 0.obs;
+  final RxList<CardEntity> _cards = <CardEntity>[].obs;
 
-  @override
-  State<ShapesWidget> createState() => _ShapesWidgetState();
-}
+  bool get showAnswer => _showAnswer.value;
 
-class _ShapesWidgetState extends State<ShapesWidget> {
-  @override
-  Widget build(BuildContext context) {
-    final width = widget.areaWidth ?? MediaQuery.sizeOf(context).width;
-    final height = MediaQuery.sizeOf(context).height;
+  bool get toggleMask => _toggleMask.value;
 
-    final color = widget.item.type == "Rectangle"
-        ? Colors.blue
-        : widget.item.type == "Circle"
-            ? Colors.red
-            : Colors.greenAccent;
+  int get currentIndex => _currentIndex.value;
 
-    return PositionedDirectional(
-      start: widget.item.position.x * width,
-      top: widget.item.position.y * height,
-      child: InkWell(
-        highlightColor: Colors.transparent,
-        splashColor: Colors.transparent,
-        onTap: widget.onTap,
-        child: AnimatedOpacity(
+  int get pageViewIndex => _pageViewIndex.value;
+
+  List<CardEntity> get cards => _cards;
+
+  ShapeCreatorEntity get data => _data.value;
+
+  set showAnswer(value) => _showAnswer.value = value;
+
+  set toggleMask(value) => _toggleMask.value = value;
+
+  set currentIndex(value) => _currentIndex.value = value;
+
+  set data(ShapeCreatorEntity value) => _data.value = value;
+
+  set cards(List<CardEntity> value) => _cards.value = value;
+
+  set pageViewIndex(value) => _pageViewIndex.value = value;
+
+  toggleAnswer() {
+    showAnswer = !showAnswer;
+    if (cards[pageViewIndex].type == "OCCLUSION" && isView) {
+      changeToggleMask();
+    }
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      onTapOnShowAnswer();
+    }
+  }
+
+  changeToggleMask() {
+    toggleMask = !toggleMask;
+
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      for (var element in data.shapes) {
+        element.isShow = !toggleMask;
+      }
+
+      _data.refresh();
+    }
+  }
+
+  getData() {
+    try {
+      return jsonDecode(cards[pageViewIndex].data);
+    } catch (_) {
+      // Corrupt/legacy data must not crash the card (same fix as getOCCData).
+      return {};
+    }
+  }
+
+  String getFrontText() {
+    if (getData()['front'] != null && getData()['front']['text'] != null) {
+      String text = getData()['front']['text'].toString();
+
+      if (cards[pageViewIndex].type == "BASIC" ||
+          cards[pageViewIndex].type == "OCCLUSION") {
+        return text;
+      }
+
+      RegExp regex = RegExp(r"\{(.*?)\}");
+      return text.replaceAllMapped(regex, (match) {
+        String insideText = match.group(1) ?? "";
+
+        if (showAnswer) {
+          String color =
+              AppColor.greenColor.value.toRadixString(16).substring(2);
+          return '<span style="color: #$color;">$insideText</span>';
+        } else {
+          return "{....}";
+        }
+      });
+    }
+    return '';
+  }
+
+  double getFrontSize() {
+    if (getData()['front'] != null && getData()['front']['size'] != null) {
+      return (getData()['front']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getFrontAlign() {
+    if (getData()['front'] != null && getData()['front']['align'] != null) {
+      return getData()['front']['align'] == "center"
+          ? 'center'
+          : getData()['front']['align'] == "start"
+              ? 'left'
+              : 'right';
+    }
+    return 'center';
+  }
+
+  String getBackText() {
+    if (getData()['back'] != null && getData()['back']['text'] != null) {
+      return getData()['back']['text'];
+    }
+    return '';
+  }
+
+  double getBackSize() {
+    if (getData()['back'] != null && getData()['back']['size'] != null) {
+      return (getData()['back']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getBackAlign() {
+    if (getData()['back'] != null && getData()['back']['align'] != null) {
+      return getData()['back']['align'] == "center"
+          ? "center"
+          : getData()['back']['align'] == "start"
+              ? "left"
+              : "right";
+    }
+    return "center";
+  }
+
+  String getCommentText() {
+    if (getData()['comment'] != null && getData()['comment']['text'] != null) {
+      return getData()['comment']['text'];
+    }
+    return '';
+  }
+
+  double getCommentSize() {
+    if (getData()['comment'] != null && getData()['comment']['size'] != null) {
+      return (getData()['comment']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getCommentAlign() {
+    if (getData()['comment'] != null && getData()['comment']['align'] != null) {
+      return getData()['comment']['align'] == "center"
+          ? "center"
+          : getData()['comment']['align'] == "start"
+              ? "left"
+              : "right";
+    }
+    return "center";
+  }
+
+  getOCCData({bool resetIndex = true}) {
+    if (resetIndex) currentIndex = 0;
+    try {
+      final shapes = getData()['shapes'];
+      if (shapes != null) {
+        data = ShapeCreatorModel.fromJson(jsonDecode(shapes)).toDomain();
+      } else {
+        data = ShapeCreatorModel().toDomain();
+      }
+    } catch (_) {
+      // Corrupt/legacy data (e.g. missing image) must not freeze the card.
+      data = ShapeCreatorModel().toDomain();
+    }
+  }
+
+  onTapOnStatusButton(String answer) async {
+    _recordAnswer(answer, cards[pageViewIndex]);
+    Get.find<YearsController>().rememberSubjectForDeck(cards[pageViewIndex].deckId);
+    final answeredCard = cards[pageViewIndex];
+
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      if(answer == "AGAIN") {
+        showAnswer = false;
+        getOCCData(resetIndex: false);
+        return;
+      }
+      for (var element in data.shapes) {
+        element.isShow = true;
+      }
+      if (currentIndex < data.shapes.length - 1) {
+        showAnswer = false;
+        currentIndex += 1;
+        unawaited(_submitAnswer(answer, answeredCard));
+      } else {
+        if (pageViewIndex < cards.length - 1) {
+          showAnswer = false;
+          await pageController.animateToPage(
+            pageViewIndex + 1,
+            curve: Curves.linear,
+            duration: const Duration(milliseconds: 300),
+          );
+          getOCCData();
+
+          _cards.refresh();
+          unawaited(_submitAnswer(answer, answeredCard));
+        } else {
+          // Last card of the session: this answer's mosaic pieces (if any)
+          // must be collected BEFORE we flush and navigate, or they'd be
+          // lost to the exact race this restructuring exists to prevent.
+          await _submitAnswer(answer, answeredCard);
+          _finishSession();
+        }
+      }
+    } else {
+      if(answer == "AGAIN") {
+        showAnswer = false;
+        return;
+      }
+      if (pageViewIndex < cards.length - 1) {
+        showAnswer = false;
+        await pageController.animateToPage(
+          pageViewIndex + 1,
+          curve: Curves.linear,
           duration: const Duration(milliseconds: 300),
-          opacity: widget.item.isShow ? 1 : 0,
-          child: Container(
-            width: widget.item.width * width,
-            height: widget.item.height * height,
-            decoration: BoxDecoration(
-              color: color,
-              shape: widget.item.type == "Circle"
-                  ? BoxShape.circle
-                  : BoxShape.rectangle,
-              border: Border.all(
-                color: color,
-                width: 1.5,
-              ),
-            ),
-            child: widget.item.type == "TextBox"
-                ? TextFormField(
-                    expands: false,
-                    readOnly: true,
-                    enabled: false,
-                    style: const TextStyle(
-                      color: Colors.black,
-                    ),
-                    onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                    controller: TextEditingController(text: widget.item.text),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      filled: true,
-                      fillColor: color,
-                    ),
-                  )
-                : null,
-          ),
-        ),
-      ),
-    );
+        );
+        if (cards[pageViewIndex].type == "OCCLUSION") {
+          getOCCData();
+        }
+        unawaited(_submitAnswer(answer, answeredCard));
+      } else {
+        // Same reasoning as above: await the final answer before finishing.
+        await _submitAnswer(answer, answeredCard);
+        _finishSession();
+      }
+    }
+  }
+
+  bool isArabic(String text) {
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+    return arabicRegex.hasMatch(text);
+  }
+
+  onTapOnShape(index) {
+    data.shapes[index].isShow = !data.shapes[index].isShow;
+    _data.refresh();
+  }
+
+  onTapOnShowAnswer() {
+    if (currentIndex < 0 || currentIndex >= data.shapes.length) return;
+    data.shapes[currentIndex].isShow = false;
+    _data.refresh();
+  }
+
+  onChangePageViewIndex(value) {
+    pageViewIndex = value;
+  }
+
+  @override
+  void onInit() {
+    final List<CardEntity> arg = Get.arguments['cards'];
+    for (var element in arg) {
+      cards.add(element);
+    }
+    isView = Get.arguments['isView'];
+    pageViewIndex = Get.arguments['initalIndex'];
+    pageController = PageController(initialPage: pageViewIndex);
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      getOCCData();
+    }
+
+    super.onInit();
   }
 }
