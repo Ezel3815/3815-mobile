@@ -97,6 +97,7 @@ class CardViewController extends GetxController {
   /// have been collected — that ordering is what actually prevents the
   /// race, rather than any timing/delay workaround.
   void _finishSession() {
+    MosaicController.diag = 'finishSession ran: pieces=${_sessionMosaicPieces.length}';
     debugPrint('[MOSAIC-DIAG] _finishSession START pieces=${_sessionMosaicPieces.length} ids=${_sessionMosaicPieces.map((p) => p.pieceId).toList()} alreadyFinished=$_sessionFinished');
     if (_sessionFinished) return;
     _sessionFinished = true;
