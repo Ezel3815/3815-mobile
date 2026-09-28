@@ -64,6 +64,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
         : Get.put(MosaicController());
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
     debugPrint('[MOSAIC-DIAG] daily batch found=${index != -1} queueSize=${mosaic.rewardQueue.length}');
+    Future.delayed(const Duration(milliseconds: 400), () => Get.snackbar('DIAG', '${MosaicController.diag} | batchFound=${index != -1}', duration: const Duration(seconds: 6)));
     if (index == -1) return; // No pieces earned this session — no ceremony.
     final batch = mosaic.rewardQueue.removeAt(index);
     Future.delayed(const Duration(milliseconds: 900), () {
