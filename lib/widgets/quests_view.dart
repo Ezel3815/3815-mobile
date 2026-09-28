@@ -8,11 +8,6 @@ import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/app_image.dart';
 import 'package:upgrade/widgets/app_snack_bar.dart';
 
-const List<String> _months = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-];
-
 const Color _trackLight = Color(0xFFE6EBD8);
 const Color _cardBorder = Color(0xFFDDE4CC);
 
@@ -47,7 +42,9 @@ Future<void> _claim(ProgressController c, String id) async {
   }
 }
 
-/// Duolingo-style "Quests" page: monthly quest, friends quest, daily quests.
+/// Duolingo-style "Quests" page: friends quest, daily quests.
+/// (The monthly quest card was replaced by the Garden by the Sea mosaic hero
+/// at the top of the Progress screen.)
 class QuestsBody extends StatelessWidget {
   final ProgressController controller;
   const QuestsBody({super.key, required this.controller});
@@ -70,8 +67,6 @@ class QuestsBody extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MonthlyCard(q: q, controller: controller),
-          const SizedBox(height: 26),
           _SectionHeader(title: 'تحدي الأصدقاء', hours: q.friendsHoursLeft),
           const SizedBox(height: 12),
           _FriendsCard(q: q, controller: controller),
@@ -153,240 +148,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ───────────────────────── Monthly quest ─────────────────────────
-
-class _MonthlyCard extends StatelessWidget {
-  final QuestsData q;
-  final ProgressController controller;
-  const _MonthlyCard({required this.q, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final monthName = _months[(q.month - 1).clamp(0, 11).toInt()];
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColor.greenColor, Color(0xFF2F7A57)],
-        ),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        monthName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColor.greenColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'تحدي الشهر',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.schedule_rounded,
-                            size: 16, color: Colors.white.withOpacity(0.75)),
-                        const SizedBox(width: 5),
-                        Text(
-                          'باقي ${q.daysLeft} ${q.daysLeft == 1 ? 'يوم' : 'أيام'}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white.withOpacity(0.75),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                ),
-                child: const Icon(Icons.emoji_events_rounded,
-                    size: 50, color: Color(0xFFFFD25A)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-            decoration: BoxDecoration(
-              color: AppColor.darkGreenColor,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'اجمع ${q.monthTarget} نقطة',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${q.monthPoints} / ${q.monthTarget}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColor.freshGreenColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _MonthlyBar(q: q, controller: controller),
-                const SizedBox(height: 10),
-                Text(
-                  'كل بطاقة تراجعها هذا الشهر = نقطة',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: Colors.white.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MonthlyBar extends StatelessWidget {
-  final QuestsData q;
-  final ProgressController controller;
-  const _MonthlyBar({required this.q, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    const node = 36.0;
-    return LayoutBuilder(builder: (context, c) {
-      final w = c.maxWidth;
-      final frac = (q.monthPoints / q.monthTarget).clamp(0.0, 1.0).toDouble();
-      return SizedBox(
-        height: node,
-        child: Stack(
-          alignment: AlignmentDirectional.centerStart,
-          children: [
-            Container(
-              height: 20,
-              decoration: BoxDecoration(
-                color: AppColor.forestGreenColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            if (frac > 0)
-              FractionallySizedBox(
-                alignment: AlignmentDirectional.centerStart,
-                widthFactor: frac,
-                child: const SizedBox(
-                  height: 20,
-                  child: _BarFill(color: AppColor.freshGreenColor),
-                ),
-              ),
-            for (final chest in q.monthChests)
-              PositionedDirectional(
-                start: (chest.at / q.monthTarget).clamp(0.0, 1.0).toDouble() *
-                    (w - node),
-                top: 0,
-                child: _MilestoneNode(
-                  chest: chest,
-                  size: node,
-                  controller: controller,
-                ),
-              ),
-          ],
-        ),
-      );
-    });
-  }
-}
-
-class _MilestoneNode extends StatelessWidget {
-  final QuestChest chest;
-  final double size;
-  final ProgressController controller;
-  const _MilestoneNode(
-      {required this.chest, required this.size, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    Widget inner;
-    Color bg;
-    if (chest.claimed) {
-      bg = AppColor.greenColor;
-      inner = const Icon(Icons.check_rounded, size: 20, color: Colors.white);
-    } else if (chest.reached) {
-      bg = const Color(0xFFFFD25A);
-      inner = _Chest(tier: 'gold', size: 22);
-    } else {
-      bg = AppColor.forestGreenColor;
-      inner = Icon(Icons.lock_rounded,
-          size: 16, color: Colors.white.withOpacity(0.5));
-    }
-    return GestureDetector(
-      onTap: chest.claimable ? () => _claim(controller, chest.id) : null,
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: bg,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColor.darkGreenColor, width: 3),
-          boxShadow: chest.claimable
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFFFD25A).withOpacity(0.7),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
-        ),
-        child: inner,
-      ),
     );
   }
 }
