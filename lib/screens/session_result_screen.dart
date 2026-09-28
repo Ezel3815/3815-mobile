@@ -58,14 +58,17 @@ class _SessionResultScreenState extends State<SessionResultScreen>
   }
 
   void _showDailyRewardIfEarned() {
+    debugPrint('[MOSAIC-DIAG] _showDailyRewardIfEarned ENTERED');
     final mosaic = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
+    debugPrint('[MOSAIC-DIAG] daily batch found=${index != -1} queueSize=${mosaic.rewardQueue.length}');
     if (index == -1) return; // No pieces earned this session — no ceremony.
     final batch = mosaic.rewardQueue.removeAt(index);
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
+      debugPrint('[MOSAIC-DIAG] NAVIGATING to RewardFlowScreen.daily pieces=${batch.pieces.length}');
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => RewardFlowScreen.daily(batch: batch)),
       );
