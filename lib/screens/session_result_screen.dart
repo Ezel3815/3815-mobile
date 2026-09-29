@@ -54,15 +54,27 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     // navigates here — so by the time this screen exists, the batch (if
     // any) is already present. No polling needed; the short delay below is
     // purely cosmetic pacing, letting the confetti/entrance play first.
+    // The final answer now completes in the background, so the batch may
+    // arrive after this screen opens: check now AND listen until it shows.
     _showDailyRewardIfEarned();
+    final mosaic = Get.isRegistered<MosaicController>()
+        ? Get.find<MosaicController>()
+        : Get.put(MosaicController());
+    _rewardWorker = ever(mosaic.rewardQueue, (_) => _showDailyRewardIfEarned());
   }
 
+  Worker? _rewardWorker;
+  bool _rewardShown = false;
+
   void _showDailyRewardIfEarned() {
+    if (_rewardShown) return;
     final mosaic = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
-    if (index == -1) return; // No pieces earned this session — no ceremony.
+    if (index == -1) return; // No pieces (yet) — no ceremony.
+    _rewardShown = true;
+    _rewardWorker?.dispose();
     final batch = mosaic.rewardQueue.removeAt(index);
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
@@ -74,6 +86,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
 
   @override
   void dispose() {
+    _rewardWorker?.dispose();
     _entrance.dispose();
     _confettiController.dispose();
     super.dispose();
