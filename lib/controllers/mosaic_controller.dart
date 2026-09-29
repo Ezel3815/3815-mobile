@@ -9,9 +9,6 @@ import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 /// (the server ledger), never invented client-side — that's what keeps a
 /// second device or a reinstalled app showing the same painting.
 class MosaicController extends GetxController {
-  /// TEMPORARY: last session-end diagnostic, shown as a snackbar on the result screen.
-  static String diag = 'finishSession never ran';
-
   final state = Rxn<MosaicState>();
   final geometry = Rxn<MosaicArtworkGeometry>();
   final loading = true.obs;
@@ -58,7 +55,34 @@ class MosaicController extends GetxController {
   Future<void> refresh() async {
     loading.value = true;
     state.value = await ApiController.getMosaic();
+    _recoverUnrevealedPieces();
     loading.value = false;
+  }
+
+  /// Picks up any server-owned piece that is unrevealed AND not already
+  /// sitting in rewardQueue, and queues it — grouped by source, so a
+  /// leftover chest piece can never surface as a daily reward. This is what
+  /// makes a piece recoverable after the app was closed mid-ceremony, an
+  /// old build missed it, or anything else left it unrevealed, without ever
+  /// re-queuing a piece that's already queued or mid-animation.
+  void _recoverUnrevealedPieces() {
+    final s = state.value;
+    if (s == null) return;
+    final alreadyQueued = rewardQueue.expand((b) => b.pieces).map((p) => p.pieceId).toSet();
+    final orphaned = s.pieces.where((p) => !p.revealed && !alreadyQueued.contains(p.pieceId));
+
+    final daily = <MosaicAwardedPiece>[];
+    final chest = <MosaicAwardedPiece>[];
+    for (final p in orphaned) {
+      final piece = MosaicAwardedPiece(pieceId: p.pieceId, slot: p.slot, kind: p.kind);
+      (p.kind == 'CHEST' ? chest : daily).add(piece);
+    }
+    if (daily.isNotEmpty) {
+      rewardQueue.add(PendingRewardBatch(source: RewardSource.daily, pieces: daily));
+    }
+    if (chest.isNotEmpty) {
+      rewardQueue.add(PendingRewardBatch(source: RewardSource.chest, pieces: chest));
+    }
   }
 
   /// Called once, when a study session actually ends, with every mosaic
