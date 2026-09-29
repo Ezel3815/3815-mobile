@@ -21,12 +21,18 @@ Future<void> openChapter(DeckEntity chapter) async {
     barrierDismissible: false,
     barrierColor: Colors.black12,
   );
-  List<CardEntity> cards = [];
+  List<CardEntity>? fetched;
   try {
-    cards = await ApiController.getCards(chapter.id);
+    fetched = await ApiController.fetchCards(chapter.id);
   } finally {
     if (Get.isDialogOpen == true) Get.back();
   }
+  if (fetched == null) {
+    // Request failed: report the real reason, not "no cards in this lesson".
+    showSnackBarWidget(message: ApiController.lastCardsError ?? 'خطأ في الاتصال');
+    return;
+  }
+  final cards = fetched;
   if (cards.isEmpty) {
     showSnackBarWidget(message: "لا توجد بطاقات في هذا الدرس");
     return;
