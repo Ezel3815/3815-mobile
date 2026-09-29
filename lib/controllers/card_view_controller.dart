@@ -97,23 +97,26 @@ class CardViewController extends GetxController {
   /// have been collected — that ordering is what actually prevents the
   /// race, rather than any timing/delay workaround.
   void _finishSession() {
-    MosaicController.diag = 'finishSession ran: pieces=${_sessionMosaicPieces.length}';
-    debugPrint('[MOSAIC-DIAG] _finishSession START pieces=${_sessionMosaicPieces.length} ids=${_sessionMosaicPieces.map((p) => p.pieceId).toList()} alreadyFinished=$_sessionFinished');
     if (_sessionFinished) return;
     _sessionFinished = true;
+    final mosaic = Get.isRegistered<MosaicController>()
+        ? Get.find<MosaicController>()
+        : Get.put(MosaicController());
     if (_sessionMosaicPieces.isNotEmpty) {
       final total = sessionCorrect + sessionWrong;
       final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
-      (Get.isRegistered<MosaicController>()
-              ? Get.find<MosaicController>()
-              : Get.put(MosaicController()))
-          .queueDailyReward(
+      mosaic.queueDailyReward(
         List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
         cardsStudied: total,
         accuracyPercent: accuracy,
       );
-      debugPrint('[MOSAIC-DIAG] daily batch QUEUED');
       _sessionMosaicPieces.clear();
+    } else {
+      // No new pieces this session, but still refresh: this is also what
+      // recovers any older unrevealed piece left over from a previous
+      // interrupted ceremony (see MosaicController.refresh()). Skipped in
+      // the branch above only because queueDailyReward() already refreshes.
+      mosaic.refresh();
     }
     _goToSessionResult();
   }
