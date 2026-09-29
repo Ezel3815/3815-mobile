@@ -33,6 +33,7 @@ class _MosaicScreenState extends State<MosaicScreen> {
     _c = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
+    _c.refresh();
     WidgetsBinding.instance.addPostFrameCallback((_) => _resumeAnyPendingBatch());
   }
 
