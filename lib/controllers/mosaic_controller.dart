@@ -52,11 +52,29 @@ class MosaicController extends GetxController {
     await refresh();
   }
 
+  bool _refreshing = false;
+
+  /// Secondary/background read. Never throws, never blocks the caller's
+  /// flow, and never replaces valid existing state with null: a failed or
+  /// timed-out GET simply keeps what we already have and retries on the
+  /// next refresh.
   Future<void> refresh() async {
-    loading.value = true;
-    state.value = await ApiController.getMosaic();
-    _recoverUnrevealedPieces();
-    loading.value = false;
+    if (_refreshing) return;
+    _refreshing = true;
+    // Only show the loading state while there is nothing valid to show.
+    if (state.value == null) loading.value = true;
+    try {
+      final fresh = await ApiController.getMosaic();
+      if (fresh != null) {
+        state.value = fresh;
+        _recoverUnrevealedPieces();
+      }
+    } catch (_) {
+      // Keep the existing state; recovery retries on the next refresh.
+    } finally {
+      _refreshing = false;
+      loading.value = false;
+    }
   }
 
   /// Picks up any server-owned piece that is unrevealed AND not already
