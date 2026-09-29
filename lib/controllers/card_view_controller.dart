@@ -80,12 +80,18 @@ class CardViewController extends GetxController {
     if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
       _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
     }
+    // Background refreshes: fire-and-forget, silent on failure, and unable
+    // to throw into (or destabilise) the study/session-result flow.
     if (Get.isRegistered<CardController>()) {
-      Get.find<CardController>().getCard();
+      unawaited(Get.find<CardController>().getCard(background: true).catchError((_) {}));
     }
-    Get.find<YearsController>().getAllDeck();
+    if (Get.isRegistered<YearsController>()) {
+      unawaited(Get.find<YearsController>()
+          .getAllDeck(keepExistingOnEmpty: true)
+          .catchError((_) {}));
+    }
     if (Get.isRegistered<ProgressController>()) {
-      Get.find<ProgressController>().loadQuests();
+      unawaited(Get.find<ProgressController>().loadQuests().catchError((_) {}));
     }
   }
 
@@ -111,13 +117,10 @@ class CardViewController extends GetxController {
         accuracyPercent: accuracy,
       );
       _sessionMosaicPieces.clear();
-    } else {
-      // No new pieces this session, but still refresh: this is also what
-      // recovers any older unrevealed piece left over from a previous
-      // interrupted ceremony (see MosaicController.refresh()). Skipped in
-      // the branch above only because queueDailyReward() already refreshes.
-      mosaic.refresh();
     }
+    // No extra mosaic refresh here: recovery of older unrevealed pieces
+    // happens when Progress/Mosaic open, and must never sit on the study
+    // completion path.
     _goToSessionResult();
   }
 
