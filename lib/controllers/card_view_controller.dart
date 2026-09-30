@@ -10,6 +10,7 @@ import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/entity/mosaic_entity.dart';
+import 'package:upgrade/controllers/session_rewards.dart';
 import 'package:upgrade/entity/shape_creator_entity.dart';
 import 'package:upgrade/extension.dart';
 import 'package:upgrade/main.dart';
@@ -35,12 +36,9 @@ class CardViewController extends GetxController {
   /// crossed), so a single session's reward can arrive across several
   /// answerCard() responses; the ceremony must represent the whole session
   /// as one moment, not each individual crossing.
-  final List<MosaicAwardedPiece> _sessionMosaicPieces = [];
-
-  /// Authoritative streak from the server, set only when THIS session's answer
-  /// was the one that saved today's streak. Feeds the standalone Streak window;
-  /// it never touches the mosaic pieces/queue above.
-  int? _sessionStreak;
+  /// Everything the server awarded this session (streak + mosaic pieces),
+  /// handed to the result screen, which reads it once the answers settle.
+  final SessionRewards _rewards = SessionRewards();
 
   /// Set the first time _finishSession() runs, so a rapid double-tap on the
   /// last card can't queue the reward or navigate twice. Lives on this
@@ -61,6 +59,7 @@ class CardViewController extends GetxController {
 
   void _goToSessionResult() {
     NotificationService.instance.markStudiedToday();
+    _rewards.settled = _answerChain;
     Get.offNamed(
       AppRoutes.sessionResultRoute,
       arguments: {
@@ -69,7 +68,7 @@ class CardViewController extends GetxController {
         'minutes': DateTime.now().difference(_sessionStart).inMinutes,
         'mistakes': sessionMistakes,
         'isView': isView,
-        'streak': _sessionStreak,
+        'rewards': _rewards,
       },
     );
   }
@@ -97,10 +96,10 @@ class CardViewController extends GetxController {
           await ApiController.answerCard(cardID: card.id, answer: answer);
       if (result != null) showCelebration(result);
       if (result != null && result.streakSaved && result.newStreak != null) {
-        _sessionStreak = result.newStreak;
+        _rewards.streak = result.newStreak;
       }
       if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
-        _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
+        _rewards.pieces.addAll(result!.mosaic!.newPieces);
       }
     } catch (_) {
       // Never let an answer failure break the study flow.
@@ -120,37 +119,16 @@ class CardViewController extends GetxController {
     }
   }
 
-  /// Waits for the last answer (so its mosaic pieces are collected) but never
-  /// longer than a few seconds: the Session Complete screen must open even if
-  /// the server is slow. Pieces that arrive late are queued when they land.
+  /// Waits briefly for the last answer, never longer than a few seconds, so
+  /// the Session Complete screen opens promptly even on a slow server. Anything
+  /// still in flight is picked up by the result screen via SessionRewards.settled.
   Future<void> _awaitFinalAnswer(String answer, CardEntity card) async {
-    final pending = _submitAnswer(answer, card);
-    var timedOut = false;
-    await pending.timeout(const Duration(seconds: 3), onTimeout: () {
-      timedOut = true;
-    });
-    if (timedOut) {
-      unawaited(pending.then((_) {
-        if (_sessionMosaicPieces.isEmpty) return;
-        final mosaic = Get.isRegistered<MosaicController>()
-            ? Get.find<MosaicController>()
-            : Get.put(MosaicController());
-        final total = sessionCorrect + sessionWrong;
-        final accuracy =
-            total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
-        mosaic.queueDailyReward(
-          List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
-          cardsStudied: total,
-          accuracyPercent: accuracy,
-        );
-        _sessionMosaicPieces.clear();
-      }));
-    }
+    await _submitAnswer(answer, card)
+        .timeout(const Duration(seconds: 3), onTimeout: () {});
   }
 
-  /// Moves every mosaic piece accumulated this session into ONE daily
-  /// reward batch (only if any were actually earned), then navigates to the
-  /// session result screen, which is where that single ceremony is shown.
+  /// Navigates to the session result screen, which builds the ONE daily
+  /// reward batch from SessionRewards once the answers have settled.
   /// This is called ONLY after the final card's _submitAnswer has already
   /// been awaited, so it can never fire before that card's pieces (if any)
   /// have been collected — that ordering is what actually prevents the
@@ -158,19 +136,6 @@ class CardViewController extends GetxController {
   void _finishSession() {
     if (_sessionFinished) return;
     _sessionFinished = true;
-    if (_sessionMosaicPieces.isNotEmpty) {
-      final mosaic = Get.isRegistered<MosaicController>()
-          ? Get.find<MosaicController>()
-          : Get.put(MosaicController());
-      final total = sessionCorrect + sessionWrong;
-      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
-      mosaic.queueDailyReward(
-        List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
-        cardsStudied: total,
-        accuracyPercent: accuracy,
-      );
-      _sessionMosaicPieces.clear();
-    }
     _goToSessionResult();
     _refreshAfterSession();
   }
