@@ -9,6 +9,7 @@ import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
+import 'package:upgrade/widgets/streak/streak_reward_screen.dart';
 
 /// Shown after finishing every card in a study session. Reads its data
 /// straight from the arguments CardViewController passes when the last
@@ -54,39 +55,38 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     // navigates here — so by the time this screen exists, the batch (if
     // any) is already present. No polling needed; the short delay below is
     // purely cosmetic pacing, letting the confetti/entrance play first.
-    // The final answer now completes in the background, so the batch may
-    // arrive after this screen opens: check now AND listen until it shows.
-    _showDailyRewardIfEarned();
-    final mosaic = Get.isRegistered<MosaicController>()
-        ? Get.find<MosaicController>()
-        : Get.put(MosaicController());
-    _rewardWorker = ever(mosaic.rewardQueue, (_) => _showDailyRewardIfEarned());
+    _runRewardSequence();
   }
 
-  Worker? _rewardWorker;
-  bool _rewardShown = false;
+  /// 1) mosaic ceremony (unchanged: same queue, same batch removal), THEN
+  /// 2) the standalone streak window, only if this session saved the streak.
+  Future<void> _runRewardSequence() async {
+    final args = Get.arguments;
+    final int? streak =
+        (args is Map && args['streak'] is int) ? args['streak'] as int : null;
 
-  void _showDailyRewardIfEarned() {
-    if (_rewardShown) return;
     final mosaic = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
-    if (index == -1) return; // No pieces (yet) — no ceremony.
-    _rewardShown = true;
-    _rewardWorker?.dispose();
-    final batch = mosaic.rewardQueue.removeAt(index);
-    Future.delayed(const Duration(milliseconds: 900), () {
+    if (index != -1) {
+      final batch = mosaic.rewardQueue.removeAt(index);
+      await Future.delayed(const Duration(milliseconds: 900));
       if (!mounted) return;
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => RewardFlowScreen.daily(batch: batch)),
       );
-    });
+    }
+
+    if (streak != null && streak > 0) {
+      if (index == -1) await Future.delayed(const Duration(milliseconds: 1100));
+      if (!mounted) return;
+      await StreakRewardScreen.show(context, streak: streak);
+    }
   }
 
   @override
   void dispose() {
-    _rewardWorker?.dispose();
     _entrance.dispose();
     _confettiController.dispose();
     super.dispose();
