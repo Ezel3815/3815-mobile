@@ -80,39 +80,32 @@ class CardViewController extends GetxController {
     if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
       _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
     }
-    // Background refreshes: fire-and-forget, silent on failure, and unable
-    // to throw into (or destabilise) the study/session-result flow.
+    // Background refreshes: none of these may throw into the study flow.
     if (Get.isRegistered<CardController>()) {
-      unawaited(Get.find<CardController>().getCard(background: true).catchError((_) {}));
+      Get.find<CardController>().getCard().catchError((_) {});
     }
-    if (Get.isRegistered<YearsController>()) {
-      unawaited(Get.find<YearsController>()
-          .getAllDeck(keepExistingOnEmpty: true)
-          .catchError((_) {}));
-    }
+    Get.find<YearsController>().getAllDeck().catchError((_) {});
     if (Get.isRegistered<ProgressController>()) {
-      unawaited(Get.find<ProgressController>().loadQuests().catchError((_) {}));
+      Get.find<ProgressController>().loadQuests().catchError((_) {});
     }
   }
 
-  /// Ends the session: opens the result screen IMMEDIATELY, then waits for
-  /// the final card's answer in the background. Once it lands, every mosaic
-  /// piece collected this session goes into ONE daily reward batch, which
-  /// the (already open) result screen picks up. A slow or failed final
-  /// request therefore can never delay or block the completion screen.
-  Future<void> _finishSession(Future<void> lastSubmit) async {
+  /// Moves every mosaic piece accumulated this session into ONE daily
+  /// reward batch (only if any were actually earned), then navigates to the
+  /// session result screen, which is where that single ceremony is shown.
+  /// This is called ONLY after the final card's _submitAnswer has already
+  /// been awaited, so it can never fire before that card's pieces (if any)
+  /// have been collected — that ordering is what actually prevents the
+  /// race, rather than any timing/delay workaround.
+  void _finishSession() {
     if (_sessionFinished) return;
     _sessionFinished = true;
-    final mosaic = Get.isRegistered<MosaicController>()
-        ? Get.find<MosaicController>()
-        : Get.put(MosaicController());
-    final total = sessionCorrect + sessionWrong;
-    final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
-    _goToSessionResult();
-    try {
-      await lastSubmit;
-    } catch (_) {}
     if (_sessionMosaicPieces.isNotEmpty) {
+      final mosaic = Get.isRegistered<MosaicController>()
+          ? Get.find<MosaicController>()
+          : Get.put(MosaicController());
+      final total = sessionCorrect + sessionWrong;
+      final accuracy = total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
       mosaic.queueDailyReward(
         List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
         cardsStudied: total,
@@ -120,6 +113,7 @@ class CardViewController extends GetxController {
       );
       _sessionMosaicPieces.clear();
     }
+    _goToSessionResult();
   }
 
   final Rx<ShapeCreatorEntity> _data = ShapeCreatorModel().toDomain().obs;
@@ -325,9 +319,11 @@ class CardViewController extends GetxController {
           _cards.refresh();
           unawaited(_submitAnswer(answer, answeredCard));
         } else {
-          // Last card: open the result screen now; the answer (and any
-          // mosaic pieces it earns) completes in the background.
-          unawaited(_finishSession(_submitAnswer(answer, answeredCard)));
+          // Last card of the session: this answer's mosaic pieces (if any)
+          // must be collected BEFORE we flush and navigate, or they'd be
+          // lost to the exact race this restructuring exists to prevent.
+          await _submitAnswer(answer, answeredCard);
+          _finishSession();
         }
       }
     } else {
@@ -347,8 +343,9 @@ class CardViewController extends GetxController {
         }
         unawaited(_submitAnswer(answer, answeredCard));
       } else {
-        // Last card: open the result screen now (see _finishSession).
-        unawaited(_finishSession(_submitAnswer(answer, answeredCard)));
+        // Same reasoning as above: await the final answer before finishing.
+        await _submitAnswer(answer, answeredCard);
+        _finishSession();
       }
     }
   }
