@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/main.dart';
+import 'package:upgrade/controllers/api_controller.dart';
+import 'package:upgrade/models/user_model.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
@@ -89,7 +92,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       );
       rewards.pieces.clear();
     }
-    final streak = rewards?.streak;
+    final streak = await _streakToShow(rewards?.streak);
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
     if (index != -1) {
       final batch = mosaic.rewardQueue.removeAt(index);
@@ -104,6 +107,42 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       if (index == -1) await Future.delayed(const Duration(milliseconds: 1100));
       if (!mounted) return;
       await StreakRewardScreen.show(context, streak: streak);
+    }
+  }
+
+  /// Set to true to force the streak window after EVERY session (testing).
+  static const bool _alwaysShowStreakWindow = false;
+
+  /// Decides the streak number to show, or null for no window.
+  /// 1) The server says it saved today's streak -> trust it.
+  /// 2) Otherwise (already saved earlier today, or the flag was missed) show
+  ///    the window ONCE per day using the profile's current streak, so the
+  ///    first finished session of the day always gets its window.
+  Future<int?> _streakToShow(int? serverStreak) async {
+    const key = 'streak_window_shown_day';
+    final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+    debugPrint('STREAK server=$serverStreak shownDay=${sharedPref.getString(key)}');
+    if (serverStreak != null && serverStreak > 0) {
+      await sharedPref.setString(key, today);
+      return serverStreak;
+    }
+    if (!_alwaysShowStreakWindow && sharedPref.getString(key) == today) {
+      return null;
+    }
+    try {
+      final userJson = sharedPref.getString('user');
+      if (userJson == null) return null;
+      final id = UserModel.fromJson(jsonDecode(userJson)).id;
+      if (id == null) return null;
+      final p = await ApiController.getProfile(id);
+      final s = p?.currentStreak ?? 0;
+      debugPrint('STREAK fallback profile=$s');
+      await sharedPref.setString(key, today);
+      // The user just finished a session, so the streak is at least 1.
+      return s > 0 ? s : 1;
+    } catch (e) {
+      debugPrint('STREAK fallback error: $e');
+      return null;
     }
   }
 
