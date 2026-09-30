@@ -94,13 +94,19 @@ class CardViewController extends GetxController {
     try {
       final result =
           await ApiController.answerCard(cardID: card.id, answer: answer);
-      if (result != null) showCelebration(result);
-      if (result != null && result.streakSaved && result.newStreak != null) {
+      if (result == null) return;
+
+      // Store rewards FIRST so nothing below can lose them.
+      if (result.streakSaved && result.newStreak != null) {
         _rewards.streak = result.newStreak;
       }
-      if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
-        _rewards.pieces.addAll(result!.mosaic!.newPieces);
+      if (result.mosaic?.newPieces.isNotEmpty ?? false) {
+        _rewards.pieces.addAll(result.mosaic!.newPieces);
       }
+
+      try {
+        showCelebration(result);
+      } catch (_) {}
     } catch (_) {
       // Never let an answer failure break the study flow.
     }
