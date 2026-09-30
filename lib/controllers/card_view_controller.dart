@@ -37,6 +37,11 @@ class CardViewController extends GetxController {
   /// as one moment, not each individual crossing.
   final List<MosaicAwardedPiece> _sessionMosaicPieces = [];
 
+  /// Authoritative streak from the server, set only when THIS session's answer
+  /// was the one that saved today's streak. Feeds the standalone Streak window;
+  /// it never touches the mosaic pieces/queue above.
+  int? _sessionStreak;
+
   /// Set the first time _finishSession() runs, so a rapid double-tap on the
   /// last card can't queue the reward or navigate twice. Lives on this
   /// controller instance, so a new study session (a new controller) starts
@@ -64,6 +69,7 @@ class CardViewController extends GetxController {
         'minutes': DateTime.now().difference(_sessionStart).inMinutes,
         'mistakes': sessionMistakes,
         'isView': isView,
+        'streak': _sessionStreak,
       },
     );
   }
@@ -90,6 +96,9 @@ class CardViewController extends GetxController {
       final result =
           await ApiController.answerCard(cardID: card.id, answer: answer);
       if (result != null) showCelebration(result);
+      if (result != null && result.streakSaved && result.newStreak != null) {
+        _sessionStreak = result.newStreak;
+      }
       if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
         _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
       }
