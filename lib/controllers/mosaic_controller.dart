@@ -53,24 +53,38 @@ class MosaicController extends GetxController {
   }
 
   bool _refreshing = false;
+  bool _refreshQueued = false;
 
-  /// Secondary/background read. Never throws, never blocks the caller's
-  /// flow, and never replaces valid existing state with null: a failed or
-  /// timed-out GET simply keeps what we already have and retries on the
-  /// next refresh.
+  /// Piece ids already put in rewardQueue during this app run. A batch is
+  /// removed from rewardQueue the moment its ceremony starts, so without this
+  /// a refresh mid-animation would see the piece as "orphaned" and queue it
+  /// a second time.
+  final Set<int> _queuedPieceIds = <int>{};
+
+  /// Secondary/background: never throws, never clears good state. A failed
+  /// request keeps whatever state we already had. Overlapping calls don't run
+  /// in parallel; one follow-up pass is queued so a call made right after a
+  /// reward/chest change is not lost.
   Future<void> refresh() async {
-    if (_refreshing) return;
+    if (_refreshing) {
+      _refreshQueued = true;
+      return;
+    }
     _refreshing = true;
-    // Only show the loading state while there is nothing valid to show.
-    if (state.value == null) loading.value = true;
     try {
-      final fresh = await ApiController.getMosaic();
-      if (fresh != null) {
-        state.value = fresh;
-        _recoverUnrevealedPieces();
-      }
-    } catch (_) {
-      // Keep the existing state; recovery retries on the next refresh.
+      do {
+        _refreshQueued = false;
+        if (state.value == null) loading.value = true;
+        try {
+          final s = await ApiController.getMosaic();
+          if (s != null) {
+            state.value = s;
+            _recoverUnrevealedPieces();
+          }
+        } catch (_) {
+          // Keep existing state; retry on the next refresh.
+        }
+      } while (_refreshQueued);
     } finally {
       _refreshing = false;
       loading.value = false;
@@ -86,7 +100,10 @@ class MosaicController extends GetxController {
   void _recoverUnrevealedPieces() {
     final s = state.value;
     if (s == null) return;
-    final alreadyQueued = rewardQueue.expand((b) => b.pieces).map((p) => p.pieceId).toSet();
+    final alreadyQueued = <int>{
+      ...rewardQueue.expand((b) => b.pieces).map((p) => p.pieceId),
+      ..._queuedPieceIds,
+    };
     final orphaned = s.pieces.where((p) => !p.revealed && !alreadyQueued.contains(p.pieceId));
 
     final daily = <MosaicAwardedPiece>[];
@@ -96,9 +113,11 @@ class MosaicController extends GetxController {
       (p.kind == 'CHEST' ? chest : daily).add(piece);
     }
     if (daily.isNotEmpty) {
+      _queuedPieceIds.addAll(daily.map((p) => p.pieceId));
       rewardQueue.add(PendingRewardBatch(source: RewardSource.daily, pieces: daily));
     }
     if (chest.isNotEmpty) {
+      _queuedPieceIds.addAll(chest.map((p) => p.pieceId));
       rewardQueue.add(PendingRewardBatch(source: RewardSource.chest, pieces: chest));
     }
   }
@@ -109,6 +128,7 @@ class MosaicController extends GetxController {
   /// Complete" moment — it must never be called mid-session per answer.
   void queueDailyReward(List<MosaicAwardedPiece> pieces, {int? cardsStudied, int? accuracyPercent}) {
     if (pieces.isEmpty) return;
+    _queuedPieceIds.addAll(pieces.map((p) => p.pieceId));
     rewardQueue.add(PendingRewardBatch(
       source: RewardSource.daily,
       pieces: pieces,
@@ -124,6 +144,7 @@ class MosaicController extends GetxController {
   Future<void> openChest(String id) async {
     final award = await ApiController.claimMosaicChest(id);
     if (award != null && award.newPieces.isNotEmpty) {
+      _queuedPieceIds.addAll(award.newPieces.map((p) => p.pieceId));
       rewardQueue.add(PendingRewardBatch(source: RewardSource.chest, pieces: award.newPieces));
     }
     refresh();
