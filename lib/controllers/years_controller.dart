@@ -84,9 +84,7 @@ class YearsController extends GetxController {
     }
   }
 
-  /// [keepExistingOnEmpty]: used by background refreshes so a failed request
-  /// (which the API layer reports as an empty list) can't wipe the tree.
-  Future<void> getAllDeck({bool keepExistingOnEmpty = false}) async {
+  Future<void> getAllDeck() async {
     // Only show the full-screen spinner on the very first load.
     // On refreshes, keep showing the existing decks while new data loads.
     final isFirstLoad = decks.isEmpty;
@@ -97,12 +95,11 @@ class YearsController extends GetxController {
       ApiController.getMyDecks(),
     ]);
 
-    final all = [...results[0], ...results[1]];
-    if (keepExistingOnEmpty && all.isEmpty && decks.isNotEmpty) {
-      loading = false;
-      return;
+    // A failed request returns [] — don't let that wipe decks already shown.
+    final failed = ApiController.lastDecksFailed || ApiController.lastMyDecksFailed;
+    if (!(failed && decks.isNotEmpty)) {
+      decks.assignAll([...results[0], ...results[1]]);
     }
-    decks.assignAll(all);
     loading = false;
   }
 
