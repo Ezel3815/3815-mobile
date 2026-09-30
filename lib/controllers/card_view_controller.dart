@@ -74,19 +74,68 @@ class CardViewController extends GetxController {
   /// one, where the caller MUST await this before flushing/navigating so
   /// that card's mosaic pieces (if any) are never lost to the navigation
   /// race described below.
-  Future<void> _submitAnswer(String answer, CardEntity card) async {
-    final result = await ApiController.answerCard(cardID: card.id, answer: answer);
-    if (result != null) showCelebration(result);
-    if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
-      _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
+  Future<void> _submitAnswer(String answer, CardEntity card) {
+    // One answer request at a time: concurrent answers starve the small DB
+    // pool and race the server's once-a-day streak update (which is what
+    // produced the "Streak saved!" spam and the slow finish).
+    final next = _answerChain.then((_) => _sendAnswer(answer, card));
+    _answerChain = next.catchError((_) {});
+    return next;
+  }
+
+  Future<void> _answerChain = Future<void>.value();
+
+  Future<void> _sendAnswer(String answer, CardEntity card) async {
+    try {
+      final result =
+          await ApiController.answerCard(cardID: card.id, answer: answer);
+      if (result != null) showCelebration(result);
+      if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
+        _sessionMosaicPieces.addAll(result!.mosaic!.newPieces);
+      }
+    } catch (_) {
+      // Never let an answer failure break the study flow.
     }
-    // Background refreshes: none of these may throw into the study flow.
+  }
+
+  /// Once per session (not once per card): refresh the lists that changed.
+  void _refreshAfterSession() {
     if (Get.isRegistered<CardController>()) {
       Get.find<CardController>().getCard().catchError((_) {});
     }
-    Get.find<YearsController>().getAllDeck().catchError((_) {});
+    if (Get.isRegistered<YearsController>()) {
+      Get.find<YearsController>().getAllDeck().catchError((_) {});
+    }
     if (Get.isRegistered<ProgressController>()) {
       Get.find<ProgressController>().loadQuests().catchError((_) {});
+    }
+  }
+
+  /// Waits for the last answer (so its mosaic pieces are collected) but never
+  /// longer than a few seconds: the Session Complete screen must open even if
+  /// the server is slow. Pieces that arrive late are queued when they land.
+  Future<void> _awaitFinalAnswer(String answer, CardEntity card) async {
+    final pending = _submitAnswer(answer, card);
+    var timedOut = false;
+    await pending.timeout(const Duration(seconds: 3), onTimeout: () {
+      timedOut = true;
+    });
+    if (timedOut) {
+      unawaited(pending.then((_) {
+        if (_sessionMosaicPieces.isEmpty) return;
+        final mosaic = Get.isRegistered<MosaicController>()
+            ? Get.find<MosaicController>()
+            : Get.put(MosaicController());
+        final total = sessionCorrect + sessionWrong;
+        final accuracy =
+            total == 0 ? 0 : ((sessionCorrect / total) * 100).round();
+        mosaic.queueDailyReward(
+          List<MosaicAwardedPiece>.from(_sessionMosaicPieces),
+          cardsStudied: total,
+          accuracyPercent: accuracy,
+        );
+        _sessionMosaicPieces.clear();
+      }));
     }
   }
 
@@ -114,6 +163,7 @@ class CardViewController extends GetxController {
       _sessionMosaicPieces.clear();
     }
     _goToSessionResult();
+    _refreshAfterSession();
   }
 
   final Rx<ShapeCreatorEntity> _data = ShapeCreatorModel().toDomain().obs;
@@ -322,7 +372,7 @@ class CardViewController extends GetxController {
           // Last card of the session: this answer's mosaic pieces (if any)
           // must be collected BEFORE we flush and navigate, or they'd be
           // lost to the exact race this restructuring exists to prevent.
-          await _submitAnswer(answer, answeredCard);
+          await _awaitFinalAnswer(answer, answeredCard);
           _finishSession();
         }
       }
@@ -344,7 +394,7 @@ class CardViewController extends GetxController {
         unawaited(_submitAnswer(answer, answeredCard));
       } else {
         // Same reasoning as above: await the final answer before finishing.
-        await _submitAnswer(answer, answeredCard);
+        await _awaitFinalAnswer(answer, answeredCard);
         _finishSession();
       }
     }
