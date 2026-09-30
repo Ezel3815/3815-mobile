@@ -99,6 +99,7 @@ flutter:
     - lib/assests/images/Mozaik_Expanded_Subject_Icon_Assets/subjects/
     - lib/assests/images/Mozaik_Second_Image_Assets/icons/
     - lib/assests/svgs/
+    - lib/assests/streak/
     - lib/assests/mosaic/garden-by-the-sea/
     - lib/assests/mosaic/garden-by-the-sea/pieces/
 
