@@ -6,8 +6,6 @@ import 'package:upgrade/resources.dart';
 /// Fires right after a card is answered, using exactly what the backend
 /// says actually happened (level up, streak saved, achievement
 /// unlocked) — never guessed or simulated client-side.
-int? _lastStreakShown;
-
 void showCelebration(AnswerResult result) {
   if (!result.hasCelebration) return;
 
@@ -15,26 +13,8 @@ void showCelebration(AnswerResult result) {
     Get.dialog(_CelebrationDialog(result: result), barrierDismissible: true);
     return;
   }
-
-  if (result.streakSaved && result.newStreak != null) {
-    // Once per streak value, however many answers report it.
-    if (_lastStreakShown == result.newStreak) return;
-    _lastStreakShown = result.newStreak;
-    Get.snackbar(
-      "Streak saved!",
-      "${result.newStreak} day streak — keep it going",
-      backgroundColor: AppColor.darkGreenColor,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(14),
-      borderRadius: 14,
-      duration: const Duration(seconds: 2),
-      icon: const Padding(
-        padding: EdgeInsets.only(left: 8),
-        child: Icon(Icons.local_fire_department_rounded, color: Colors.white),
-      ),
-    );
-  }
+  // Streak is no longer a snackbar: it has its own standalone window
+  // (StreakRewardScreen), opened from the session result screen.
 }
 
 class _CelebrationDialog extends StatelessWidget {
