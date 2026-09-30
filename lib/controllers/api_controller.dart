@@ -397,7 +397,13 @@ class ApiController {
     return null;
   }
 
+  /// True when the last getDecks()/getMyDecks() call failed, so callers can
+  /// tell a failed request apart from a genuinely empty list.
+  static bool lastDecksFailed = false;
+  static bool lastMyDecksFailed = false;
+
   static Future<List<DeckEntity>> getDecks() async {
+    lastDecksFailed = false;
     if (await _networkInfo.isConnected) {
       try {
         final response = await dio.get(
@@ -423,11 +429,13 @@ class ApiController {
 
           return data;
         } else {
+          lastDecksFailed = true;
           showSnackBarWidget(message: response.data['message'] ?? "");
         }
 
         return [];
       } catch (e) {
+        lastDecksFailed = true;
         if(ErrorHandler.handle(e).failure.code != -6) {
         showSnackBarWidget(
             message: ErrorHandler.handle(e).failure.message ?? "");
@@ -445,10 +453,12 @@ class ApiController {
         //         DataSource.noInternetConnection.getFailure().message ?? "");
       }
     }
+    lastDecksFailed = true; // offline and nothing cached
     return [];
   }
 
   static Future<List<DeckEntity>> getMyDecks() async {
+    lastMyDecksFailed = false;
     if (await _networkInfo.isConnected) {
       try {
         final response = await dio.get(
@@ -472,11 +482,13 @@ class ApiController {
           await _appLocalDataSource.setMyDeckEntityToLocal(data);
           return data;
         } else {
+          lastMyDecksFailed = true;
           showSnackBarWidget(message: response.data['message'] ?? "");
         }
 
         return [];
       } catch (e) {
+        lastMyDecksFailed = true;
         if(ErrorHandler.handle(e).failure.code != -6) {
         showSnackBarWidget(
             message: ErrorHandler.handle(e).failure.message ?? "");
@@ -494,6 +506,7 @@ class ApiController {
         //         DataSource.noInternetConnection.getFailure().message ?? "");
       }
     }
+    lastMyDecksFailed = true; // offline and nothing cached
     return [];
   }
 
