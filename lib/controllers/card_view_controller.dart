@@ -95,6 +95,7 @@ class CardViewController extends GetxController {
       final result =
           await ApiController.answerCard(cardID: card.id, answer: answer);
       if (result == null) return;
+      debugPrint('ANSWER streakSaved=${result.streakSaved} newStreak=${result.newStreak}');
 
       // Store rewards FIRST so nothing below can lose them.
       if (result.streakSaved && result.newStreak != null) {
