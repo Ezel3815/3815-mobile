@@ -7,6 +7,7 @@ import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
+import 'package:upgrade/controllers/session_rewards.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
 import 'package:upgrade/widgets/streak/streak_reward_screen.dart';
@@ -62,12 +63,33 @@ class _SessionResultScreenState extends State<SessionResultScreen>
   /// 2) the standalone streak window, only if this session saved the streak.
   Future<void> _runRewardSequence() async {
     final args = Get.arguments;
-    final int? streak =
-        (args is Map && args['streak'] is int) ? args['streak'] as int : null;
+    final SessionRewards? rewards =
+        (args is Map && args['rewards'] is SessionRewards)
+            ? args['rewards'] as SessionRewards
+            : null;
+    final int correct = (args is Map ? args['correct'] : null) ?? 0;
+    final int wrong = (args is Map ? args['wrong'] : null) ?? 0;
+
+    // The window is already on screen; wait (in the background) for the last
+    // answer so a slow server can never lose the streak or the mosaic pieces.
+    if (rewards != null) {
+      await rewards.settled.timeout(const Duration(seconds: 30), onTimeout: () {});
+      if (!mounted) return;
+    }
 
     final mosaic = Get.isRegistered<MosaicController>()
         ? Get.find<MosaicController>()
         : Get.put(MosaicController());
+    if (rewards != null && rewards.pieces.isNotEmpty) {
+      final total = correct + wrong;
+      mosaic.queueDailyReward(
+        List.of(rewards.pieces),
+        cardsStudied: total,
+        accuracyPercent: total == 0 ? 0 : ((correct / total) * 100).round(),
+      );
+      rewards.pieces.clear();
+    }
+    final streak = rewards?.streak;
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
     if (index != -1) {
       final batch = mosaic.rewardQueue.removeAt(index);
