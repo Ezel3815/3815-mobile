@@ -6,6 +6,8 @@ import 'package:upgrade/resources.dart';
 /// Fires right after a card is answered, using exactly what the backend
 /// says actually happened (level up, streak saved, achievement
 /// unlocked) — never guessed or simulated client-side.
+int? _lastStreakShown;
+
 void showCelebration(AnswerResult result) {
   if (!result.hasCelebration) return;
 
@@ -15,6 +17,9 @@ void showCelebration(AnswerResult result) {
   }
 
   if (result.streakSaved && result.newStreak != null) {
+    // Once per streak value, however many answers report it.
+    if (_lastStreakShown == result.newStreak) return;
+    _lastStreakShown = result.newStreak;
     Get.snackbar(
       "Streak saved!",
       "${result.newStreak} day streak — keep it going",
