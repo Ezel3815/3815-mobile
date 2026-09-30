@@ -30,48 +30,82 @@ class CardController extends GetxController {
   set loadingEdit(value) => _loadingEdit.value = value;
   set cards(List<CardEntity> value) => _cards.value = value;
 
-  int _loadSeq = 0;
+  bool _fetching = false;
+  bool _fetchQueued = false;
 
-  /// Loads this deck's cards. A successful response with zero cards is a
-  /// legitimate empty state; a FAILED request (timeout etc.) is not — it
-  /// leaves the existing cards untouched instead of wiping them.
-  /// [background] refreshes (after a study answer) never show a spinner or
-  /// an error snackbar.
-  Future<void> getCard({bool background = false}) async {
-    final seq = ++_loadSeq;
-    if (!background && cards.isEmpty) loading = true;
-    try {
-      final data = await ApiController.fetchCards(deck.id);
-      // A newer load started meanwhile — let it win.
-      if (seq != _loadSeq) return;
-      // fetchCards() falls back to the local cache on failure and records
-      // the reason in lastCardsError. A failed request must never replace
-      // cards we already have.
-      final failed = data == null || ApiController.lastCardsError != null;
-      if (failed && cards.isNotEmpty) return;
-      if (data == null) {
-        if (!background) {
-          showSnackBarWidget(
-              message: ApiController.lastCardsError ?? 'خطأ في الاتصال');
-        }
-        return;
-      }
-      List<CardEntity> pick(bool Function(String? first) test) =>
-          data.where((element) {
-            final answer =
-                element.answers?.map((e) => e.toDomain()).toList() ?? [];
-            return test(answer.isEmpty ? null : answer.first.answer);
-          }).toList();
-
-      final easyCard = pick((a) => a == "EASY" || a == "GOOD");
-      final againCard = pick((a) => a == "AGAIN");
-      final hardCard = pick((a) => a == "HARD");
-      final emptyCard = pick((a) => a == null || a == "NONE");
-      // Build the full list first, then swap it in once — never clear first.
-      cards = [...emptyCard, ...hardCard, ...againCard, ...easyCard];
-    } finally {
-      if (seq == _loadSeq) loading = false;
+  Future<void> getCard() async {
+    if (_fetching) {
+      _fetchQueued = true;
+      return;
     }
+    _fetching = true;
+    try {
+      do {
+        _fetchQueued = false;
+        await _loadCards();
+      } while (_fetchQueued);
+    } finally {
+      _fetching = false;
+    }
+  }
+
+  Future<void> _loadCards() async {
+    final hadCards = cards.isNotEmpty;
+    if (!hadCards) loading = true;
+    // null = the request FAILED (not "deck has no cards").
+    final data = await ApiController.fetchCards(deck.id);
+    final error = ApiController.lastCardsError;
+    if (error != null && !hadCards) showSnackBarWidget(message: error);
+    // Failed request (or failed-with-nothing-cached): never turn it into an
+    // empty list, and never wipe cards that are already showing.
+    if (data == null || (error != null && hadCards)) {
+      loading = false;
+      return;
+    }
+    cards.clear();
+    final easyCard = data.where((element) {
+      final answer = element.answers?.map((e) => e.toDomain()).toList() ?? [];
+      if (answer.isNotEmpty) {
+        if (answer.first.answer == "EASY" || answer.first.answer == "GOOD") {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+    final againCard = data.where((element) {
+      final answer = element.answers?.map((e) => e.toDomain()).toList() ?? [];
+      if (answer.isNotEmpty) {
+        if (answer.first.answer == "AGAIN") {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+    final hardCard = data.where((element) {
+      final answer = element.answers?.map((e) => e.toDomain()).toList() ?? [];
+      if (answer.isNotEmpty) {
+        if (answer.first.answer == "HARD") {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+    final emptyCard = data.where((element) {
+      final answer = element.answers?.map((e) => e.toDomain()).toList() ?? [];
+      if (answer.isNotEmpty) {
+        if (answer.first.answer == "NONE") {
+          return true;
+        }
+      } else {
+        return true;
+      }
+      return false;
+    }).toList();
+    cards.addAll(emptyCard);
+    cards.addAll(hardCard);
+    cards.addAll(againCard);
+    cards.addAll(easyCard);
+    loading = false;
   }
 
   editDeck() async {
