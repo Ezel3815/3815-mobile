@@ -108,7 +108,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     // granted that the answer response did not carry (slow/failed response)
     // is recovered and queued HERE, instead of waiting for an app restart.
     try {
-      await mosaic.refresh().timeout(const Duration(seconds: 12));
+      await mosaic.refresh(sync: true).timeout(const Duration(seconds: 15));
     } catch (_) {}
     final streak = await _streakToShow(rewards, correct + wrong);
     await countUp; // never open a reward window over a half-counted result
