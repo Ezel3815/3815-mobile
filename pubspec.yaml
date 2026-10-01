@@ -84,6 +84,18 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
 
+  # Generates every launcher icon size from ONE image (run by codemagic.yaml).
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "tool/brand/mozaik_app_icon_1024.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#F8F8ED"
+  adaptive_icon_foreground: "tool/brand/mozaik_icon_foreground.png"
+  adaptive_icon_monochrome: "tool/brand/mozaik_icon_mono.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -100,6 +112,7 @@ flutter:
     - lib/assests/images/Mozaik_Second_Image_Assets/icons/
     - lib/assests/svgs/
     - lib/assests/streak/
+    - lib/assests/brand/
     - lib/assests/mosaic/garden-by-the-sea/
     - lib/assests/mosaic/garden-by-the-sea/pieces/
 
