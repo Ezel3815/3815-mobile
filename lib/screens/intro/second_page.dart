@@ -1,58 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:upgrade/resources.dart';
 import 'package:upgrade/screens/intro/onboarding_widgets.dart';
 
-class FirstPage extends StatelessWidget {
-  const FirstPage({super.key});
+class SecondPage extends StatelessWidget {
+  const SecondPage({super.key});
 
-  Widget _piece(String n, double left, double top, double size) => Positioned(
-        left: left,
-        top: top,
-        width: size,
-        height: size,
-        child: Image.asset('lib/assests/onboarding/piece_$n.png',
-            fit: BoxFit.contain),
-      );
+  static const _timeline = [
+    ("اليوم", 1.0),
+    ("بعد 4 أيام", 0.6),
+    ("بعد أسبوعين", 0.28),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final chevron = Icon(
+      rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+      size: 20,
+      color: AppColor.textSecondary.withOpacity(0.45),
+    );
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
           children: [
-            const SizedBox(height: 56),
-            const ObTitle("تعلّم قطعة،\nوابنِ الصورة."),
-            const SizedBox(height: 14),
-            const ObBody("حوّل المعلومات المتفرقة إلى\nمعرفة راسخة."),
+            const SizedBox(height: 48),
+            const ObTitle("ما الذي يُسبب\nفرط نشاط الغدة الدرقية؟", size: 25),
             Expanded(
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: 330,
-                    height: 240,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        _piece('01', 0, 0, 112),
-                        _piece('02', 118, -4, 112),
-                        _piece('03', 0, 112, 112),
-                        const Positioned(
-                            left: 124,
-                            top: 118,
-                            width: 94,
-                            height: 94,
-                            child: DashedSlot()),
-                        _piece('04', 216, 112, 108),
-                        const Positioned.fill(child: CurvedArrow()),
-                      ],
-                    ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: Image.asset(
+                    "lib/assests/onboarding/flashcard_stack.png",
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 130),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < _timeline.length; i++) ...[
+                  if (i > 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: chevron,
+                    ),
+                  Column(
+                    children: [
+                      Opacity(
+                        opacity: _timeline[i].$2,
+                        child: Image.asset(
+                          "lib/assests/brand/mozaik_emblem.png",
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _timeline[i].$1,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColor.textSecondary.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 22),
+            const ObTitle("بطاقاتك تتذكّرك معك.", size: 22),
+            const SizedBox(height: 10),
+            const ObBody(
+                "يُعيد MOZAIK عرض القطع المناسبة\nفي الوقت المناسب، عندما تكون أكثر\nاحتمالاً للنسيان."),
+            const SizedBox(height: 120),
           ],
         ),
       ),
