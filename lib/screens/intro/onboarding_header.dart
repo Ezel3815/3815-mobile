@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 
 class OnboardingHeader extends StatelessWidget {
   const OnboardingHeader({super.key});
@@ -9,18 +8,19 @@ class OnboardingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const MozaikMarkIcon(color: AppColor.greenColor, size: 44),
-        const SizedBox(height: 8),
-        const Text(
-          "MOZAIK",
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 3,
-            color: AppColor.darkGreenColor,
-          ),
+        // New Mozaik hexagon identity (raster brand assets; aspect ratio kept).
+        Image.asset(
+          'lib/assests/brand/mozaik_hexagon.png',
+          height: 76,
+          fit: BoxFit.contain,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
+        Image.asset(
+          'lib/assests/brand/mozaik_wordmark.png',
+          height: 22,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 8),
         Text(
           "قطعة تلو الأخرى، تتكامل الصورة.",
           style: TextStyle(
