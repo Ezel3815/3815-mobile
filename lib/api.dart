@@ -5,6 +5,7 @@ class Api {
   static const String achievements = '$baseUrl/users/me/achievements';
   static const String quests = '$baseUrl/users/me/quests';
   static const String mosaic = '$baseUrl/users/me/mosaic';
+  static const String mosaicSync = '$baseUrl/users/me/mosaic/sync';
   static const String mosaicReveal = '$baseUrl/users/me/mosaic/reveal';
   static const String updateTimezone = '$baseUrl/users/me/timezone';
   static const String questFriends = '$baseUrl/users/me/quests/friends';
