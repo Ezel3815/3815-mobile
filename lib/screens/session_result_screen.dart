@@ -104,6 +104,12 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       );
       rewards.pieces.clear();
     }
+    // Re-read the mosaic from the server (one request): any piece the server
+    // granted that the answer response did not carry (slow/failed response)
+    // is recovered and queued HERE, instead of waiting for an app restart.
+    try {
+      await mosaic.refresh().timeout(const Duration(seconds: 12));
+    } catch (_) {}
     final streak = await _streakToShow(rewards, correct + wrong);
     await countUp; // never open a reward window over a half-counted result
     if (!mounted) return;
