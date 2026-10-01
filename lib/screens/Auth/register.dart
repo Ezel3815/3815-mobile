@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:upgrade/app_validation.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -175,10 +174,10 @@ class _RegisterState extends State<Register> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Center(
-                              child: MozaikMarkIcon(
-                                color: AppColor.greenColor,
-                                size: 68,
+                            Center(
+                              child: Image.asset(
+                                'lib/assests/brand/mozaik_emblem.png',
+                                height: 78,
                               ),
                             ),
                             const SizedBox(height: 14),
