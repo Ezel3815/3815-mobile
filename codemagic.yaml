@@ -7,6 +7,8 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
+      - name: Generate app icons from the single brand image
+        script: dart run flutter_launcher_icons
       - name: Analyze
         script: flutter analyze
       - name: Unit tests
