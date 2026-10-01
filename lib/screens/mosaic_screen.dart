@@ -134,24 +134,59 @@ class _TodayProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget step(String label, bool done) => Row(
-          children: [
-            Icon(
+    // Each task says exactly what to do and shows live progress (server data).
+    Widget step(String label, String hint, MosaicStep st) {
+      final done = st.done;
+      final showCount = st.target > 0;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
               done ? Icons.check_circle : Icons.circle_outlined,
               size: 18,
               color: done ? AppColor.greenColor : AppColor.textSecondary,
             ),
-            const SizedBox(width: 8),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: done ? AppColor.textPrimary : AppColor.textSecondary,
+                    fontWeight: done ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hint,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showCount)
             Text(
-              label,
+              '${st.progress.clamp(0, st.target)} / ${st.target}',
               style: TextStyle(
-                fontSize: 14,
-                color: done ? AppColor.textPrimary : AppColor.textSecondary,
-                fontWeight: done ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: done ? AppColor.greenColor : AppColor.textSecondary,
               ),
             ),
-          ],
-        );
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -176,11 +211,32 @@ class _TodayProgress extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          step("دراسة", today.study.done),
-          const SizedBox(height: 8),
-          step("إتقان", today.mastery.done),
-          const SizedBox(height: 8),
-          step("تحدي", today.challenge.done),
+          step(
+            "دراسة",
+            "أجب عن ${today.study.target} بطاقات مختلفة اليوم (بأي تقييم).",
+            today.study,
+          ),
+          const SizedBox(height: 12),
+          step(
+            "إتقان",
+            "قيّم ${today.mastery.target} بطاقات بـ«جيد» أو «سهل» اليوم.",
+            today.mastery,
+          ),
+          const SizedBox(height: 12),
+          step(
+            "تحدي",
+            "أجب عن ${today.challenge.target} بطاقة اليوم، أو أنهِ فصلًا كاملًا.",
+            today.challenge,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "أكمل المهام الثلاث لتفتح قطعة جديدة من اللوحة.",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColor.greenColor,
+            ),
+          ),
         ],
       ),
     );
