@@ -65,11 +65,22 @@ class MosaicController extends GetxController {
   /// request keeps whatever state we already had. Overlapping calls don't run
   /// in parallel; one follow-up pass is queued so a call made right after a
   /// reward/chest change is not lost.
-  Future<void> refresh() async {
-    if (_refreshing) {
+  Future<void>? _current;
+
+  /// Awaiting this always means "a refresh that started after this call has
+  /// finished" (an in-flight one is joined, with one follow-up pass queued).
+  Future<void> refresh() {
+    final running = _current;
+    if (running != null) {
       _refreshQueued = true;
-      return;
+      return running;
     }
+    final f = _runRefresh().whenComplete(() => _current = null);
+    _current = f;
+    return f;
+  }
+
+  Future<void> _runRefresh() async {
     _refreshing = true;
     try {
       do {
