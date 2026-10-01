@@ -8,6 +8,9 @@ class SessionRewards {
   /// Set only by the answer that actually saved today's streak.
   int? streak;
 
+  /// True once at least one answer of this session reached the server.
+  bool answered = false;
+
   /// Mosaic pieces earned this session (mosaic side only; never the streak).
   final List<MosaicAwardedPiece> pieces = [];
 
