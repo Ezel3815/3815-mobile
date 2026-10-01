@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:upgrade/app_validation.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 
 import '../../controllers/api_controller.dart';
 
@@ -127,10 +126,10 @@ class _LoginState extends State<Login> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 40),
-                            const Center(
-                              child: MozaikMarkIcon(
-                                color: AppColor.greenColor,
-                                size: 84,
+                            Center(
+                              child: Image.asset(
+                                'lib/assests/brand/mozaik_emblem.png',
+                                height: 97,
                               ),
                             ),
                             const SizedBox(height: 18),
