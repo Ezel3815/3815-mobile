@@ -222,8 +222,8 @@ class AnimatedLogosState extends State<AnimatedLogos>
               child: FadeTransition(
                 opacity: _markOpacity,
                 child: Image.asset(
-                  "lib/assests/images/splash_mark.png",
-                  height: 84,
+                  "lib/assests/brand/mozaik_emblem.png",
+                  height: 104,
                 ),
               ),
             ),
