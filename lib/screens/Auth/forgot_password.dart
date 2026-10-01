@@ -9,7 +9,6 @@ import 'package:upgrade/controllers/error_handler.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/app_snack_bar.dart';
-import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 
 /// Two steps on one screen:
 ///  1. type your email and press "send code" (the screen STAYS open),
@@ -245,10 +244,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Center(
-                              child: MozaikMarkIcon(
-                                color: AppColor.greenColor,
-                                size: 68,
+                            Center(
+                              child: Image.asset(
+                                'lib/assests/brand/mozaik_emblem.png',
+                                height: 78,
                               ),
                             ),
                             const SizedBox(height: 14),
