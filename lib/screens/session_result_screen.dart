@@ -1,16 +1,14 @@
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/main.dart';
-import 'package:upgrade/controllers/api_controller.dart';
-import 'package:upgrade/models/user_model.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/controllers/session_rewards.dart';
+import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_models.dart';
 import 'package:upgrade/widgets/mosaic/reward_flow_screen.dart';
 import 'package:upgrade/widgets/streak/streak_reward_screen.dart';
@@ -59,13 +57,25 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     // navigates here — so by the time this screen exists, the batch (if
     // any) is already present. No polling needed; the short delay below is
     // purely cosmetic pacing, letting the confetti/entrance play first.
-    _runRewardSequence();
+    // After the first frame: the route (and its arguments) is fully attached,
+    // which is not guaranteed while initState is still running.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runRewardSequence();
+    });
   }
 
   /// 1) mosaic ceremony (unchanged: same queue, same batch removal), THEN
   /// 2) the standalone streak window, only if this session saved the streak.
   Future<void> _runRewardSequence() async {
-    final args = Get.arguments;
+    try {
+      await _runRewardSequenceInner();
+    } catch (_) {
+      // Rewards are secondary: never let them break the result screen.
+    }
+  }
+
+  Future<void> _runRewardSequenceInner() async {
+    final args = ModalRoute.of(context)?.settings.arguments ?? Get.arguments;
     final SessionRewards? rewards =
         (args is Map && args['rewards'] is SessionRewards)
             ? args['rewards'] as SessionRewards
@@ -73,8 +83,10 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     final int correct = (args is Map ? args['correct'] : null) ?? 0;
     final int wrong = (args is Map ? args['wrong'] : null) ?? 0;
 
-    // The window is already on screen; wait (in the background) for the last
-    // answer so a slow server can never lose the streak or the mosaic pieces.
+    // The window is already on screen and its numbers are counting up; that
+    // time is used to let the last answer settle and the server catch up, so a
+    // slow server can never lose the streak or the mosaic pieces.
+    final countUp = Future.delayed(_countUpDuration + const Duration(milliseconds: 300));
     if (rewards != null) {
       await rewards.settled.timeout(const Duration(seconds: 30), onTimeout: () {});
       if (!mounted) return;
@@ -92,7 +104,9 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       );
       rewards.pieces.clear();
     }
-    final streak = await _streakToShow(rewards?.streak);
+    final streak = await _streakToShow(rewards, correct + wrong);
+    await countUp; // never open a reward window over a half-counted result
+    if (!mounted) return;
     final index = mosaic.rewardQueue.indexWhere((b) => b.source == RewardSource.daily);
     if (index != -1) {
       final batch = mosaic.rewardQueue.removeAt(index);
@@ -110,41 +124,39 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     }
   }
 
-  /// Set to true to force the streak window after EVERY session (testing).
-  static const bool _alwaysShowStreakWindow = false;
+  /// The streak window is a once-per-day moment. The server only *reports* the
+  /// streak on the first answer of the day, so relying on that alone loses the
+  /// window whenever that answer came from an earlier/aborted session. Instead:
+  /// show it at most once per UTC day, after a session that reached the server,
+  /// using the reported streak or, failing that, the current streak (profile).
+  Future<int?> _streakToShow(SessionRewards? rewards, int cardsAnswered) async {
+    final answered = rewards?.answered ?? cardsAnswered > 0;
+    if (!answered) return null;
+    final todayKey = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+    if (sharedPref.getString(_streakShownKey) == todayKey) return null;
 
-  /// Decides the streak number to show, or null for no window.
-  /// 1) The server says it saved today's streak -> trust it.
-  /// 2) Otherwise (already saved earlier today, or the flag was missed) show
-  ///    the window ONCE per day using the profile's current streak, so the
-  ///    first finished session of the day always gets its window.
-  Future<int?> _streakToShow(int? serverStreak) async {
-    const key = 'streak_window_shown_day';
-    final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
-    debugPrint('STREAK server=$serverStreak shownDay=${sharedPref.getString(key)}');
-    if (serverStreak != null && serverStreak > 0) {
-      await sharedPref.setString(key, today);
-      return serverStreak;
+    // The server is the source of truth, and it can lag a moment behind the
+    // last answer: read the profile fresh (one retry), fall back to the value
+    // the answer response reported.
+    int? streak;
+    for (var attempt = 0; attempt < 2 && (streak == null || streak <= 0); attempt++) {
+      if (attempt > 0) await Future.delayed(const Duration(milliseconds: 1500));
+      try {
+        final years = Get.find<YearsController>();
+        final before = years.profile.value;
+        await years.getMyProfile().timeout(const Duration(seconds: 10));
+        if (years.profile.value == null) years.profile.value = before;
+        streak = years.profile.value?.currentStreak;
+      } catch (_) {}
     }
-    if (!_alwaysShowStreakWindow && sharedPref.getString(key) == today) {
-      return null;
-    }
-    try {
-      final userJson = sharedPref.getString('user');
-      if (userJson == null) return null;
-      final id = UserModel.fromJson(jsonDecode(userJson)).id;
-      if (id == null) return null;
-      final p = await ApiController.getProfile(id);
-      final s = p?.currentStreak ?? 0;
-      debugPrint('STREAK fallback profile=$s');
-      await sharedPref.setString(key, today);
-      // The user just finished a session, so the streak is at least 1.
-      return s > 0 ? s : 1;
-    } catch (e) {
-      debugPrint('STREAK fallback error: $e');
-      return null;
-    }
+    if (streak == null || streak <= 0) streak = rewards?.streak;
+    if (streak == null || streak <= 0) return null;
+    await sharedPref.setString(_streakShownKey, todayKey);
+    return streak;
   }
+
+  static const String _streakShownKey = 'streak_window_shown_date';
+  static const Duration _countUpDuration = Duration(milliseconds: 2200);
 
   @override
   void dispose() {
@@ -224,7 +236,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                               height: 120,
                               child: TweenAnimationBuilder<double>(
                                 tween: Tween(begin: 0, end: accuracy / 100),
-                                duration: const Duration(milliseconds: 900),
+                                duration: _countUpDuration,
                                 curve: Curves.easeOutCubic,
                                 builder: (context, value, _) =>
                                     CircularProgressIndicator(
@@ -261,19 +273,19 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                             _StatChip(
                               icon: Icons.star_rounded,
                               color: AppColor.warningColor,
-                              value: "$correct",
+                              value: correct,
                               label: "صحيح",
                             ),
                             _StatChip(
                               icon: Icons.close_rounded,
                               color: AppColor.errorColor,
-                              value: "$wrong",
+                              value: wrong,
                               label: "خاطئ",
                             ),
                             _StatChip(
                               icon: Icons.schedule_rounded,
                               color: AppColor.infoColor,
-                              value: "$minutes",
+                              value: minutes,
                               label: "دقيقة",
                             ),
                           ],
@@ -470,7 +482,7 @@ class _ConfettiPainter extends CustomPainter {
 class _StatChip extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final String value;
+  final int value;
   final String label;
   const _StatChip({
     required this.icon,
@@ -493,12 +505,17 @@ class _StatChip extends StatelessWidget {
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColor.textPrimary,
+        TweenAnimationBuilder<int>(
+          tween: IntTween(begin: 0, end: value),
+          duration: _SessionResultScreenState._countUpDuration,
+          curve: Curves.easeOutCubic,
+          builder: (context, v, _) => Text(
+            '$v',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
+            ),
           ),
         ),
         Text(
