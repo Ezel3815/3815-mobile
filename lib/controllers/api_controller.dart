@@ -1106,6 +1106,24 @@ class ApiController {
     return null;
   }
 
+  /// Asks the server to re-run its idempotent post-answer evaluation (heals a
+  /// piece whose answer-time evaluation was slow/failed) and returns the fresh
+  /// state. Silent on failure: callers fall back to the read-only getMosaic().
+  static Future<MosaicState?> syncMosaic() async {
+    try {
+      final response = await dio.post(
+        Api.mosaicSync,
+        options: GetOptions.getOptions(),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return MosaicState.fromJson(response.data);
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+    return null;
+  }
+
   /// Read-only: never awards anything, so refreshing/reopening is always safe.
   static Future<MosaicState?> getMosaic() async {
     try {
