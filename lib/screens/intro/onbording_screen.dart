@@ -94,16 +94,15 @@ class OutBoordinagState extends State<OnBording> {
                 children: [
                   TextButton(
                       onPressed: () {
-                        Get.offAllNamed(AppRoutes.loginRoute);
-                        sharedPref.setBool("onBoarding", true);
-                        // Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        //     builder: (context) => const Register()));
+                        controller.nextPage(
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.easeInOut);
                       },
-                      child: Text(AppStrings.skip,
+                      child: Text(AppStrings.next,
                           style: const TextStyle(
                               fontSize: 18,
                               color: Colors.black,
-             ))),
+                ))),
                   Center(
                     child: SmoothPageIndicator(
                       controller: controller,
@@ -122,15 +121,16 @@ class OutBoordinagState extends State<OnBording> {
                   ),
                   TextButton(
                       onPressed: () {
-                        controller.nextPage(
-                            duration: const Duration(seconds: 1),
-                            curve: Curves.easeInOut);
+                        Get.offAllNamed(AppRoutes.loginRoute);
+                        sharedPref.setBool("onBoarding", true);
+                        // Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        //     builder: (context) => const Register()));
                       },
-                      child: Text(AppStrings.next,
+                      child: Text(AppStrings.skip,
                           style: const TextStyle(
                               fontSize: 18,
                               color: Colors.black,
-                ))),
+             ))),
                 ],
               ),
             ),
