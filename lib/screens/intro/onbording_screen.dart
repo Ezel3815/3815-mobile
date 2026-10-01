@@ -22,118 +22,133 @@ class OutBoordinagState extends State<OnBording> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     controller.dispose();
     super.dispose();
+  }
+
+  void _finish() {
+    Get.offAllNamed(AppRoutes.loginRoute);
+    sharedPref.setBool("onBoarding", true);
+  }
+
+  Widget _bar() {
+    return Row(
+      key: const ValueKey('bar'),
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        TextButton(
+          onPressed: () => controller.nextPage(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut),
+          child: Text(AppStrings.next,
+              style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColor.textPrimary)),
+        ),
+        SmoothPageIndicator(
+          controller: controller,
+          count: 3,
+          effect: const WormEffect(
+            dotWidth: 9,
+            dotHeight: 9,
+            spacing: 12,
+            dotColor: Color(0xFFCBD3C4),
+            activeDotColor: AppColor.darkGreenColor,
+          ),
+          onDotClicked: (i) => controller.animateToPage(i,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut),
+        ),
+        TextButton(
+          onPressed: _finish,
+          child: Text(AppStrings.skip,
+              style: TextStyle(
+                  fontSize: 17,
+                  color: AppColor.textSecondary.withOpacity(0.85))),
+        ),
+      ],
+    );
+  }
+
+  Widget _startButton() {
+    return SizedBox(
+      key: const ValueKey('start'),
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColor.darkGreenColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        onPressed: _finish,
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('ابدأ الآن',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_back_rounded, size: 20, color: Colors.white),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        // Arabic UI: swiping should feel right-to-left, not left-to-right.
-        reverse: true,
-        onPageChanged: (index) {
-          setState(() {
-            islastpage = index == 2;
-          });
-        },
-        controller: controller,
-        children: const [
-          FirstPage(),
-          SecondPage(),
-          ThirdPage(),
-        ],
-      ),
-      bottomSheet: islastpage
-          ? Container(
-              color: const Color(0xE8F2F4E7),
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-              child: SizedBox(
+      backgroundColor: AppColor.scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // Static mountain footer behind every page.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: Image.asset(
+                'lib/assests/onboarding/mountain.png',
                 width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.greenColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  onPressed: () {
-                    Get.offAllNamed(AppRoutes.loginRoute);
-                    sharedPref.setBool("onBoarding", true);
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'ابدأ الآن',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_back_rounded,
-                          size: 20, color: Colors.white),
-                    ],
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          PageView(
+            // Arabic UI: swiping should feel right-to-left.
+            reverse: true,
+            controller: controller,
+            onPageChanged: (i) => setState(() => islastpage = i == 2),
+            children: const [FirstPage(), SecondPage(), ThirdPage()],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 20),
+                child: SizedBox(
+                  height: 56,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: islastpage ? _startButton() : _bar(),
                   ),
                 ),
               ),
-            )
-          : Container(
-              color: const Color(0xE8F2F4E7),
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                      onPressed: () {
-                        controller.nextPage(
-                            duration: const Duration(seconds: 1),
-                            curve: Curves.easeInOut);
-                      },
-                      child: Text(AppStrings.next,
-                          style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-                ))),
-                  Center(
-                    child: SmoothPageIndicator(
-                      controller: controller,
-                      count: 3,
-                      effect: const WormEffect(
-                        spacing: 16,
-                        dotColor: Colors.black87,
-                        activeDotColor: AppColor.greenColor,
-                      ),
-                      onDotClicked: (index) {
-                        controller.animateToPage(index,
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeIn);
-                      },
-                    ),
-                  ),
-                  TextButton(
-                      onPressed: () {
-                        Get.offAllNamed(AppRoutes.loginRoute);
-                        sharedPref.setBool("onBoarding", true);
-                        // Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        //     builder: (context) => const Register()));
-                      },
-                      child: Text(AppStrings.skip,
-                          style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-             ))),
-                ],
-              ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }
