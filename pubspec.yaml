@@ -70,6 +70,7 @@ dependencies:
   flutter_timezone: ^3.0.1
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.6
+  home_widget: ^0.7.0
 
 
 
