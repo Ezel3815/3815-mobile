@@ -5,6 +5,18 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// ---- Release signing -------------------------------------------------------
+// A fixed key is what lets a new build install OVER the old one (no uninstall).
+// The key is NOT stored in the repo: CI provides it through 4 environment
+// variables. Without them (local runs) the build falls back to the debug key.
+def mozaikKeystoreB64 = System.getenv("MOZAIK_KEYSTORE_BASE64")
+def mozaikKeystoreFile = null
+if (mozaikKeystoreB64 != null && !mozaikKeystoreB64.trim().isEmpty()) {
+    mozaikKeystoreFile = new File(layout.buildDirectory.get().asFile, "mozaik-release.jks")
+    mozaikKeystoreFile.parentFile.mkdirs()
+    mozaikKeystoreFile.bytes = Base64.getDecoder().decode(mozaikKeystoreB64.replaceAll("\\s", ""))
+}
+
 android {
     namespace = "com.example.upgrade"
     compileSdk = flutter.compileSdkVersion
@@ -31,13 +43,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (mozaikKeystoreFile != null) {
+            mozaikRelease {
+                storeFile mozaikKeystoreFile
+                storePassword System.getenv("MOZAIK_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("MOZAIK_KEY_ALIAS")
+                keyPassword System.getenv("MOZAIK_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             shrinkResources false
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Fixed release key when CI provides it, debug key otherwise.
+            signingConfig = (mozaikKeystoreFile != null) ? signingConfigs.mozaikRelease : signingConfigs.debug
         }
     }
 }
