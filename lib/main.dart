@@ -151,8 +151,7 @@ class AnimatedLogosState extends State<AnimatedLogos>
   late AnimationController _controller;
   late Animation<double> _markScale;
   late Animation<double> _markOpacity;
-  late Animation<double> _wordmarkOpacity;
-  late Animation<Offset> _wordmarkSlide;
+  late Animation<double> _typed;
 
   @override
   void initState() {
@@ -173,19 +172,10 @@ class AnimatedLogosState extends State<AnimatedLogos>
       curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
     ));
 
-    // Wordmark fades and slides up slightly, starting once the mark has
-    // mostly settled.
-    _wordmarkOpacity =
-        Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+    // The name "Mozaik" is typed out letter by letter once the mark settles.
+    _typed = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
-    ));
-    _wordmarkSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.45, 1.0, curve: Curves.easeOutCubic),
+      curve: const Interval(0.45, 1.0, curve: Curves.linear),
     ));
 
     _controller.forward();
@@ -228,15 +218,37 @@ class AnimatedLogosState extends State<AnimatedLogos>
               ),
             ),
             const SizedBox(height: 18),
-            SlideTransition(
-              position: _wordmarkSlide,
-              child: FadeTransition(
-                opacity: _wordmarkOpacity,
-                child: Image.asset(
-                  "lib/assests/images/splash_wordmark.png",
-                  height: 34,
-                ),
-              ),
+            AnimatedBuilder(
+              animation: _typed,
+              builder: (context, _) {
+                const name = "Mozaik";
+                final n = (_typed.value * name.length).ceil();
+                const style = TextStyle(
+                  fontFamily: 'ELMESSIRI',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 34,
+                  height: 1.2,
+                  letterSpacing: 2,
+                );
+                const green = Color(0xFF1F5A44);
+                // Untyped letters stay transparent so the layout never shifts.
+                return Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: RichText(
+                    text: TextSpan(
+                      style: style,
+                      children: [
+                        TextSpan(
+                            text: name.substring(0, n),
+                            style: const TextStyle(color: green)),
+                        TextSpan(
+                            text: name.substring(n),
+                            style: const TextStyle(color: Colors.transparent)),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
