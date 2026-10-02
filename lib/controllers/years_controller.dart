@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:upgrade/services/streak_widget_service.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/entity/activity_feed_item.dart';
@@ -131,6 +132,7 @@ class YearsController extends GetxController {
       getActivityFeed(),
       getDailyMissions(),
     ]);
+    StreakWidgetService.instance.sync(streak: profile.value?.currentStreak);
     // Fire-and-forget: don't block Home from loading on this.
     NotificationService.instance.requestPermission().then(
         (_) => NotificationService.instance.scheduleNextReminders());
