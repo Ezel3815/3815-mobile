@@ -9,6 +9,7 @@ import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/screens/app_drawer.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
+import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
 
 class YearsScreen extends StatefulWidget {
   const YearsScreen({super.key});
@@ -41,7 +42,6 @@ class _YearsScreenState extends State<YearsScreen> {
                       controller.getAllDeck(),
                       controller.getMyProfile(),
                       controller.getActivityFeed(),
-                      controller.getDailyMissions(),
                     ]),
                     child: TabletBounded(
                       child: ListView(
@@ -52,9 +52,10 @@ class _YearsScreenState extends State<YearsScreen> {
                           const SizedBox(height: 20),
                           _GreetingBlock(),
                           const SizedBox(height: 18),
-                          _TodaysMissions(),
-                          const SizedBox(height: 18),
-                          _CurrentSubjectProgressCard(),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 20),
+                            child: MosaicHeroCard(),
+                          ),
                           const SizedBox(height: 24),
                           Padding(
                             padding:
@@ -220,179 +221,6 @@ class _GreetingBlock extends StatelessWidget {
         );
       }),
     );
-  }
-}
-
-/// Progress within the current subject (chapters completed / total) —
-/// matches "رحلتك الحالية: 3/12" in the reference design. Replaces the
-/// old top-level Years-unlocked metric now that Home shows a subject's
-/// lessons directly instead of the Years list.
-class _CurrentSubjectProgressCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<YearsController>();
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Obx(() {
-        final subject = controller.currentSubject;
-        final chapters = subject?.children ?? [];
-        final total = chapters.length;
-        final completed = chapters.where((c) {
-          if (c.cards.isEmpty) return false;
-          return c.cards.every((card) =>
-              card.answer.isNotEmpty && card.answer != "NONE");
-        }).length;
-        final progress = total == 0 ? 0.0 : completed / total;
-
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColor.surfaceColor,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    AppStrings.currentPath,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    "$completed/$total",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColor.greenColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 8,
-                  backgroundColor: AppColor.scaffoldBackgroundColor,
-                  valueColor: const AlwaysStoppedAnimation(AppColor.greenColor),
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _TodaysMissions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<YearsController>();
-    return Obx(() {
-      final missions = controller.missions;
-      if (missions.isEmpty) return const SizedBox.shrink();
-
-      final completedCount = missions.where((m) => m.completed).length;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColor.surfaceColor,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    AppStrings.todaysMissions,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColor.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    "$completedCount/${missions.length} ${AppStrings.completedCount}",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColor.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ...missions.map((m) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          m.completed
-                              ? Icons.check_circle_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          size: 20,
-                          color: m.completed
-                              ? AppColor.greenColor
-                              : AppColor.textSecondary.withOpacity(0.4),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            m.title,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: m.completed
-                                  ? AppColor.textSecondary
-                                  : AppColor.textPrimary,
-                              decoration: m.completed
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          "${m.progress}/${m.target}",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-            ],
-          ),
-        ),
-      );
-    });
   }
 }
 
