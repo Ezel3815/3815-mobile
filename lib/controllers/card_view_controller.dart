@@ -1,4 +1,5 @@
 import 'package:upgrade/controllers/progress_controller.dart';
+import 'package:upgrade/services/streak_widget_service.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -59,6 +60,7 @@ class CardViewController extends GetxController {
 
   void _goToSessionResult() {
     NotificationService.instance.markStudiedToday();
+    StreakWidgetService.instance.sync(streak: _rewards.streak, studiedToday: true);
     _rewards.settled = _answerChain;
     Get.offNamed(
       AppRoutes.sessionResultRoute,
