@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/main.dart';
+import 'package:upgrade/services/notification_router.dart';
+import 'package:upgrade/services/notification_service.dart';
 
 /// Must be a top-level (or static) function — the platform calls this
 /// in a separate isolate when a data message arrives while the app is
@@ -52,6 +54,12 @@ class PushService {
     // plugin/channel NotificationService already set up.
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
 
+    // Tapping a push (app in background / closed) → open the right screen.
+    FirebaseMessaging.onMessageOpenedApp.listen((m) => _handleTap(m));
+    FirebaseMessaging.instance.getInitialMessage().then((m) {
+      if (m != null) _handleTap(m);
+    });
+
     // A token can change (app reinstalled, Firebase rotates it) at any
     // time, not just at startup.
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
@@ -61,9 +69,38 @@ class PushService {
     await syncToken();
   }
 
+  /// Records the push for analytics and routes challenge invites to the
+  /// Quests tab (where the friends challenge lives).
+  Future<void> _handleTap(RemoteMessage message) async {
+    final data = message.data;
+    if (data['type'] == 'challenge_invite') {
+      await _recordChallenge(message, opened: true);
+      NotificationRouter.open(data['route'] ?? 'quests');
+    }
+  }
+
+  Future<void> _recordChallenge(RemoteMessage message, {required bool opened}) async {
+    final data = message.data;
+    final challengeId = int.tryParse(data['challenge_id'] ?? '');
+    await NotificationService.instance.engine.recordExternal(
+      // one record per invitation (each challenge has its own event id)
+      clientId: 'challenge-${challengeId ?? message.messageId ?? DateTime.now().millisecondsSinceEpoch}',
+      type: 'challenge_invite',
+      message: message.notification?.body ?? '',
+      sentAt: message.sentTime ?? DateTime.now(),
+      opened: opened,
+      challengeId: challengeId,
+      friendId: int.tryParse(data['friend_id'] ?? ''),
+    );
+    NotificationService.instance.flushAnalytics();
+  }
+
   Future<void> _showForegroundNotification(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
+    if (message.data['type'] == 'challenge_invite') {
+      _recordChallenge(message, opened: false);
+    }
     await _plugin.show(
       notification.hashCode,
       notification.title,
@@ -72,12 +109,16 @@ class PushService {
         android: AndroidNotificationDetails(
           'social_notifications',
           'Friend activity',
-          channelDescription: 'Follows and achievement unlocks from friends',
+          channelDescription: 'Follows, achievements and friend challenges',
           importance: Importance.high,
           priority: Priority.high,
+          icon: NotificationService.smallIcon,
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: message.data['type'] == 'challenge_invite'
+          ? '{"route":"${message.data['route'] ?? 'quests'}","cid":"challenge-${message.data['challenge_id'] ?? ''}"}'
+          : null,
     );
   }
 
