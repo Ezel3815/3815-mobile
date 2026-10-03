@@ -59,7 +59,7 @@ class CardViewController extends GetxController {
   }
 
   void _goToSessionResult() {
-    NotificationService.instance.markStudiedToday();
+    NotificationService.instance.onSessionFinished();
     StreakWidgetService.instance.sync(streak: _rewards.streak, studiedToday: true);
     _rewards.settled = _answerChain;
     Get.offNamed(
@@ -97,7 +97,11 @@ class CardViewController extends GetxController {
       final result =
           await ApiController.answerCard(cardID: card.id, answer: answer);
       if (result != null) showCelebration(result);
-      if (result != null) _rewards.answered = true;
+      if (result != null) {
+        _rewards.answered = true;
+        // Server-confirmed answer → STUDIED_TODAY: stops the day's reminders.
+        NotificationService.instance.onCardAnswered();
+      }
       if (result != null && result.streakSaved && result.newStreak != null) {
         _rewards.streak = result.newStreak;
       }
@@ -404,6 +408,7 @@ class CardViewController extends GetxController {
       cards.add(element);
     }
     isView = Get.arguments['isView'];
+    if (!isView) NotificationService.instance.onSessionStarted();
     pageViewIndex = Get.arguments['initalIndex'];
     pageController = PageController(initialPage: pageViewIndex);
     if (cards[pageViewIndex].type == "OCCLUSION") {
