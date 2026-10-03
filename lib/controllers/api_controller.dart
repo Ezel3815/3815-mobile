@@ -1,1295 +1,417 @@
-import 'package:upgrade/entity/follow_person.dart';
-import 'package:upgrade/entity/feed_entity.dart';
-import 'package:upgrade/entity/quests_entity.dart';
-import 'dart:convert';
-import 'dart:developer';
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'package:upgrade/screens/follow_list_screen.dart';
+import 'package:upgrade/screens/locale_controller.dart';
+import 'package:upgrade/utils/deep_link_service.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart' hide FormData, MultipartFile;
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import 'package:upgrade/controllers/app_local_data_source.dart';
-import 'package:upgrade/controllers/error_handler.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:upgrade/controllers/add_card_controller.dart';
+import 'package:upgrade/controllers/card_view_controller.dart';
+import 'package:upgrade/controllers/create_deck_controller.dart';
+import 'package:upgrade/controllers/document_controller.dart';
+import 'package:upgrade/controllers/main_controller.dart';
+import 'package:upgrade/controllers/preparatory_year_controller.dart';
+import 'package:upgrade/controllers/card_controller.dart';
+import 'package:upgrade/controllers/shape_creator_controller.dart';
+import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/di.dart';
-import 'package:upgrade/entity/card_entity.dart';
-import 'package:upgrade/entity/deck_entity.dart';
-import 'package:upgrade/entity/document_entity.dart';
-import 'package:upgrade/entity/achievement.dart';
-import 'package:upgrade/entity/activity_feed_item.dart';
-import 'package:upgrade/entity/answer_result.dart';
-import 'package:upgrade/entity/mosaic_entity.dart';
-import 'package:upgrade/entity/daily_mission.dart';
-import 'package:upgrade/entity/leaderboard_entry.dart';
-import 'package:upgrade/entity/profile_entity.dart';
-import 'package:upgrade/mapper/app_mapper.dart';
-import 'package:upgrade/models/card_model.dart';
-import 'package:upgrade/models/deck_model.dart';
-import 'package:upgrade/models/document_model.dart';
-import 'package:upgrade/models/user_model.dart';
-import 'package:upgrade/network_info.dart';
+import 'package:upgrade/resources.dart';
+import 'package:upgrade/screens/Auth/activate_code.dart';
+import 'package:upgrade/controllers/api_controller.dart';
+import 'package:upgrade/screens/Auth/forgot_password.dart';
+import 'package:upgrade/screens/Auth/login.dart';
+import 'package:upgrade/screens/Auth/register.dart';
+import 'package:upgrade/screens/Preparatory%20Year/preparatory_year_screen.dart';
+import 'package:upgrade/screens/card_view_screen.dart';
+import 'package:upgrade/screens/creat_deck/add_card_screen.dart';
+import 'package:upgrade/screens/creat_deck/create_deck_screen.dart';
+import 'package:upgrade/screens/creat_deck/shape_creator.dart';
+import 'package:upgrade/screens/creat_deck/card_screen.dart';
+import 'package:upgrade/screens/intro/onbording_screen.dart';
+import 'package:upgrade/screens/main_screen.dart';
+import 'package:upgrade/screens/profile_screen.dart';
+import 'package:upgrade/screens/search_users_screen.dart';
+import 'package:upgrade/screens/session_result_screen.dart';
+import 'package:upgrade/screens/notification_settings_screen.dart';
+import 'package:upgrade/screens/notification_lab_screen.dart';
+import 'package:upgrade/screens/mosaic_screen.dart';
+import 'package:upgrade/services/notification_service.dart';
 import 'package:upgrade/services/push_service.dart';
-import 'package:upgrade/widgets/app_snack_bar.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import '../api.dart';
-import '../main.dart';
+late SharedPreferences sharedPref;
 
-class ApiController {
-  static late Dio dio;
-  static final AppLocalDataSource _appLocalDataSource =
-      instance<AppLocalDataSource>();
-  static final NetworkInfo _networkInfo = instance<NetworkInfo>();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  static initDio() {
-    dio = Dio(
-      BaseOptions(
-        baseUrl: Api.baseUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        sendTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-        validateStatus: (status) {
-          return status! >= 200 || status <= 500;
-        },
+  // TEMPORARY DIAGNOSTIC: release builds normally hide widget-build
+  // errors behind a blank grey box. This makes the real error message
+  // visible on screen instead, so it can be screenshotted and fixed —
+  // safe to leave in, it only ever shows up when something is already
+  // broken. Remove once the grey-box bug is found and fixed.
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Container(
+      color: const Color(0xFF7A1F1F),
+      padding: const EdgeInsets.all(10),
+      alignment: Alignment.center,
+      child: Text(
+        details.exceptionAsString(),
+        style: const TextStyle(color: Colors.white, fontSize: 11),
       ),
     );
-    if (!kReleaseMode) {
-      dio.interceptors.add(
-        PrettyDioLogger(
-          requestHeader: true,
-          requestBody: true,
-          responseBody: true,
-          responseHeader: false,
+  };
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  // Make the system navigation bar match the app instead of a black strip.
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: AppColor.scaffoldBackgroundColor,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
+  sharedPref = await SharedPreferences.getInstance();
+  // Loads the saved language (defaults to Arabic) before the first frame,
+  // so GetMaterialApp picks the right locale/direction on the very first
+  // build instead of flashing Arabic then flipping.
+  Get.put(LocaleController(), permanent: true);
+  await initAppModule();
+  await ApiController.initDio();
+  await NotificationService.instance.init();
+  try {
+    await Firebase.initializeApp();
+    await PushService.instance.init();
+  } catch (e) {
+    // Missing google-services.json / no Play services on this device —
+    // push notifications are unavailable, everything else still runs.
+  }
+  DeepLinkService.init();
+  runApp(
+    const MyApp(),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final localeController = Get.find<LocaleController>();
+    return Obx(() => GetMaterialApp(
+      title: "MOZAIK",
+      debugShowCheckedModeBanner: false,
+      getPages: AppRoutes.pages,
+      // Reactive: follows LocaleController, which defaults to Arabic and
+      // persists whatever the user picks in the drawer. Registering both
+      // locales (rather than just "ar") is what lets Get.updateLocale("en")
+      // actually take, and also what makes Flutter auto-flip text
+      // direction (RTL for ar, LTR for en) via GlobalWidgetsLocalizations.
+      locale: Locale(localeController.languageCode.value),
+      supportedLocales: const [Locale("ar"), Locale("en")],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // Keep every screen above the system navigation bar (gesture pill or
+      // 3-button bar). Android draws apps edge-to-edge on newer phones, which
+      // slid content underneath it. Screens that already use a SafeArea are
+      // unaffected: nested SafeAreas don't add up.
+      builder: (context, child) => ColoredBox(
+        color: AppColor.scaffoldBackgroundColor,
+        child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          child: child ?? const SizedBox.shrink(),
         ),
-      );
-    }
-  }
-
-     /// Returns null on success (or after showing an error), or
-  /// 'username_taken' so the form can flag the username field itself.
-  static Future<String?> register(String name, String username, String email,
-      String password, BuildContext context) async {
-    try {
-      final response = await dio.post(
-        Api.register,
-        data: {
-          'name': name,
-          'username': username.trim().toLowerCase(),
-          'email': email,
-          'password': password,
-        },
-      );
-      if (response.statusCode == 201) {
-        Map<String, dynamic> json = response.data;
-        Get.offNamed(AppRoutes.mainRoute);
-        sharedPref.setString('token', json['token']);
-        sharedPref.setString(
-            "user", jsonEncode(UserModel.fromJson(json['user'])));
-        PushService.instance.syncToken();
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      final body = e is DioException ? '${e.response?.data}'.toLowerCase() : '';
-      if (body.contains('username') && body.contains('taken')) {
-        return 'username_taken';
-      }
-      if (e is DioException && (e.response?.statusCode ?? 0) >= 500) {
-        return 'server_error';
-      }
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return null;
-  }
-  static Future<void> activate(
-      String code, String email, BuildContext context) async {
-    try {
-      final response = await dio.put(
-        Api.activate,
-        data: {
-          'code': code,
-          'email': email,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        Get.offAllNamed(AppRoutes.loginRoute);
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-  }
-
-  static Future<void> login(
-      String email, String password, BuildContext context) async {
-    try {
-      final response = await dio.post(
-        Api.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
-      );
-
-      Map<String, dynamic> json = response.data;
-      if (response.statusCode == 201) {
-        if (json['user']['status'] == "PENDING") {
-          Get.toNamed(AppRoutes.activateCodeRoute);
-          return;
-        }
-        Get.offNamed(AppRoutes.mainRoute);
-        sharedPref.setString('token', json['token']);
-        sharedPref.setString(
-            "user", jsonEncode(UserModel.fromJson(json['user'])));
-        PushService.instance.syncToken();
-      } else {
-        showSnackBarWidget(message: json['message'] ?? "");
-      }
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-  }
-
-  static Future<void> requestResetPassword(
-      String email, BuildContext context) async {
-    try {
-      final response = await dio.put(
-        Api.requestResetPassword,
-        data: {
-          'email': email,
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.offAllNamed(AppRoutes.loginRoute);
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-  }
-
-  static Future<void> resetPassword(
-      String email, String code, String password, BuildContext context) async {
-    try {
-      await dio.put(
-        Api.resetPassword,
-        data: {
-          'email': email,
-          'code': code,
-          'password': password,
-        },
-      );
-
-      Get.offAllNamed(AppRoutes.loginRoute);
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-  }
-
-  static Future<CardEntity?> addcard(
-    int? id,
-    String type,
-    Map<String, dynamic> data, {
-    String? documentName,
-    String? documenttitle,
-    required String backImageName,
-    required String frontImageName,
-  }) async {
-    try {
-      Map<String, dynamic> requestBody = {
-        'type': type,
-        'data': data,
-      };
-      if (backImageName.isNotEmpty) {
-        requestBody['back_image_name'] = backImageName;
-      }
-
-      if (frontImageName.isNotEmpty) {
-        requestBody['front_image_name'] = frontImageName;
-      }
-
-      if (documentName != null) {
-        requestBody['document_name'] = documentName;
-      }
-
-      if (documenttitle != null) {
-        requestBody['document_title'] = documenttitle;
-      }
-
-      final response = await dio.post(
-        '${Api.addCard}/$id',
-        data: requestBody,
-        options: GetOptions.getOptions(),
-      );
-
-      Map<String, dynamic> json = response.data;
-      if (response.statusCode == 201) {
-        return CardModel.fromJson(json).toDomain();
-      } else {
-        Get.back();
-        showSnackBarWidget(message: json['message'] ?? "");
-      }
-    } catch (e) {
-      Get.back();
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<CardEntity?> editcard(
-    int id,
-    int deckid,
-    String type,
-    Map<String, dynamic> data, {
-    String? documentName,
-    String? documenttitle,
-    String? backImageName,
-    String? frontImageName,
-  }) async {
-    try {
-      Map<String, dynamic> requestBody = {
-        'type': type,
-        'data': data,
-      };
-      if (backImageName != null) {
-        requestBody['back_image_name'] = backImageName;
-      }
-
-      if (frontImageName != null) {
-        requestBody['front_image_name'] = frontImageName;
-      }
-
-      if (documentName != null) {
-        requestBody['document_name'] = documentName;
-      }
-
-      if (documenttitle != null) {
-        requestBody['document_title'] = documenttitle;
-      }
-
-      final response = await dio.put(
-        '${Api.addCard}/$deckid/$id',
-        data: requestBody,
-        options: GetOptions.getOptions(),
-      );
-      Map<String, dynamic> json = response.data;
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.back();
-        return CardModel.fromJson(json).toDomain();
-      } else {
-        Get.back();
-        showSnackBarWidget(message: json['message'] ?? "");
-      }
-    } catch (e) {
-      Get.back();
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<String?> uploadImage(String path) async {
-    try {
-      final file = await MultipartFile.fromFile(path);
-
-      final formData = FormData.fromMap(
-        {
-          "file": file,
-        },
-        ListFormat.multiCompatible,
-      );
-
-      final response = await dio.post(
-        Api.uploadImage,
-        data: formData,
-        options: GetOptions.getOptions(),
-      );
-
-      Map<String, dynamic> json = response.data;
-
-      if (response.statusCode == 201) {
-        return json['name'];
-      } else {
-        showSnackBarWidget(message: json['message'] ?? "");
-      }
-    } catch (e) {
-      log(e.toString());
-      if(ErrorHandler.handle(e).failure.code != -6) {
-      showSnackBarWidget(message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-      return null;
-    }
-    return null;
-  }
-
-  static Future<String?> uploadFile(String path) async {
-    try {
-      final file = await MultipartFile.fromFile(path);
-
-      final formData = FormData.fromMap(
-        {
-          "file": file,
-        },
-        ListFormat.multiCompatible,
-      );
-
-      final response = await dio.post(
-        Api.uploadDocument,
-        data: formData,
-        options: GetOptions.getOptions(),
-      );
-
-      Map<String, dynamic> json = response.data;
-
-      if (response.statusCode == 201) {
-        return json['name'];
-      } else {
-        showSnackBarWidget(message: json['message'] ?? "");
-      }
-    } catch (e) {
-      log(e.toString());
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-      return null;
-    }
-    return null;
-  }
-
-  /// True when the last getDecks()/getMyDecks() call failed, so callers can
-  /// tell a failed request apart from a genuinely empty list.
-  static bool lastDecksFailed = false;
-  static bool lastMyDecksFailed = false;
-
-  static Future<List<DeckEntity>> getDecks() async {
-    lastDecksFailed = false;
-    if (await _networkInfo.isConnected) {
-      try {
-        final response = await dio.get(
-          Api.getDecks,
-          options: GetOptions.getOptions(),
-        );
-
-        List<dynamic> json = response.data;
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          List<DeckModel> list = [];
-          for (var value in json) {
-            try {
-              list.add(DeckModel.fromJson(value));
-            } catch (e) {
-              // One bad deck/card must not wipe the entire tree.
-              log(e.toString());
-            }
-          }
-
-          final data = list.map((e) => e.toDomain()).toList();
-          await _appLocalDataSource.setDeckEntityToLocal(data);
-
-          return data;
-        } else {
-          lastDecksFailed = true;
-          showSnackBarWidget(message: response.data['message'] ?? "");
-        }
-
-        return [];
-      } catch (e) {
-        lastDecksFailed = true;
-        if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-        }
-        log(e.toString());
-        return [];
-      }
-    } else {
-      final data = await _appLocalDataSource.getDeckEntityFromLocal();
-      if (data.isNotEmpty) {
-        return data;
-      } else {
-        // showSnackBarWidget(
-        //     message:
-        //         DataSource.noInternetConnection.getFailure().message ?? "");
-      }
-    }
-    lastDecksFailed = true; // offline and nothing cached
-    return [];
-  }
-
-  static Future<List<DeckEntity>> getMyDecks() async {
-    lastMyDecksFailed = false;
-    if (await _networkInfo.isConnected) {
-      try {
-        final response = await dio.get(
-          Api.getMyDecks,
-          options: GetOptions.getOptions(),
-        );
-
-        List<dynamic> json = response.data;
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          List<DeckModel> list = [];
-          for (var value in json) {
-            try {
-              list.add(DeckModel.fromJson(value));
-            } catch (e) {
-              // One bad deck/card must not wipe the entire tree.
-              log(e.toString());
-            }
-          }
-          final data = list.map((e) => e.toDomain()).toList();
-          await _appLocalDataSource.setMyDeckEntityToLocal(data);
-          return data;
-        } else {
-          lastMyDecksFailed = true;
-          showSnackBarWidget(message: response.data['message'] ?? "");
-        }
-
-        return [];
-      } catch (e) {
-        lastMyDecksFailed = true;
-        if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-        }
-        log(e.toString());
-        return [];
-      }
-    } else {
-      final data = await _appLocalDataSource.getMyDeckEntityFromLocal();
-      if (data.isNotEmpty) {
-        return data;
-      } else {
-        // showSnackBarWidget(
-        //     message:
-        //         DataSource.noInternetConnection.getFailure().message ?? "");
-      }
-    }
-    lastMyDecksFailed = true; // offline and nothing cached
-    return [];
-  }
-
-  static Future<bool> enterCode(String code) async {
-    try {
-      final response = await dio.post(
-        Api.enterCode,
-        data: {
-          "code": code,
-        },
-        options: GetOptions.getOptions(),
-      );
-      if(response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-      return false;
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-      log(e.toString());
-      return false;
-    }
-  }
-
-  static Future<DeckEntity?> createDeck(String name) async {
-    try {
-      final response = await dio.post(
-        Api.createDeck,
-        options: GetOptions.getOptions(),
-        data: {
-          "title": name,
-        },
-      );
-
-      final Map<String, dynamic> json = response.data;
-
-      return DeckModel.fromJson(json).toDomain();
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<DeckEntity?> editDeck(String name, int id) async {
-    try {
-      final response = await dio.put(
-        Api.editDeck(id),
-        options: GetOptions.getOptions(),
-        data: {
-          "title": name,
-        },
-      );
-
-      final Map<String, dynamic> json = response.data;
-
-      return DeckModel.fromJson(json).toDomain();
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<void> deleteDeck(int id) async {
-    try {
-      await dio.delete(
-        Api.deleteDeck(id),
-        options: GetOptions.getOptions(),
-      );
-
-      return;
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return;
-  }
-
-  static Future<bool> deleteCard(int deckId, int id) async {
-    try {
-     final response =  await dio.delete(
-        Api.deleteCard(deckId, id),
-        options: GetOptions.getOptions(),
-      );
-
-     if(response.statusCode == 200 || response.statusCode == 201) {
-       return true;
-     } else {
-       showSnackBarWidget(message: response.data?['message'] ?? 'Error ${response.data}');
-       return false;
-     }
-    } catch (e,stacktrace) {
-      print(e.toString());
-      print(stacktrace.toString());
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
-    }
-    return false;
-  }
-
-  /// Reason the last [fetchCards] call failed (shown to the user so a real
-  /// error is never mistaken for "this deck has no cards").
-  static String? lastCardsError;
-
-  /// Like [getCards] but distinguishes failure (null) from a deck that is
-  /// really empty ([]).
-  static Future<List<CardEntity>?> fetchCards(int id) async {
-    lastCardsError = null;
-    try {
-      final response = await dio.get(
-        Api.getCards(id),
-        options: GetOptions.getOptions(),
-      );
-      final List<dynamic> json = response.data;
-      final data = json.map((e) => CardModel.fromJson(e).toDomain()).toList();
-      await _appLocalDataSource.setCardEntityToLocal(data, id);
-      return data;
-    } catch (e) {
-      lastCardsError = e is DioException
-          ? (ErrorHandler.handle(e).failure.message ?? 'خطأ في الاتصال')
-          : e.toString();
-      log('fetchCards($id) failed: $e');
-      final local = await _appLocalDataSource.getCardEntityFromLocal(id);
-      return local.isNotEmpty ? local : null;
-    }
-  }
-
-  static Future<List<CardEntity>> getCards(int id) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final response = await dio.get(
-          Api.getCards(id),
-          options: GetOptions.getOptions(),
-        );
-
-        final List<dynamic> json = response.data;
-
-        final List<CardModel> list = [];
-
-        for (var element in json) {
-          list.add(CardModel.fromJson(element));
-        }
-
-        final data = list.map((e) => e.toDomain()).toList();
-        await _appLocalDataSource.setCardEntityToLocal(data, id);
-
-        return data;
-      } catch (e,stackTrace) {
-        log(e.toString());
-        log(stackTrace.toString());
-        if(ErrorHandler.handle(e).failure.code != -6) {
-          showSnackBarWidget(
-              message: ErrorHandler
-                  .handle(e)
-                  .failure
-                  .message ?? "");
-        }
-      }
-    } else {
-      final data = await _appLocalDataSource.getCardEntityFromLocal(id);
-      if (data.isNotEmpty) {
-        return data;
-      } else {
-        // showSnackBarWidget(
-        //     message:
-        //         DataSource.noInternetConnection.getFailure().message ?? "");
-      }
-    }
-    return [];
-  }
-
-  static Future<List<DocumentEntity>> getDocument() async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final response = await dio.get(
-          Api.getDocument,
-          options: GetOptions.getOptions(),
-        );
-
-        final List<dynamic> json = response.data;
-
-        final List<DocumentModel> list = [];
-
-        for (var element in json) {
-          list.add(DocumentModel.fromJson(element));
-        }
-
-        final data = list.map((e) => e.toDomain()).toList();
-        await _appLocalDataSource.setDocumentEntityToLocal(data);
-
-        return data;
-      } catch (e) {
-        if(ErrorHandler.handle(e).failure.code != -6) {
-          showSnackBarWidget(
-              message: ErrorHandler
-                  .handle(e)
-                  .failure
-                  .message ?? "");
-        }
-      }
-    } else {
-      final data = await _appLocalDataSource.getDocumentEntityFromLocal();
-      if (data.isNotEmpty) {
-        return data;
-      } else {
-        // showSnackBarWidget(
-        //     message:
-        //         DataSource.noInternetConnection.getFailure().message ?? "");
-      }
-    }
-    return [];
-  }
-
-  static Future<List<ActivityFeedItem>> getActivityFeed() async {
-    try {
-      final response = await dio.get(
-        Api.activityFeed,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => ActivityFeedItem.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return [];
-  }
-
-  static Future<AnswerResult?> answerCard(
-      {required int cardID, required String answer}) async {
-    try {
-      final response = await dio.put(
-        Api.answerCard(cardID),
-        data: {
-          "answer": answer,
-        },
-        options: GetOptions.getOptions(),
-      );
-      if (response.data is Map<String, dynamic>) {
-        return AnswerResult.fromJson(response.data);
-      }
-    } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<int?> getUserIdByUsername(String username) async {
-    try {
-      final response = await dio.get(
-        Api.userByUsername(username),
-        options: GetOptions.getOptions(),
-      );
-      return response.data['id'] as int?;
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  /// True when the username is free (or the check itself failed —
-  /// the server still rejects duplicates on register).
-  static Future<bool?> isUsernameAvailable(String username) async {
-    try {
-      final response = await dio.get(Api.usernameAvailable(username));
-      final v = response.data['available'];
-      return v is bool ? v : null;
-    } catch (_) {
-      return null; // unknown (server unreachable / route missing)
-    }
-  }
-
-  static Future<ProfileEntity?> getProfile(int id) async {
-    try {
-      final response = await dio.get(
-        Api.getProfile(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return ProfileEntity.fromJson(response.data);
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  /// kind: 'followers' or 'following'. Null when the request failed.
-  static Future<List<FollowPerson>?> getFollowList(int id, String kind) async {
-    try {
-      final response = await dio.get(
-        kind == 'followers' ? Api.followers(id) : Api.following(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => FollowPerson.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      log(e.toString());
-    }
-    return null;
-  }
-
-  static Future<bool> followUser(int id) async {
-    try {
-      final response = await dio.post(
-        Api.followUser(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return false;
-  }
-
-  static Future<bool> unfollowUser(int id) async {
-    try {
-      final response = await dio.delete(
-        Api.unfollowUser(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return false;
-  }
-
-  /// Registers this device's push token with the backend (or clears it
-  /// on logout). Silent by design — a failed sync here should never
-  /// interrupt the user; NotificationService retries on next app open.
-  static Future<bool> registerFcmToken(String? token) async {
-    try {
-      final response = await dio.put(
-        Api.fcmToken,
-        data: {'token': token ?? ''},
-        options: GetOptions.getOptions(),
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  static Future<bool> updateProfile({
-    String? username,
-    String? avatarHair,
-    String? avatarHairColor,
-    String? avatarSkinColor,
-    String? avatarClothingColor,
-    bool? avatarGlasses,
-  }) async {
-    try {
-      final Map<String, dynamic> data = {};
-      if (username != null) data['username'] = username;
-      if (avatarHair != null) data['avatar_hair'] = avatarHair;
-      if (avatarHairColor != null) data['avatar_hair_color'] = avatarHairColor;
-      if (avatarSkinColor != null) data['avatar_skin_color'] = avatarSkinColor;
-      if (avatarClothingColor != null) {
-        data['avatar_clothing_color'] = avatarClothingColor;
-      }
-      if (avatarGlasses != null) data['avatar_glasses'] = avatarGlasses;
-
-      final response = await dio.put(
-        Api.updateProfile,
-        data: data,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return false;
-  }
-
-    static Future<List<Achievement>> getAchievements() async {
-    try {
-      final response = await dio.get(
-        Api.achievements,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => Achievement.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return [];
-  }
-
-  static Future<List<FeedPost>?> getFeed() async {
-    try {
-      final response = await dio.get(
-        Api.feed,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List).map((e) => FeedPost.fromJson(e)).toList();
-      }
-    } catch (e) {
-      log(e.toString());
-    }
-    return null;
-  }
-
-  /// Toggles "celebrate". Returns {celebrated, count} or null on failure.
-  static Future<Map<String, dynamic>?> celebratePost(int id) async {
-    try {
-      final response = await dio.post(
-        Api.feedCelebrate(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Map<String, dynamic>.from(response.data as Map);
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  static Future<List<FeedComment>?> getFeedComments(int id) async {
-    try {
-      final response = await dio.get(
-        Api.feedComments(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => FeedComment.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      log(e.toString());
-    }
-    return null;
-  }
-
-  static Future<FeedComment?> addFeedComment(int id, String text) async {
-    try {
-      final response = await dio.post(
-        Api.feedComments(id),
-        data: {'text': text},
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return FeedComment.fromJson(response.data);
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  /// Mutual friends the user can pick as friends-quest partner (null = failed).
-  static Future<List<QuestFriend>?> getQuestFriends() async {
-    try {
-      final response = await dio.get(
-        Api.questFriends,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => QuestFriend.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      log(e.toString());
-    }
-    return null;
-  }
-
-  static Future<bool> setQuestPartner(int friendId) async {
-    try {
-      final response = await dio.put(
-        Api.questPartner,
-        data: {'friend_id': friendId},
-        options: GetOptions.getOptions(),
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return false;
-  }
-
-  /// Nudges a friend (feed post + push). Returns {sent, reason?} or null.
-  static Future<Map<String, dynamic>?> remindFriend(int id) async {
-    try {
-      final response = await dio.post(
-        Api.remind(id),
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Map<String, dynamic>.from(response.data as Map);
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-  /// Opens a mosaic weekly chest (ids like "mosaic_chest_1"). Reuses the
-  /// quest-chest endpoint server-side, but the response also carries the
-  /// awarded mosaic pieces, so it's parsed separately from claimQuestChest().
-  static Future<MosaicAward?> claimMosaicChest(String id) async {
-    try {
-      final response = await dio.post(
-        Api.claimQuest,
-        data: {'id': id},
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return MosaicAward.tryParse(response.data['mosaic']);
-      }
-    } catch (e) {
-      showSnackBarWidget(
-          message: ErrorHandler.handle(e).failure.message ?? "");
-    }
-    return null;
-  }
-
-  /// Asks the server to re-run its idempotent post-answer evaluation (heals a
-  /// piece whose answer-time evaluation was slow/failed) and returns the fresh
-  /// state. Silent on failure: callers fall back to the read-only getMosaic().
-  static Future<MosaicState?> syncMosaic() async {
-    try {
-      final response = await dio.post(
-        Api.mosaicSync,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return MosaicState.fromJson(response.data);
-      }
-    } catch (e) {
-      log(e.toString());
-    }
-    return null;
-  }
-
-  /// Read-only: never awards anything, so refreshing/reopening is always safe.
-  static Future<MosaicState?> getMosaic() async {
-    try {
-      final response = await dio.get(
-        Api.mosaic,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return MosaicState.fromJson(response.data);
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return null;
-  }
-
-  /// Acks that the reveal animation played for these pieces, so it doesn't
-  /// replay on next open. Best-effort — losing this ack just replays once.
-  static Future<void> ackMosaicReveal(List<int> pieceIds) async {
-    try {
-      await dio.post(
-        Api.mosaicReveal,
-        data: {'pieceIds': pieceIds},
-        options: GetOptions.getOptions(),
-      );
-    } catch (e) {
-      log(e.toString());
-    }
-  }
-
-  static Future<bool> updateTimezone(String timezone) async {
-    try {
-      final response = await dio.put(
-        Api.updateTimezone,
-        data: {'timezone': timezone},
-        options: GetOptions.getOptions(),
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      log(e.toString());
-      return false;
-    }
-  }
-
-  static Future<QuestsData?> getQuests() async {
-    try {
-      final response = await dio.get(
-        Api.quests,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return QuestsData.fromJson(response.data);
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return null;
-  }
-
-  /// Opens a chest. Returns the XP gained, or null if it couldn't be opened.
-  static Future<int?> claimQuestChest(String id) async {
-    try {
-      final response = await dio.post(
-        Api.claimQuest,
-        data: {'id': id},
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final xp = response.data['xp'];
-        return xp is num ? xp.toInt() : 0;
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(
-            message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return null;
-  }
-
-    static Future<List<DailyMission>> getDailyMissions() async {
-    try {
-      final response = await dio.get(
-        Api.dailyMissions,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data['missions'] as List)
-            .map((e) => DailyMission.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return [];
-  }
-
-    static Future<List<LeaderboardEntry>> getLeaderboard() async {
-    try {
-      final response = await dio.get(
-        Api.leaderboard,
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => LeaderboardEntry.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        log(e.toString());
-      }
-    }
-    return [];
-  }
-
-    static Future<List<ProfileEntity>> searchUsers(String query) async {
-    try {
-      final response = await dio.get(
-        Api.searchUsers,
-        queryParameters: {'q': query},
-        options: GetOptions.getOptions(),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (response.data as List)
-            .map((e) => ProfileEntity.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      if (ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler.handle(e).failure.message ?? "");
-      }
-    }
-    return [];
-  }
-  static logout() async {
-    // Best-effort: clear the push token server-side before dropping the
-    // auth token that makes the request possible. If it fails (offline),
-    // it's harmless — the token gets overwritten next login anyway.
-    await registerFcmToken(null);
-    await sharedPref.remove("token");
-    Get.offAllNamed(AppRoutes.loginRoute);
+      ),
+      theme: ThemeData(
+        fontFamily: "ELMESSIRI",
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.transparent,
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+        ),
+      ),
+    ));
   }
 }
 
-class GetOptions {
-  static Options options = Options();
+class AnimatedLogos extends StatefulWidget {
+  const AnimatedLogos({super.key});
 
-  static Options getOptions() {
-    final token = sharedPref.getString("token") ?? "";
-    if (token.isNotEmpty) {
-      options.headers = {
-        'Accept': 'application/json',
-        'Authorization': token,
-      };
-    } else {
-      options.headers = {
-        'Accept': 'application/json',
-      }; // default for non-auth
-    }
-    return options;
+  @override
+  AnimatedLogosState createState() => AnimatedLogosState();
+}
+
+class AnimatedLogosState extends State<AnimatedLogos>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _markScale;
+  late Animation<double> _markOpacity;
+  late Animation<double> _typed;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1400),
+      vsync: this,
+    );
+
+    // Mark scales in with a slight overshoot ("pop"), fading in over the
+    // first half of the animation.
+    _markScale = Tween<double>(begin: 0.7, end: 1.0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.65, curve: Curves.easeOutBack),
+    ));
+    _markOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
+    ));
+
+    // The name "Mozaik" is typed out letter by letter once the mark settles.
+    _typed = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.45, 1.0, curve: Curves.linear),
+    ));
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (sharedPref.getString("token") != null) {
+        Get.offNamed(AppRoutes.mainRoute);
+      } else {
+        if (sharedPref.get("onBoarding") != null) {
+          Get.offNamed(AppRoutes.loginRoute);
+        } else {
+          Get.offNamed(AppRoutes.onboardingRoute);
+        }
+      }
+    });
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColor.scaffoldBackgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: _markScale,
+              child: FadeTransition(
+                opacity: _markOpacity,
+                child: Image.asset(
+                  "lib/assests/brand/mozaik_emblem.png",
+                  height: 104,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            AnimatedBuilder(
+              animation: _typed,
+              builder: (context, _) {
+                const name = "Mozaik";
+                final n = (_typed.value * name.length).ceil();
+                const style = TextStyle(
+                  fontFamily: 'ELMESSIRI',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 34,
+                  height: 1.2,
+                  letterSpacing: 2,
+                );
+                const green = Color(0xFF1F5A44);
+                // Untyped letters stay transparent so the layout never shifts.
+                return Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: RichText(
+                    text: TextSpan(
+                      style: style,
+                      children: [
+                        TextSpan(
+                            text: name.substring(0, n),
+                            style: const TextStyle(color: green)),
+                        TextSpan(
+                            text: name.substring(n),
+                            style: const TextStyle(color: Colors.transparent)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AppRoutes {
+  static const String searchUsersRoute = "/searchUsersRoute";
+  static const String viewProfileRoute = "/viewProfileRoute";
+  static const String followListRoute = "/followListRoute";
+  static const String splashRoute = "/";
+  static const String onboardingRoute = "/onbordingRoute";
+  static const String cardRoute = "/cardRoute";
+  static const String activateCodeRoute = "/activateCodeRoute";
+  static const String loginRoute = "/loginRoute";
+  static const String registerRoute = "/registerRoute";
+  static const String forgetPassowrdRoute = "/forgetPassowrdRoute";
+  static const String addCardRoute = "/addCardRoute";
+  static const String shapeCreatorRoute = "/shapeCreatorRoute";
+  static const String preparatoryYearRoute = "/preparatoryYearRoute";
+  static const String cardViewRoute = "/cardViewRoute";
+  static const String mainRoute = "/mainRoute";
+  static const String createDeckRoute = "/createDeckRoute";
+  static const String sessionResultRoute = "/sessionResultRoute";
+  static const String notificationSettingsRoute = "/notificationSettingsRoute";
+  static const String mosaicRoute = "/mosaicRoute";
+  static const String notificationLabRoute = "/notificationLabRoute";
+
+  static final List<GetPage> pages = [
+    GetPage(name: searchUsersRoute, page: () => const SearchUsersScreen()),
+    GetPage(name: viewProfileRoute, page: () => ProfileScreen(userId: Get.arguments)),
+    GetPage(name: followListRoute, page: () => const FollowListScreen()),
+    GetPage(
+      name: splashRoute,
+      page: () => const AnimatedLogos(),
+    ),
+    GetPage(
+      name: onboardingRoute,
+      page: () => const OnBording(),
+    ),
+    GetPage(
+      name: cardRoute,
+      page: () => const CardScreen(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(
+          () => CardController(),
+        ),
+      ),
+    ),
+    GetPage(
+      name: activateCodeRoute,
+      page: () => const ActivateCode(),
+    ),
+    GetPage(
+      name: loginRoute,
+      page: () => const Login(),
+    ),
+    GetPage(
+      name: registerRoute,
+      page: () => const Register(),
+    ),
+    GetPage(
+      name: forgetPassowrdRoute,
+      page: () => const ForgotPassword(),
+    ),
+    GetPage(
+      name: addCardRoute,
+      page: () => const AddCardScreen(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(
+          () => AddCardController(),
+        ),
+      ),
+    ),
+    GetPage(
+      name: shapeCreatorRoute,
+      page: () => const ShapeCreator(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(
+          () => ShapeCreatorController(),
+        ),
+      ),
+    ),
+   GetPage(
+  name: preparatoryYearRoute,
+  page: () => PreparatoryYear(id: (Get.arguments['id']).toString()), // was: () => const PreparatoryYear()
+  binding: BindingsBuilder(
+    () => Get.lazyPut(
+      () => PreparatoryYearController(),
+      tag: Get.arguments['id'].toString(),
+      fenix: true,
+    ),
+  ),
+),
+    GetPage(
+      name: cardViewRoute,
+      page: () => const CardViewScreen(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(
+          () => CardViewController(),
+        ),
+      ),
+    ),
+    GetPage(
+      // CreateDeckScreen used to be a bottom-nav tab; it's now reached
+      // from a "+" button inside the Library screen instead, so it
+      // needs a real named route. CreateDeckController is already
+      // registered (lazyPut) via mainRoute's bindings below, and
+      // stays alive for the lifetime of the main tab shell, so no
+      // extra binding is needed here.
+      name: createDeckRoute,
+      page: () => const CreateDeckScreen(),
+      binding: BindingsBuilder(() {
+        // Safe no-ops if already registered by mainRoute; recreates
+        // them if the main shell was disposed (fixes "not found" crash).
+        Get.lazyPut(() => YearsController(), fenix: true);
+        Get.lazyPut(() => CreateDeckController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: sessionResultRoute,
+      page: () => const SessionResultScreen(),
+    ),
+    GetPage(
+      name: notificationSettingsRoute,
+      page: () => const NotificationSettingsScreen(),
+    ),
+    GetPage(
+      name: notificationLabRoute,
+      page: () => const NotificationLabScreen(),
+    ),
+    GetPage(
+      name: mosaicRoute,
+      page: () => const MosaicScreen(),
+    ),
+    GetPage(
+      name: mainRoute,
+      page: () => const MainScreen(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(
+          () => MainController(),
+        ),
+      ),
+      bindings: [
+        BindingsBuilder(
+          () => Get.lazyPut(
+            () => YearsController(),
+          ),
+        ),
+        BindingsBuilder(
+          () => Get.lazyPut(
+            () => CreateDeckController(),
+          ),
+        ),
+        BindingsBuilder(
+          () => Get.lazyPut(
+            () => DocumentController(),
+          ),
+        ),
+      ],
+    ),
+  ];
 }
