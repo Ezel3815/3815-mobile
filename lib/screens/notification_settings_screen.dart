@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/services/notification_service.dart';
 
@@ -137,6 +138,20 @@ class _NotificationSettingsScreenState
             ),
             icon: const Icon(Icons.notifications_active_outlined, size: 18),
             label: const Text("إرسال إشعار تجريبي الآن"),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => Get.toNamed(AppRoutes.notificationLabRoute),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColor.greenColor,
+              side: const BorderSide(color: AppColor.greenColor),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.science_outlined, size: 18),
+            label: const Text("مختبر الإشعارات (اختبار سريع)"),
           ),
           const SizedBox(height: 10),
           FutureBuilder<List<PendingNotificationRequest>>(
