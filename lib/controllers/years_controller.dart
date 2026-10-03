@@ -134,8 +134,9 @@ class YearsController extends GetxController {
     ]);
     StreakWidgetService.instance.sync(streak: profile.value?.currentStreak);
     // Fire-and-forget: don't block Home from loading on this.
-    NotificationService.instance.requestPermission().then(
-        (_) => NotificationService.instance.scheduleNextReminders());
+    NotificationService.instance
+        .requestPermission()
+        .then((_) => NotificationService.instance.onAppOpened());
     super.onInit();
   }
 }
