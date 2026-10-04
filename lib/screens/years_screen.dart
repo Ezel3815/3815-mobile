@@ -41,7 +41,6 @@ class _YearsScreenState extends State<YearsScreen> {
                     onRefresh: () => Future.wait([
                       controller.getAllDeck(),
                       controller.getMyProfile(),
-                      controller.getActivityFeed(),
                     ]),
                     child: TabletBounded(
                       child: ListView(
@@ -71,8 +70,6 @@ class _YearsScreenState extends State<YearsScreen> {
                           ),
                           const SizedBox(height: 12),
                           _CurrentSubjectLessons(),
-                          const SizedBox(height: 24),
-                          _FriendsActivity(),
                         ],
                       ),
                     ),
@@ -221,120 +218,6 @@ class _GreetingBlock extends StatelessWidget {
         );
       }),
     );
-  }
-}
-
-String _relativeTime(DateTime time) {
-  final diff = DateTime.now().difference(time);
-  if (diff.inMinutes < 1) return "الآن";
-  if (diff.inMinutes < 60) return "قبل ${diff.inMinutes} د";
-  if (diff.inHours < 24) return "قبل ${diff.inHours} س";
-  return "قبل ${diff.inDays} ي";
-}
-
-/// The "I'm not studying alone" feed — recent real milestones from
-/// people you follow (chapter completions, level-ups, achievement
-/// unlocks). Nothing here is simulated; it's a direct read of the same
-/// events that trigger celebration popups on each person's own device.
-class _FriendsActivity extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<YearsController>();
-    return Obx(() {
-      final feed = controller.activityFeed;
-      if (feed.isEmpty) return const SizedBox.shrink();
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.friendsActivity,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColor.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...feed.map((item) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColor.surfaceColor,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      ClipOval(
-                        child: (item.userAvatar != null &&
-                                item.userAvatar!.isNotEmpty)
-                            ? AppImage(
-                                image: item.userAvatar!,
-                                width: 34,
-                                height: 34,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                width: 34,
-                                height: 34,
-                                color: AppColor.lightGreenColor,
-                                child: Center(
-                                  child: Text(
-                                    item.userName.isNotEmpty
-                                        ? item.userName[0].toUpperCase()
-                                        : "?",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColor.darkGreenColor,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColor.textPrimary,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: item.userName,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700),
-                              ),
-                              TextSpan(text: " ${item.verbPhrase}"),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _relativeTime(item.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColor.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-          ],
-        ),
-      );
-    });
   }
 }
 
