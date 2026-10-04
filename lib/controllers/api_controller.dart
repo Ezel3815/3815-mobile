@@ -893,6 +893,23 @@ class ApiController {
   /// Registers this device's push token with the backend (or clears it
   /// on logout). Silent by design — a failed sync here should never
   /// interrupt the user; NotificationService retries on next app open.
+  /// Asks the server to send a real push to this account after [delaySeconds]
+  /// and reports what it found (Firebase configured? token saved? result).
+  static Future<Map<String, dynamic>?> sendPushTest({int delaySeconds = 12}) async {
+    try {
+      final response = await dio.post(
+        Api.pushTest,
+        data: {'delay_seconds': delaySeconds},
+        options: GetOptions.getOptions(),
+      );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
+        return Map<String, dynamic>.from(response.data);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Server-authoritative study state for the reminder engine (null = offline).
   static Future<Map<String, dynamic>?> getNotificationState() async {
     try {
