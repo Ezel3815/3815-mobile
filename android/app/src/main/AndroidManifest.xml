@@ -76,6 +76,9 @@
             android:value="2" />
         <!-- Icon FCM uses for push notifications shown while the app is closed. -->
         <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="social_notifications" />
+        <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_mozaik" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
