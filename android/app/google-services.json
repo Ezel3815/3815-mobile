@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "684828391924",
+    "project_id": "soalix888",
+    "storage_bucket": "soalix888.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684828391924:android:649aaa06f154c3da9ce1a1",
+        "android_client_info": {
+          "package_name": "com.example.upgrade"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYyso5aysMMxWxcFwRciaIzCcNdUrFHEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
