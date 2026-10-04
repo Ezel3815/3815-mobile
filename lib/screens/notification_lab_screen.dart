@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:upgrade/controllers/api_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -46,6 +48,9 @@ class _NotificationLabScreenState extends State<NotificationLabScreen> {
     final pending = await _svc.pendingNotifications();
     out.add('${pending.isNotEmpty ? '✅' : '⚠️'} مجدول الآن: ${pending.length} إشعار');
     out.add('🕒 المنطقة الزمنية: ${tz.local.name}');
+    out.add(Firebase.apps.isNotEmpty
+        ? '✅ Firebase يعمل داخل التطبيق'
+        : '❌ Firebase لم يُهيَّأ في هذا التطبيق (ملف google-services.json غير موجود في البناء) — لن تصل أي إشعارات من الخادم (متابعة / تحدٍّ) خارج التطبيق');
     try {
       final t = await FirebaseMessaging.instance.getToken();
       out.add('${t != null ? '✅' : '❌'} رمز الإشعارات الفورية (للتحديات): ${t != null ? 'موجود' : 'غير موجود'}');
@@ -141,6 +146,29 @@ class _NotificationLabScreenState extends State<NotificationLabScreen> {
               _btn('إرسال إشعار تجريبي الآن', () async {
                 await _svc.showTestNotification();
                 _say('أُرسل إشعار تجريبي — هل ظهر في شريط الإشعارات؟');
+              }),
+            ]),
+            _card('1-ب) إشعارات الخادم خارج التطبيق (متابعة / تحدٍّ)', [
+              const Text(
+                'يرسل لك الخادم إشعارًا حقيقيًا بعد 12 ثانية. اضغط الزر ثم أغلق التطبيق تمامًا أو اخرج للشاشة الرئيسية وانتظر. إن وصلك فإشعارات المتابعة والتحدي ستعمل.',
+                style: TextStyle(fontSize: 12, height: 1.5),
+              ),
+              _btn('أرسل لي إشعارًا من الخادم', () async {
+                final r = await ApiController.sendPushTest(delaySeconds: 12);
+                if (r == null) {
+                  _say('تعذّر الاتصال بالخادم (أو لم يُحدَّث الخادم بعد).');
+                  return;
+                }
+                switch (r['diagnosis']) {
+                  case 'server_firebase_not_configured':
+                    _say('❌ الخادم غير مهيّأ لـ Firebase: أضف المتغير FIREBASE_SERVICE_ACCOUNT في Render.');
+                    break;
+                  case 'no_device_token':
+                    _say('❌ حسابك لا يملك رمز جهاز محفوظًا: التطبيق لم يسجّل الإشعارات (غالبًا Firebase غير مهيّأ في البناء). راجع سطر Firebase أعلاه.');
+                    break;
+                  default:
+                    _say('✅ أُرسل الطلب. أغلق التطبيق وانتظر ~12 ثانية: هل وصل إشعار «اختبار الإشعارات 🔔»؟');
+                }
               }),
             ]),
             _card('2) خيارات المحاكاة', [
