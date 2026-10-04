@@ -42,6 +42,17 @@ class PushService {
 
     FirebaseMessaging.onBackgroundMessage(firebaseBackgroundHandler);
 
+    // Background pushes are drawn by Android itself, using this channel (see the
+    // default_notification_channel_id in AndroidManifest). It must exist first.
+    await _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(const AndroidNotificationChannel(
+          'social_notifications',
+          'Friend activity',
+          description: 'Follows, achievements and friend challenges',
+          importance: Importance.high,
+        ));
+
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
