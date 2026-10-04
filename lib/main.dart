@@ -34,7 +34,6 @@ import 'package:upgrade/screens/profile_screen.dart';
 import 'package:upgrade/screens/search_users_screen.dart';
 import 'package:upgrade/screens/session_result_screen.dart';
 import 'package:upgrade/screens/notification_settings_screen.dart';
-import 'package:upgrade/screens/notification_lab_screen.dart';
 import 'package:upgrade/screens/mosaic_screen.dart';
 import 'package:upgrade/services/notification_service.dart';
 import 'package:upgrade/services/push_service.dart';
@@ -278,7 +277,6 @@ class AppRoutes {
   static const String sessionResultRoute = "/sessionResultRoute";
   static const String notificationSettingsRoute = "/notificationSettingsRoute";
   static const String mosaicRoute = "/mosaicRoute";
-  static const String notificationLabRoute = "/notificationLabRoute";
 
   static final List<GetPage> pages = [
     GetPage(name: searchUsersRoute, page: () => const SearchUsersScreen()),
@@ -378,10 +376,6 @@ class AppRoutes {
     GetPage(
       name: notificationSettingsRoute,
       page: () => const NotificationSettingsScreen(),
-    ),
-    GetPage(
-      name: notificationLabRoute,
-      page: () => const NotificationLabScreen(),
     ),
     GetPage(
       name: mosaicRoute,
