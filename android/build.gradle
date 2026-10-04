@@ -1,52 +1,87 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// ---- Firebase (push notifications outside the app) -------------------------
+// google-services.json is the Firebase config for package com.example.upgrade.
+// Either commit it as android/app/google-services.json, or give CI the base64 of
+// it in GOOGLE_SERVICES_JSON_BASE64. Without it the build still works, but push
+// notifications are unavailable (Firebase can't initialise).
+def gsFile = file("google-services.json")
+def gsB64 = System.getenv("GOOGLE_SERVICES_JSON_BASE64")
+if (!gsFile.exists() && gsB64 != null && !gsB64.trim().isEmpty()) {
+    gsFile.bytes = Base64.getDecoder().decode(gsB64.replaceAll("\\s", ""))
+}
+if (gsFile.exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
+
+// ---- Release signing -------------------------------------------------------
+// A fixed key is what lets a new build install OVER the old one (no uninstall).
+// The key is NOT stored in the repo: CI provides it through 4 environment
+// variables. Without them (local runs) the build falls back to the debug key.
+def mozaikKeystoreB64 = System.getenv("MOZAIK_KEYSTORE_BASE64")
+def mozaikKeystoreFile = null
+if (mozaikKeystoreB64 != null && !mozaikKeystoreB64.trim().isEmpty()) {
+    mozaikKeystoreFile = new File(layout.buildDirectory.get().asFile, "mozaik-release.jks")
+    mozaikKeystoreFile.parentFile.mkdirs()
+    mozaikKeystoreFile.bytes = Base64.getDecoder().decode(mozaikKeystoreB64.replaceAll("\\s", ""))
+}
+
+android {
+    namespace = "com.example.upgrade"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = "26.1.10909125"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.upgrade"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    signingConfigs {
+        if (mozaikKeystoreFile != null) {
+            mozaikRelease {
+                storeFile mozaikKeystoreFile
+                storePassword System.getenv("MOZAIK_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("MOZAIK_KEY_ALIAS")
+                keyPassword System.getenv("MOZAIK_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            // Fixed release key when CI provides it, debug key otherwise.
+            signingConfig = (mozaikKeystoreFile != null) ? signingConfigs.mozaikRelease : signingConfigs.debug
+        }
     }
 }
 
-rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-
-    // file_picker (11.0.0–11.0.3) ships Kotlin source but forgets to apply
-    // the Kotlin compiler plugin to itself, so its class never compiles.
-    // This has to run here, before file_picker's own build.gradle configures
-    // itself - doing it inside afterEvaluate (below) is too late and breaks
-    // Kotlin's plugin lifecycle.
-    if (project.name == "file_picker") {
-        project.apply plugin: "org.jetbrains.kotlin.android"
-    }
-
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                if (namespace == null) {
-                    namespace project.group
-                }
-            }
-        }
-        // Force every plugin (file_picker, etc.) to build with the same
-        // Java/Kotlin version as the app itself, so they stop disagreeing.
-        if (project.hasProperty('android')) {
-            project.android {
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
-                }
-            }
-        }
-        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    }
-}
-subprojects {
-    project.evaluationDependsOn(":app")
+flutter {
+    source = "../.."
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
