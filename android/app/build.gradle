@@ -5,6 +5,20 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// ---- Firebase (push notifications outside the app) -------------------------
+// google-services.json is the Firebase config for package com.example.upgrade.
+// Either commit it as android/app/google-services.json, or give CI the base64 of
+// it in GOOGLE_SERVICES_JSON_BASE64. Without it the build still works, but push
+// notifications are unavailable (Firebase can't initialise).
+def gsFile = file("google-services.json")
+def gsB64 = System.getenv("GOOGLE_SERVICES_JSON_BASE64")
+if (!gsFile.exists() && gsB64 != null && !gsB64.trim().isEmpty()) {
+    gsFile.bytes = Base64.getDecoder().decode(gsB64.replaceAll("\\s", ""))
+}
+if (gsFile.exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
+
 // ---- Release signing -------------------------------------------------------
 // A fixed key is what lets a new build install OVER the old one (no uninstall).
 // The key is NOT stored in the repo: CI provides it through 4 environment
@@ -26,10 +40,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -61,6 +71,13 @@ android {
             // Fixed release key when CI provides it, debug key otherwise.
             signingConfig = (mozaikKeystoreFile != null) ? signingConfigs.mozaikRelease : signingConfigs.debug
         }
+    }
+}
+
+// kotlinOptions{} is an error since Kotlin 2.2; compilerOptions replaces it.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
