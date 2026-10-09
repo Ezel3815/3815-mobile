@@ -893,6 +893,51 @@ class ApiController {
   /// Registers this device's push token with the backend (or clears it
   /// on logout). Silent by design — a failed sync here should never
   /// interrupt the user; NotificationService retries on next app open.
+  /// Admin: the whole cards library as a JSON string (null = failed / not admin).
+  static Future<String?> exportCardsBackup({bool includePersonal = false}) async {
+    try {
+      final response = await dio.get(
+        Api.backupCards,
+        queryParameters: {'all': includePersonal ? 1 : 0},
+        options: GetOptions.getOptions().copyWith(
+          responseType: ResponseType.plain,
+          receiveTimeout: const Duration(seconds: 180),
+        ),
+      );
+      if (response.statusCode == 200 && response.data is String) {
+        return response.data as String;
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+    return null;
+  }
+
+  /// Admin: restores a backup file's JSON text. Never deletes anything.
+  static Future<Map<String, dynamic>?> restoreCardsBackup(
+    String json, {
+    bool overwrite = false,
+  }) async {
+    try {
+      final response = await dio.post(
+        Api.backupRestore,
+        queryParameters: {'overwrite': overwrite ? 1 : 0},
+        data: jsonDecode(json),
+        options: GetOptions.getOptions().copyWith(
+          sendTimeout: const Duration(seconds: 180),
+          receiveTimeout: const Duration(seconds: 180),
+        ),
+      );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
+        return Map<String, dynamic>.from(response.data);
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+    return null;
+  }
+
   /// Asks the server to send a real push to this account after [delaySeconds]
   /// and reports what it found (Firebase configured? token saved? result).
   static Future<Map<String, dynamic>?> sendPushTest({int delaySeconds = 12}) async {
