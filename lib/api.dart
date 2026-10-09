@@ -5,6 +5,8 @@ class Api {
   static const String achievements = '$baseUrl/users/me/achievements';
   static const String quests = '$baseUrl/users/me/quests';
   static const String mosaic = '$baseUrl/users/me/mosaic';
+  static const String backupCards = '$baseUrl/backup/cards';
+  static const String backupRestore = '$baseUrl/backup/cards/restore';
   static const String pushTest = '$baseUrl/users/me/push-test';
   static const String notificationState = '$baseUrl/users/me/notification-state';
   static const String notificationEvents = '$baseUrl/users/me/notification-events';
