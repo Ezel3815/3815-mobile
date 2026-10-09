@@ -1,4 +1,5 @@
 import 'package:upgrade/strings.dart';
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/controllers/main_controller.dart';
 import 'package:upgrade/main.dart';
+import 'package:upgrade/models/user_model.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/screens/locale_controller.dart';
 import 'package:upgrade/widgets/inter_code_dialog.dart';
@@ -16,6 +18,18 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
+
+  /// Admin-only tools (backup/restore) are hidden from everyone else; the
+  /// server enforces the same rule, this only decides whether to show the item.
+  bool _isAdmin() {
+    try {
+      final raw = sharedPref.getString("user");
+      if (raw == null) return false;
+      return UserModel.fromJson(jsonDecode(raw)).role == "ADMIN";
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -236,6 +250,18 @@ class AppDrawer extends StatelessWidget {
                 thickness: 1,
                 height: 24,
               ),
+              if (_isAdmin())
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  leading: iconBadge(PhosphorIcons.cloudArrowUp(PhosphorIconsStyle.bold)),
+                  title: Text("نسخ احتياطي للبطاقات", style: itemStyle()),
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.cardsBackupRoute);
+                  },
+                ),
               ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
