@@ -46,12 +46,12 @@ class MainScreen extends GetView<MainController> {
             ),
             Icon(
               controller.page == 2
-                  ? Icons.bar_chart_rounded
-                  : Icons.bar_chart_outlined,
+                  ? Icons.emoji_events_rounded
+                  : Icons.emoji_events_outlined,
               color: controller.page == 2
                   ? Colors.white
-                  : AppColor.textSecondary,
-              size: 26,
+                  : const Color(0xFFC27F00), // gold: stands out from the rest
+              size: 28,
             ),
             Icon(
               controller.page == 3
