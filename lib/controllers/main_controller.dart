@@ -1,6 +1,7 @@
 import 'package:upgrade/controllers/feed_controller.dart';
 import 'package:upgrade/services/notification_router.dart';
 import 'package:upgrade/widgets/streak_widget_prompt.dart';
+import 'package:upgrade/widgets/study_year_prompt.dart';
 import 'package:upgrade/screens/feed_screen.dart';
 import 'package:upgrade/utils/deep_link_service.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class MainController extends GetxController {
     // on the bottom nav can be correct even before the feed tab is
     // ever opened.
     Get.put(FeedController(), permanent: true).load();
+    StudyYearPrompt.maybeShow();
     StreakWidgetPrompt.maybeShow();
     NotificationRouter.consumePending();
     super.onReady();
