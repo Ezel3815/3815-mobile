@@ -1,5 +1,5 @@
 import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
-import 'package:upgrade/widgets/study_year_prompt.dart';
+import 'package:upgrade/widgets/mossad/mossad_view.dart';
 import 'package:upgrade/widgets/quests_view.dart';
 import 'package:upgrade/strings.dart';
 import 'package:flutter/material.dart';
@@ -31,111 +31,170 @@ class ProgressScreen extends StatelessWidget {
     final controller = Get.put(ProgressController());
     final scaffoldKey = GlobalKey<ScaffoldState>();
 
-    return Scaffold(
-      key: scaffoldKey,
-      backgroundColor: AppColor.scaffoldBackgroundColor,
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
-      body: SafeArea(
-        child: TabletBounded(
-          child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
-          children: [
-            Row(
+    return Obx(() {
+      // Mossad is its own dark destination: no mosaic painting, no light theme.
+      final mossadMode = controller.tab.value == ProgressTab.mossad;
+      final headerColor =
+          mossadMode ? MossadColors.text : AppColor.textPrimary;
+
+      return Scaffold(
+        key: scaffoldKey,
+        backgroundColor:
+            mossadMode ? MossadColors.bg : AppColor.scaffoldBackgroundColor,
+        drawer: const AppDrawer(),
+        drawerEnableOpenDragGesture: false,
+        body: SafeArea(
+          child: TabletBounded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
               children: [
-                InkWell(
-                  onTap: () => scaffoldKey.currentState?.openDrawer(),
-                  child: const Icon(
-                    Icons.dehaze,
-                    size: 26,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Text(
-                  AppStrings.navProgress,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            const MosaicHeroCard(),
-            const SizedBox(height: 18),
-            Obx(
-              () => Row(
-                children: [
-                  Expanded(
-                    child: _TabPill(
-                      label: AppStrings.tasks,
-                      selected:
-                          controller.tab.value == ProgressTab.achievements,
-                      onTap: () =>
-                          controller.tab.value = ProgressTab.achievements,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _TabPill(
-                      label: AppStrings.statistics,
-                      selected: controller.tab.value == ProgressTab.statistics,
-                      onTap: () =>
-                          controller.tab.value = ProgressTab.statistics,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _TabPill(
-                      label: AppStrings.leaderboard,
-                      selected: controller.tab.value == ProgressTab.leaderboard,
-                      onTap: () =>
-                          controller.tab.value = ProgressTab.leaderboard,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _TabPill(
-                      label: kMossadName,
-                      selected: controller.tab.value == ProgressTab.mossad,
-                      onTap: () => controller.tab.value = ProgressTab.mossad,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Obx(() {
-              if (controller.tab.value == ProgressTab.achievements) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    QuestsBody(controller: controller),
-                    const SizedBox(height: 28),
-                    Text(
-                      AppStrings.achievements,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColor.textPrimary,
+                    InkWell(
+                      onTap: () => scaffoldKey.currentState?.openDrawer(),
+                      child: Icon(
+                        Icons.dehaze,
+                        size: 26,
+                        color: headerColor,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _AchievementsBody(controller: controller),
+                    const SizedBox(width: 14),
+                    Text(
+                      AppStrings.navProgress,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: headerColor,
+                      ),
+                    ),
                   ],
-                );
-              }
-              if (controller.tab.value == ProgressTab.leaderboard) {
-                return _LeaderboardBody(controller: controller);
-              }
-              if (controller.tab.value == ProgressTab.mossad) {
-                return _MossadBody(controller: controller);
-              }
-              return _StatisticsBody(controller: controller);
-            }),
-          ],
+                ),
+                const SizedBox(height: 18),
+                if (!mossadMode) ...[
+                  const MosaicHeroCard(),
+                  const SizedBox(height: 18),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _MossadPill(
+                        selected: mossadMode,
+                        onTap: () => controller.tab.value = ProgressTab.mossad,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: _TabPill(
+                        label: AppStrings.tasks,
+                        dark: mossadMode,
+                        selected:
+                            controller.tab.value == ProgressTab.achievements,
+                        onTap: () =>
+                            controller.tab.value = ProgressTab.achievements,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: _TabPill(
+                        label: AppStrings.statistics,
+                        dark: mossadMode,
+                        selected:
+                            controller.tab.value == ProgressTab.statistics,
+                        onTap: () =>
+                            controller.tab.value = ProgressTab.statistics,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: _TabPill(
+                        label: AppStrings.leaderboard,
+                        dark: mossadMode,
+                        selected:
+                            controller.tab.value == ProgressTab.leaderboard,
+                        onTap: () =>
+                            controller.tab.value = ProgressTab.leaderboard,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                if (controller.tab.value == ProgressTab.achievements)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      QuestsBody(controller: controller),
+                      const SizedBox(height: 28),
+                      Text(
+                        AppStrings.achievements,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _AchievementsBody(controller: controller),
+                    ],
+                  )
+                else if (controller.tab.value == ProgressTab.leaderboard)
+                  _LeaderboardBody(controller: controller)
+                else if (mossadMode)
+                  MossadView(controller: controller)
+                else
+                  _StatisticsBody(controller: controller),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool dark;
+  final VoidCallback onTap;
+  const _TabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.dark = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg = selected
+        ? AppColor.greenColor
+        : (dark ? MossadColors.surface : AppColor.surfaceColor);
+    final Color fg = selected
+        ? Colors.white
+        : (dark ? MossadColors.muted : AppColor.textSecondary);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: fg,
+            ),
           ),
         ),
       ),
@@ -143,15 +202,12 @@ class ProgressScreen extends StatelessWidget {
   }
 }
 
-class _TabPill extends StatelessWidget {
-  final String label;
+/// The Mossad entry point: always dark + neon with a gold trophy so it stands
+/// out from the ordinary pills, whichever tab is selected.
+class _MossadPill extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
-  const _TabPill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _MossadPill({required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -159,18 +215,48 @@ class _TabPill extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColor.greenColor : AppColor.surfaceColor,
+          gradient: selected
+              ? const LinearGradient(
+                  colors: [MossadColors.neon, MossadColors.neonDeep],
+                )
+              : null,
+          color: selected ? null : MossadColors.bg,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: MossadColors.neon,
+            width: selected ? 0 : 1.4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: MossadColors.neon.withOpacity(selected ? 0.45 : 0.28),
+              blurRadius: selected ? 14 : 10,
+            ),
+          ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : AppColor.textSecondary,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.emoji_events_rounded,
+                size: 18,
+                color: selected ? MossadColors.neonInk : MossadColors.gold,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                kMossadName,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? MossadColors.neonInk : MossadColors.neon,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -284,65 +370,6 @@ class _AchievementsBody extends StatelessWidget {
 
 /// Name of the open preparatory-year competition (single place to rename it).
 const String kMossadName = "Mossad";
-
-class _MossadBody extends StatelessWidget {
-  final ProgressController controller;
-  const _MossadBody({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final data = controller.mossad.value;
-      if (data == null && controller.mossadLoading.value) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 60),
-          child: Center(child: CircularProgressIndicator(color: AppColor.greenColor)),
-        );
-      }
-      if (data == null) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 40),
-          child: Center(child: Text("تعذّر تحميل الترتيب. اسحب للتحديث أو حاول لاحقًا.")),
-        );
-      }
-      if (!data.inMossad) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 12),
-          child: Column(
-            children: [
-              Text(
-                "$kMossadName مسابقة مفتوحة لطلاب السنة التحضيرية.\nهناك ${data.total} مشارك حاليًا.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColor.textSecondary, height: 1.6),
-              ),
-              const SizedBox(height: 14),
-              OutlinedButton(
-                onPressed: () async {
-                  await StudyYearPrompt.choose();
-                  controller.loadMossad();
-                },
-                child: const Text("اختيار سنتي الدراسية"),
-              ),
-            ],
-          ),
-        );
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              "${data.total} طالب في $kMossadName — الترتيب حسب النقاط",
-              style: const TextStyle(fontSize: 12, color: AppColor.textSecondary),
-            ),
-          ),
-          _LeaderboardRows(entries: data.entries, useServerRank: true),
-        ],
-      );
-    });
-  }
-}
 
 class _LeaderboardBody extends StatelessWidget {
   final ProgressController controller;
