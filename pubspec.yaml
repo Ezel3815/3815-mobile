@@ -115,6 +115,7 @@ flutter:
     - lib/assests/streak/
     - lib/assests/brand/
     - lib/assests/onboarding/
+    - lib/assests/mossad/
     - lib/assests/mosaic/garden-by-the-sea/
     - lib/assests/mosaic/garden-by-the-sea/pieces/
 
