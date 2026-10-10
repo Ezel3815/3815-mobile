@@ -7,6 +7,8 @@ class Api {
   static const String mosaic = '$baseUrl/users/me/mosaic';
   static const String backupCards = '$baseUrl/backup/cards';
   static const String backupRestore = '$baseUrl/backup/cards/restore';
+  static const String mossad = '$baseUrl/users/mossad';
+  static const String studyYear = '$baseUrl/users/me/study-year';
   static const String pushTest = '$baseUrl/users/me/push-test';
   static const String notificationState = '$baseUrl/users/me/notification-state';
   static const String notificationEvents = '$baseUrl/users/me/notification-events';
