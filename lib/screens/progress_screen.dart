@@ -1,4 +1,5 @@
 import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
+import 'package:upgrade/widgets/study_year_prompt.dart';
 import 'package:upgrade/widgets/quests_view.dart';
 import 'package:upgrade/strings.dart';
 import 'package:flutter/material.dart';
@@ -94,6 +95,14 @@ class ProgressScreen extends StatelessWidget {
                           controller.tab.value = ProgressTab.leaderboard,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _TabPill(
+                      label: kMossadName,
+                      selected: controller.tab.value == ProgressTab.mossad,
+                      onTap: () => controller.tab.value = ProgressTab.mossad,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -120,6 +129,9 @@ class ProgressScreen extends StatelessWidget {
               }
               if (controller.tab.value == ProgressTab.leaderboard) {
                 return _LeaderboardBody(controller: controller);
+              }
+              if (controller.tab.value == ProgressTab.mossad) {
+                return _MossadBody(controller: controller);
               }
               return _StatisticsBody(controller: controller);
             }),
@@ -270,6 +282,68 @@ class _AchievementsBody extends StatelessWidget {
   }
 }
 
+/// Name of the open preparatory-year competition (single place to rename it).
+const String kMossadName = "Mossad";
+
+class _MossadBody extends StatelessWidget {
+  final ProgressController controller;
+  const _MossadBody({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final data = controller.mossad.value;
+      if (data == null && controller.mossadLoading.value) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 60),
+          child: Center(child: CircularProgressIndicator(color: AppColor.greenColor)),
+        );
+      }
+      if (data == null) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: Text("تعذّر تحميل الترتيب. اسحب للتحديث أو حاول لاحقًا.")),
+        );
+      }
+      if (!data.inMossad) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 12),
+          child: Column(
+            children: [
+              Text(
+                "$kMossadName مسابقة مفتوحة لطلاب السنة التحضيرية.\nهناك ${data.total} مشارك حاليًا.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColor.textSecondary, height: 1.6),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton(
+                onPressed: () async {
+                  await StudyYearPrompt.choose();
+                  controller.loadMossad();
+                },
+                child: const Text("اختيار سنتي الدراسية"),
+              ),
+            ],
+          ),
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              "${data.total} طالب في $kMossadName — الترتيب حسب النقاط",
+              style: const TextStyle(fontSize: 12, color: AppColor.textSecondary),
+            ),
+          ),
+          _LeaderboardRows(entries: data.entries, useServerRank: true),
+        ],
+      );
+    });
+  }
+}
+
 class _LeaderboardBody extends StatelessWidget {
   final ProgressController controller;
   const _LeaderboardBody({required this.controller});
@@ -298,6 +372,20 @@ class _LeaderboardBody extends StatelessWidget {
           ),
         );
       }
+      return _LeaderboardRows(entries: entries.toList());
+    });
+  }
+}
+
+class _LeaderboardRows extends StatelessWidget {
+  final List<LeaderboardEntry> entries;
+  /// Mossad rows carry their real rank (the caller may be below the top 50).
+  final bool useServerRank;
+  const _LeaderboardRows({required this.entries, this.useServerRank = false});
+
+  @override
+  Widget build(BuildContext context) {
+    {
       return Column(
         children: List.generate(entries.length, (index) {
           final entry = entries[index];
@@ -327,7 +415,7 @@ class _LeaderboardBody extends StatelessWidget {
                 SizedBox(
                   width: 24,
                   child: Text(
-                    "${index + 1}",
+                    "${useServerRank ? (entry.rank ?? index + 1) : index + 1}",
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -399,7 +487,7 @@ class _LeaderboardBody extends StatelessWidget {
           );
         }),
       );
-    });
+    }
   }
 }
 
