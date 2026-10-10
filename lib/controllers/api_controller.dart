@@ -70,7 +70,8 @@ class ApiController {
      /// Returns null on success (or after showing an error), or
   /// 'username_taken' so the form can flag the username field itself.
   static Future<String?> register(String name, String username, String email,
-      String password, BuildContext context) async {
+      String password, BuildContext context,
+      {String? studyYear}) async {
     try {
       final response = await dio.post(
         Api.register,
@@ -79,6 +80,7 @@ class ApiController {
           'username': username.trim().toLowerCase(),
           'email': email,
           'password': password,
+          if (studyYear != null) 'study_year': studyYear,
         },
       );
       if (response.statusCode == 201) {
@@ -1316,6 +1318,44 @@ class ApiController {
       }
     }
     return [];
+  }
+
+  /// "Mossad" ranking (null = failed; the caller keeps what it had).
+  static Future<MossadData?> getMossad() async {
+    try {
+      final response = await dio.get(Api.mossad, options: GetOptions.getOptions());
+      if (response.statusCode == 200 && response.data is Map) {
+        return MossadData.fromJson(Map<String, dynamic>.from(response.data));
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+    return null;
+  }
+
+  /// null = couldn't reach the server; '' = reachable but no year chosen yet.
+  static Future<String?> getStudyYear() async {
+    try {
+      final response = await dio.get(Api.studyYear, options: GetOptions.getOptions());
+      if (response.statusCode == 200 && response.data is Map) {
+        return (response.data['study_year'] ?? '') as String;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Future<bool> setStudyYear(String year) async {
+    try {
+      final response = await dio.put(
+        Api.studyYear,
+        data: {'study_year': year},
+        options: GetOptions.getOptions(),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      log(e.toString());
+      return false;
+    }
   }
 
     static Future<List<LeaderboardEntry>> getLeaderboard() async {
