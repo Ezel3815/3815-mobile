@@ -26,6 +26,8 @@ class _RegisterState extends State<Register> {
   bool? usernameAvailable; // null = unknown
   bool checkingUsername = false;
   bool serverRejected = false;
+  String? studyYear; // PREPARATORY | OTHER
+  bool yearError = false;
 
   @override
   void dispose() {
@@ -95,6 +97,74 @@ class _RegisterState extends State<Register> {
         color: AppColor.textSecondary,
       ),
       onPressed: () => setState(() => hidePassword = !hidePassword),
+    );
+  }
+
+  /// "What is your study year?" — preparatory-year students join the Mossad
+  /// competition. Required, so every new account carries a year tag.
+  Widget _yearPicker() {
+    Widget chip(String value, String label) {
+      final selected = studyYear == value;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() {
+            studyYear = value;
+            yearError = false;
+          }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: BoxDecoration(
+              color: selected ? AppColor.darkGreenColor : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected
+                    ? AppColor.darkGreenColor
+                    : (yearError ? Colors.red : AppColor.disabledColor),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? Colors.white : AppColor.darkGreenColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "ما سنتك الدراسية؟",
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            chip('PREPARATORY', 'السنة التحضيرية'),
+            const SizedBox(width: 10),
+            chip('OTHER', 'سنة أخرى'),
+          ],
+        ),
+        if (yearError)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text("اختر سنتك الدراسية للمتابعة",
+                style: TextStyle(color: Colors.red, fontSize: 12)),
+          ),
+        const SizedBox(height: 4),
+        const Text(
+          "طلاب السنة التحضيرية يدخلون مسابقة Mossad تلقائيًا.",
+          style: TextStyle(fontSize: 11.5, color: AppColor.textSecondary),
+        ),
+      ],
     );
   }
 
@@ -338,6 +408,8 @@ class _RegisterState extends State<Register> {
                                       suffix: _eyeButton(),
                                     ),
                                   ),
+                                  const SizedBox(height: 16),
+                                  _yearPicker(),
                                   const SizedBox(height: 20),
                                   SizedBox(
                                     height: 54,
@@ -360,6 +432,10 @@ class _RegisterState extends State<Register> {
                                           : () async {
                                               if (_formKey1.currentState!
                                                   .validate()) {
+                                                if (studyYear == null) {
+                                                  setState(() => yearError = true);
+                                                  return;
+                                                }
                                                 setState(() {
                                                   isLoading = true;
                                                 });
@@ -391,7 +467,8 @@ class _RegisterState extends State<Register> {
                                                                 .text,
                                                             passwordController
                                                                 .text,
-                                                            context);
+                                                            context,
+                                                            studyYear: studyYear);
                                                 if (mounted) {
                                                   setState(() {
                                                     isLoading = false;
