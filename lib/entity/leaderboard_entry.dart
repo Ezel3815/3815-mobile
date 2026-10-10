@@ -6,6 +6,8 @@ class LeaderboardEntry {
   final int xp;
   final int level;
   final bool isMe;
+  /// Server-side position (Mossad only; null for the friends leaderboard).
+  final int? rank;
 
   LeaderboardEntry({
     required this.id,
@@ -15,6 +17,7 @@ class LeaderboardEntry {
     required this.xp,
     required this.level,
     required this.isMe,
+    this.rank,
   });
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
@@ -26,8 +29,25 @@ class LeaderboardEntry {
       xp: json['xp'] ?? 0,
       level: json['level'] ?? 1,
       isMe: json['isMe'] ?? false,
+      rank: json['rank'],
     );
   }
 
   String? get avatarPhotoName => avatarHair;
+}
+
+/// The "Mossad" competition: every preparatory-year student, ranked by XP.
+class MossadData {
+  final bool inMossad; // is the signed-in user part of the competition?
+  final int total;
+  final List<LeaderboardEntry> entries;
+  const MossadData({required this.inMossad, required this.total, required this.entries});
+
+  factory MossadData.fromJson(Map<String, dynamic> json) => MossadData(
+        inMossad: json['in_mossad'] ?? false,
+        total: json['total'] ?? 0,
+        entries: ((json['entries'] ?? []) as List)
+            .map((e) => LeaderboardEntry.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+      );
 }
