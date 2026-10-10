@@ -22,7 +22,7 @@ class SubjectProgress {
   double get mastery => totalCards == 0 ? 0 : masteredCards / totalCards;
 }
 
-enum ProgressTab { statistics, leaderboard, achievements }
+enum ProgressTab { statistics, leaderboard, achievements, mossad }
 
 class ProgressController extends GetxController {
   final yearsController = Get.find<YearsController>();
@@ -31,6 +31,17 @@ class ProgressController extends GetxController {
 
   final RxList<LeaderboardEntry> leaderboard = <LeaderboardEntry>[].obs;
   final RxBool leaderboardLoading = false.obs;
+
+  /// "Mossad" — the open competition between all preparatory-year students.
+  final Rxn<MossadData> mossad = Rxn<MossadData>();
+  final RxBool mossadLoading = false.obs;
+
+  Future<void> loadMossad() async {
+    mossadLoading.value = true;
+    final data = await ApiController.getMossad();
+    if (data != null) mossad.value = data; // keep the old ranking on failure
+    mossadLoading.value = false;
+  }
 
   Future<void> loadLeaderboard() async {
     leaderboardLoading.value = true;
@@ -85,6 +96,7 @@ class ProgressController extends GetxController {
     if (xp != null) {
       await loadQuests();
       loadLeaderboard();
+      loadMossad();
     }
     return xp;
   }
@@ -101,6 +113,7 @@ class ProgressController extends GetxController {
   @override
   void onInit() {
     loadLeaderboard();
+    loadMossad();
     loadAchievements();
     loadQuests();
     super.onInit();
