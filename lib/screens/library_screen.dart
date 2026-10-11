@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:upgrade/controllers/library_controller.dart';
+import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/entity/deck_entity.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
@@ -287,6 +288,12 @@ class _FilterPill extends StatelessWidget {
   }
 }
 
+/// Every card inside a deck, however deeply it is nested.
+List<CardEntity> _allCardsIn(DeckEntity deck) {
+  if (deck.type == "CARDS_DECK") return deck.cards;
+  return deck.children.expand(_allCardsIn).toList();
+}
+
 class _SubjectCard extends StatelessWidget {
   final DeckEntity subject;
   final Color accentColor;
@@ -297,9 +304,7 @@ class _SubjectCard extends StatelessWidget {
     // Subjects are folders (PACKAGE_DECK) — their cards live on their
     // chapter children, not on the subject node itself.
     final isCardsDeck = subject.type == "CARDS_DECK";
-    final allCards = isCardsDeck
-        ? subject.cards
-        : subject.children.expand((c) => c.cards).toList();
+    final allCards = _allCardsIn(subject);
     final total = allCards.length;
     final answered =
         allCards.where((c) => c.answer.isNotEmpty && c.answer != "NONE").length;
