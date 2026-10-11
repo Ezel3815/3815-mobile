@@ -60,6 +60,33 @@ class LibraryController extends GetxController {
     return result;
   }
 
+  /// What the Library lists for the given top-level decks (the "years").
+  /// Every deck assigned DIRECTLY to a year is one item — whether it is a
+  /// package or a cards deck — and everything inside it is reached by
+  /// opening it. (Before, nested packages were flattened, so a topic
+  /// inside a deck showed up next to that deck instead of inside it.)
+  List<DeckEntity> _itemsOfYears(List<DeckEntity> years) {
+    final result = <DeckEntity>[];
+    for (final year in years) {
+      if (year.type != "PACKAGE_DECK") continue;
+      final hasSubPackage = year.children.any((c) => c.type == "PACKAGE_DECK");
+      final hasChapters = year.children.any((c) => c.type == "CARDS_DECK");
+      // A top-level package that only holds chapters is itself the subject.
+      if (!hasSubPackage && hasChapters) {
+        result.add(year);
+        continue;
+      }
+      // A locked year comes back from the server with no children;
+      // still list it (marked locked) instead of hiding it.
+      if (year.children.isEmpty) {
+        if (year.locked) result.add(year);
+        continue;
+      }
+      result.addAll(year.children);
+    }
+    return result;
+  }
+
   List<DeckEntity> get _createdDecks => yearsController.decks
       .where((d) => !d.byAdmin && d.editable && d.type == "CARDS_DECK")
       .toList();
@@ -70,7 +97,7 @@ class LibraryController extends GetxController {
         : yearsController.decks
             .where((d) => d.id == selectedYearId.value)
             .toList();
-    var subjects = _collectSubjects(roots);
+    var subjects = _itemsOfYears(roots);
 
     switch (filter.value) {
       case LibraryFilter.mine:
