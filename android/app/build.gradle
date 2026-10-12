@@ -31,6 +31,13 @@ if (mozaikKeystoreB64 != null && !mozaikKeystoreB64.trim().isEmpty()) {
     mozaikKeystoreFile.bytes = Base64.getDecoder().decode(mozaikKeystoreB64.replaceAll("\\s", ""))
 }
 
+// Shows up in the build log so you can tell which key signed the APK.
+if (mozaikKeystoreFile != null) {
+    println "MOZAIK SIGNING: using the fixed RELEASE key (updates install over the previous build)"
+} else {
+    println "MOZAIK SIGNING: WARNING - key variables missing, using the DEBUG key (this APK cannot update an app signed with another key)"
+}
+
 android {
     namespace = "com.example.upgrade"
     compileSdk = flutter.compileSdkVersion
