@@ -646,6 +646,20 @@ class ApiController {
         Api.getCards(id),
         options: GetOptions.getOptions(),
       );
+      // The server answers with a JSON object (not a list) when it refuses the
+      // request, e.g. 403 "no access to this deck". Report that — never try to
+      // read it as cards, and never fall back to old local cards in that case.
+      if (response.data is! List) {
+        final status = response.statusCode ?? 0;
+        final serverMessage = response.data is Map
+            ? (response.data['message'] ?? '').toString()
+            : '';
+        lastCardsError = status == 403
+            ? 'ليس لديك صلاحية لفتح هذا الدرس. أدخل رمز الوصول (الكود) الخاص به أولًا.'
+            : (serverMessage.isNotEmpty ? serverMessage : 'تعذّر تحميل بطاقات هذا الدرس (رمز $status)');
+        log('fetchCards($id) refused: $status $serverMessage');
+        return null;
+      }
       final List<dynamic> json = response.data;
       final data = json.map((e) => CardModel.fromJson(e).toDomain()).toList();
       await _appLocalDataSource.setCardEntityToLocal(data, id);
