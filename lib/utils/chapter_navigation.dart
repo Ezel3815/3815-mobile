@@ -16,15 +16,6 @@ Future<void> openChapter(DeckEntity chapter) async {
     Get.toNamed(AppRoutes.cardRoute, arguments: chapter);
     return;
   }
-  // Locked by the server (needs an access code, or the previous lesson isn't
-  // finished): say so instead of calling the server and failing.
-  if (chapter.locked) {
-    showSnackBarWidget(
-      message:
-          'هذا الدرس مقفل. أنهِ الدرس السابق أو أدخل رمز الوصول الخاص بالمادة لفتحه.',
-    );
-    return;
-  }
   Get.dialog(
     const _OpeningDeckLoader(),
     barrierDismissible: false,
