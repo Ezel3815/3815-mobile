@@ -655,7 +655,7 @@ class ApiController {
             ? (response.data['message'] ?? '').toString()
             : '';
         lastCardsError = status == 403
-            ? 'ليس لديك صلاحية لفتح هذا الدرس. أدخل رمز الوصول (الكود) الخاص به أولًا.'
+            ? 'ليس لديك صلاحية لفتح هذا الدرس. $serverMessage'
             : (serverMessage.isNotEmpty ? serverMessage : 'تعذّر تحميل بطاقات هذا الدرس (رمز $status)');
         log('fetchCards($id) refused: $status $serverMessage');
         return null;
