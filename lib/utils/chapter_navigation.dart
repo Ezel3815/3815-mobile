@@ -5,6 +5,7 @@ import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/entity/deck_entity.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
+import 'package:upgrade/services/resume_position.dart';
 import 'package:upgrade/widgets/app_snack_bar.dart';
 
 /// Regular users tapping a chapter land directly in study mode. The deck
@@ -37,12 +38,19 @@ Future<void> openChapter(DeckEntity chapter) async {
     showSnackBarWidget(message: "لا توجد بطاقات في هذا الدرس");
     return;
   }
+  // Continue where the student stopped last time (card 1 on a first visit or
+  // after finishing the deck).
+  final start = ResumePosition.indexFor(chapter.id, cards.map((c) => c.id).toList());
+  if (start > 0) {
+    showSnackBarWidget(message: "نكمل من حيث توقفت: البطاقة ${start + 1} من ${cards.length}");
+  }
   Get.toNamed(
     AppRoutes.cardViewRoute,
     arguments: {
       "cards": cards,
       "isView": false,
-      "initalIndex": 0,
+      "initalIndex": start,
+      "resume": true, // only full-deck sessions record the position
     },
   );
 }
