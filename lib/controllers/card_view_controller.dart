@@ -1,4 +1,5 @@
 import 'package:upgrade/controllers/progress_controller.dart';
+import 'package:upgrade/services/resume_position.dart';
 import 'package:upgrade/services/streak_widget_service.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -140,9 +141,13 @@ class CardViewController extends GetxController {
   /// been awaited, so it can never fire before that card's pieces (if any)
   /// have been collected — that ordering is what actually prevents the
   /// race, rather than any timing/delay workaround.
+  int? _resumeDeckId;
+
   void _finishSession() {
     if (_sessionFinished) return;
     _sessionFinished = true;
+    // Deck finished: the next visit starts from card 1 again.
+    if (_resumeDeckId != null) ResumePosition.clear(_resumeDeckId!);
     _goToSessionResult();
     _refreshAfterSession();
   }
@@ -411,6 +416,17 @@ class CardViewController extends GetxController {
     if (!isView) NotificationService.instance.onSessionStarted();
     pageViewIndex = Get.arguments['initalIndex'];
     pageController = PageController(initialPage: pageViewIndex);
+    // Remember the card the student is on, so leaving and coming back continues
+    // here. Only for a normal full-deck session (not mistakes review / editing).
+    if (!isView && Get.arguments['resume'] == true && cards.isNotEmpty) {
+      _resumeDeckId = cards.first.deckId;
+      ResumePosition.save(_resumeDeckId!, cards[pageViewIndex].id);
+      ever(_pageViewIndex, (int i) {
+        if (i >= 0 && i < cards.length) {
+          ResumePosition.save(_resumeDeckId!, cards[i].id);
+        }
+      });
+    }
     if (cards[pageViewIndex].type == "OCCLUSION") {
       getOCCData();
     }
