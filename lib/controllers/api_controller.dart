@@ -428,7 +428,8 @@ class ApiController {
           }
 
           final data = list.map((e) => e.toDomain()).toList();
-          await _appLocalDataSource.setDeckEntityToLocal(data);
+          // Don't block the UI on the offline-cache write.
+          _appLocalDataSource.setDeckEntityToLocal(data).catchError((_) {});
 
           return data;
         } else {
@@ -482,7 +483,7 @@ class ApiController {
             }
           }
           final data = list.map((e) => e.toDomain()).toList();
-          await _appLocalDataSource.setMyDeckEntityToLocal(data);
+          _appLocalDataSource.setMyDeckEntityToLocal(data).catchError((_) {});
           return data;
         } else {
           lastMyDecksFailed = true;
