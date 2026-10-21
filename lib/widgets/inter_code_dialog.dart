@@ -9,6 +9,38 @@ class InterCodeDialog extends GetView<InterCodeController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => InterCodeController());
+    return Obx(() => controller.success.value ? _successView() : _form());
+  }
+
+  Widget _successView() {
+    return Dialog(
+      backgroundColor: AppColor.surfaceColor,
+      surfaceTintColor: AppColor.surfaceColor,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      child: const Padding(
+        padding: EdgeInsets.fromLTRB(22, 32, 22, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_rounded,
+                color: AppColor.greenColor, size: 84),
+            SizedBox(height: 14),
+            Text(
+              "Code activated!",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _form() {
     return Dialog(
       backgroundColor: AppColor.surfaceColor,
       surfaceTintColor: AppColor.surfaceColor,
