@@ -27,14 +27,10 @@ class InterCodeController extends GetxController {
       loading = true;
       final ok = await ApiController.enterCode(codeController.text.trim());
       if (ok) {
-        // Reload the decks BEFORE closing so the new subject is already
-        // there when the user lands back on the app (no restart needed).
-        // Always refresh, whether or not the dialog is still open.
-        try {
-          await yearsController.getAllDeck();
-        } catch (_) {}
-        success.value = true; // show the tick
-        await Future.delayed(const Duration(milliseconds: 1200));
+        // Show the tick immediately, refresh the decks in the background.
+        success.value = true;
+        yearsController.getAllDeck().catchError((_) {});
+        await Future.delayed(const Duration(milliseconds: 700));
         if (Get.isDialogOpen == true) Get.back();
         reset();
       }
