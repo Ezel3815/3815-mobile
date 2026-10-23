@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:upgrade/controllers/card_controller.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
+import 'package:upgrade/screens/ai_scan/ai_scan.dart';
 import 'package:upgrade/screens/app_drawer.dart';
 import 'package:upgrade/widgets/card_widget.dart';
 import 'package:upgrade/widgets/edit_deck_dialog.dart';
@@ -30,12 +31,17 @@ class CardScreen extends GetView<CardController> {
               backgroundColor: AppColor.greenColor,
               elevation: 3,
               onPressed: () {
-                Get.toNamed(
-                  AppRoutes.addCardRoute,
-                  arguments: {
-                    "id": controller.deck.id,
-                    "isEdit": false,
-                  },
+                AiScan.showAddMenu(
+                  context: context,
+                  deckId: controller.deck.id,
+                  onDeckChanged: () => controller.getCard(),
+                  onManual: () => Get.toNamed(
+                    AppRoutes.addCardRoute,
+                    arguments: {
+                      "id": controller.deck.id,
+                      "isEdit": false,
+                    },
+                  ),
                 );
               },
               child: const Icon(
