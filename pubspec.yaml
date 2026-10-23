@@ -41,6 +41,7 @@ dependencies:
   smooth_page_indicator: ^1.0.0+2
   curved_navigation_bar:
   image_picker:
+  camera: ^0.11.0+2
   shared_preferences:
   dio: ^5.8.0+1
   flutter_svg: ^2.0.17
@@ -116,6 +117,7 @@ flutter:
     - lib/assests/brand/
     - lib/assests/onboarding/
     - lib/assests/mossad/
+    - lib/assests/ai_scan/
     - lib/assests/mosaic/garden-by-the-sea/
     - lib/assests/mosaic/garden-by-the-sea/pieces/
 
