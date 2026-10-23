@@ -7,7 +7,8 @@ class AiStr {
 
   // entry sheet on the deck's "+" button
   static String get addManual => _t('إضافة بطاقة يدويًا', 'Add a card manually');
-  static String get addWithAi => _t('إنشاء بالذكاء الاصطناعي من صورة', 'Create from a photo with AI');
+  static String get newDeck => _t('إنشاء مجموعة جديدة', 'Create a new deck');
+  static String get addWithAi => _t('إنشاء بطاقات بالذكاء الاصطناعي من صورة', 'Create cards from a photo with AI');
 
   // window 2
   static String get createTitle => _t('إنشاء بالذكاء الاصطناعي', 'Create with AI');
