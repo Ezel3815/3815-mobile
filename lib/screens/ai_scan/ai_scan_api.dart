@@ -38,12 +38,13 @@ class ScanResult {
   final bool mcq;
   final List<FlashItem> cards;
   final List<McqItem> questions;
-  final int? quizId;
+  final int? quizId, savedDeckId;
   ScanResult(Map j)
       : mcq = j['mode'] == 'mcq',
         cards = j['mode'] == 'mcq' ? [] : (j['items'] as List).map((e) => FlashItem(e)).toList(),
         questions = j['mode'] == 'mcq' ? (j['items'] as List).map((e) => McqItem(e)).toList() : [],
-        quizId = j['quiz_id'];
+        quizId = j['quiz_id'],
+        savedDeckId = j['saved_to_deck'];
 }
 
 /// Thrown when the free tries are used up (HTTP 402).
@@ -107,12 +108,13 @@ class AiScanApi {
   Future<Plans> plans() => _guard(() async => Plans(_ok(await _d.get('/ai/plans', options: _o))));
 
   /// [mcq]: quiz (saved on the server when [title] is given) or flashcards (saved into [deckId] when given).
-  Future<ScanResult> scan(List<File> images, {required bool mcq, int count = 10, int? deckId, String? title}) => _guard(() async {
+  Future<ScanResult> scan(List<File> images, {required bool mcq, int count = 10, int? deckId, String? title, String? deckTitle}) => _guard(() async {
         final form = FormData()
           ..fields.add(MapEntry('mode', mcq ? 'mcq' : 'flashcards'))
           ..fields.add(MapEntry('count', '$count'));
         if (deckId != null && !mcq) form.fields.add(MapEntry('deck_id', '$deckId'));
         if (title != null) form.fields.add(MapEntry('title', title));
+        if (deckTitle != null && deckId == null && !mcq) form.fields.add(MapEntry('deck_title', deckTitle));
         for (final f in images) {
           form.files.add(MapEntry('images', await MultipartFile.fromFile(f.path, filename: f.path.split('/').last, contentType: DioMediaType.parse(_mime(f.path)))));
         }
