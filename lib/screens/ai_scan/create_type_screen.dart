@@ -42,7 +42,7 @@ class CreateTypeScreen extends StatelessWidget {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 aiSvg('w02_info_circle.svg', w: 16, h: 16),
                 const SizedBox(width: 6),
-                Flexible(child: Text(AiStr.clearPhotoTip, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage))),
+                Flexible(child: Text(AiStr.clearPhotoTip, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage))),
               ]),
             ]),
           ),
@@ -64,7 +64,7 @@ class _OptionCard extends StatelessWidget {
             color: AiC.card,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: AiC.line),
-            boxShadow: [BoxShadow(color: AiC.forest.withOpacity(.06), blurRadius: 18, offset: const Offset(0, 6))],
+            boxShadow: [BoxShadow(color: AiC.shadow, blurRadius: 18, offset: const Offset(0, 6))],
           ),
           child: Row(children: [
             aiSvg(icon, w: 92, h: 70),
@@ -73,7 +73,7 @@ class _OptionCard extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(title, style: aiCardTitle),
                 const SizedBox(height: 4),
-                Text(sub, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage, height: 1.5)),
+                Text(sub, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage, height: 1.5)),
               ]),
             ),
             // chevron points to the end of the row: left in Arabic (RTL), right in English
