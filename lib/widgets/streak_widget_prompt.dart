@@ -45,7 +45,7 @@ class _PromptSheet extends StatelessWidget {
             children: [
               Image.asset('lib/assests/brand/mozaik_emblem.png', height: 96),
               const SizedBox(height: 16),
-              const Text('لا تفقد سلسلة إنجازاتك!',
+              Text('لا تفقد سلسلة إنجازاتك!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 22,
