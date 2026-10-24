@@ -301,7 +301,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(color: AppColor.card.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   const Icon(Icons.extension_rounded, size: 14, color: _gold),
                   const SizedBox(width: 6),
@@ -338,14 +338,14 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
         Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.10), borderRadius: BorderRadius.circular(20), border: Border.all(color: _gold.withOpacity(0.3))),
+          decoration: BoxDecoration(color: AppColor.card.withOpacity(0.10), borderRadius: BorderRadius.circular(20), border: Border.all(color: _gold.withOpacity(0.3))),
           child: Row(children: [
             Container(
               width: 44,
               height: 44,
               padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: geo == null ? const Icon(Icons.eco_rounded, color: AppColor.greenColor) : Image.asset(geo.assetPath, fit: BoxFit.contain),
+              decoration: BoxDecoration(color: AppColor.card, shape: BoxShape.circle),
+              child: geo == null ? Icon(Icons.eco_rounded, color: AppColor.greenColor) : Image.asset(geo.assetPath, fit: BoxFit.contain),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -395,21 +395,21 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
               height: 88,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.card,
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: _forest.withOpacity(0.12), blurRadius: 18, offset: const Offset(0, 6))],
               ),
-              child: lastAsset == null ? const Icon(Icons.eco_rounded, color: AppColor.greenColor, size: 40) : Image.asset(lastAsset, fit: BoxFit.contain),
+              child: lastAsset == null ? Icon(Icons.eco_rounded, color: AppColor.greenColor, size: 40) : Image.asset(lastAsset, fit: BoxFit.contain),
             ),
             const SizedBox(height: 20),
             const Text("Keep going!", style: TextStyle(fontFamily: _serif, fontSize: 34, fontWeight: FontWeight.w700, color: _forest)),
             const SizedBox(height: 8),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 44),
               child: Text("Each day brings you closer to completing your masterpiece.", textAlign: TextAlign.center, style: TextStyle(fontFamily: _serif, fontSize: 16, color: AppColor.textSecondary)),
             ),
             const SizedBox(height: 14),
-            Text("$earned / $total", textDirection: TextDirection.ltr, style: const TextStyle(fontFamily: _serif, fontSize: 18, fontWeight: FontWeight.w600, color: AppColor.greenColor)),
+            Text("$earned / $total", textDirection: TextDirection.ltr, style: TextStyle(fontFamily: _serif, fontSize: 18, fontWeight: FontWeight.w600, color: AppColor.greenColor)),
             const Spacer(),
             _button("Back to Home", () => Navigator.of(context).pop()),
             const SizedBox(height: 8),
@@ -465,7 +465,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontFamily: _serif, fontSize: 16, color: AppColor.greenColor)),
+              child: Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontFamily: _serif, fontSize: 16, color: AppColor.greenColor)),
             ),
             const SizedBox(height: 26),
             Padding(
@@ -479,7 +479,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.75),
+                            color: AppColor.card.withOpacity(0.75),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: _gold.withOpacity(0.35)),
                             boxShadow: [BoxShadow(color: _forest.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 6))],
@@ -487,7 +487,7 @@ class _RewardFlowScreenState extends State<RewardFlowScreen> {
                           child: Column(children: [
                             Text(s.$1, textDirection: TextDirection.ltr, style: const TextStyle(fontFamily: _serif, fontSize: 26, fontWeight: FontWeight.w700, color: _forest)),
                             const SizedBox(height: 2),
-                            Text(s.$2, textAlign: TextAlign.center, style: const TextStyle(fontFamily: _serif, fontSize: 12.5, color: AppColor.greenColor)),
+                            Text(s.$2, textAlign: TextAlign.center, style: TextStyle(fontFamily: _serif, fontSize: 12.5, color: AppColor.greenColor)),
                           ]),
                         ),
                       ),
