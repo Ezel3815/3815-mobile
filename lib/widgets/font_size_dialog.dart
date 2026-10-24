@@ -20,11 +20,11 @@ class FontSizeDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Font Size",
               style: TextStyle(
                 fontSize: 24,
-                color: Colors.black,
+                color: AppColor.ink,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -33,11 +33,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 10.0);
               },
-              title: const Text(
+              title: Text(
                 "xx-small",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -46,11 +46,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 12.0);
               },
-              title: const Text(
+              title: Text(
                 "x-small",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -59,11 +59,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 14.0);
               },
-              title: const Text(
+              title: Text(
                 "small",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -72,11 +72,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 16.0);
               },
-              title: const Text(
+              title: Text(
                 "medium",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -85,11 +85,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 18.0);
               },
-              title: const Text(
+              title: Text(
                 "large",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -98,11 +98,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 20.0);
               },
-              title: const Text(
+              title: Text(
                 "x-large",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -111,11 +111,11 @@ class FontSizeDialog extends StatelessWidget {
               onTap: () {
                 Get.back(result: 22.0);
               },
-              title: const Text(
+              title: Text(
                 "xx-large",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w400,
                 ),
               ),
