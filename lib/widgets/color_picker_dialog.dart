@@ -1,3 +1,4 @@
+import 'package:upgrade/resources.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,7 +25,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.card,
       surfaceTintColor: Colors.white,
       title: Text(AppStrings.chooseColor),
       content: SingleChildScrollView(
