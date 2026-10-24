@@ -18,6 +18,7 @@ class OnboardingHeader extends StatelessWidget {
         Image.asset(
           'lib/assests/brand/mozaik_wordmark.png',
           height: 22,
+          color: AppColor.night ? const Color(0xFFF4F2FF) : null,
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 8),
