@@ -38,14 +38,14 @@ class _CelebrationDialog extends StatelessWidget {
               Container(
                 width: 76,
                 height: 76,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColor.lightGreenColor,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     "${result.newLevel}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
                       color: AppColor.darkGreenColor,
@@ -54,7 +54,7 @@ class _CelebrationDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "Level Up!",
                 style: TextStyle(
                   fontSize: 20,
@@ -64,7 +64,7 @@ class _CelebrationDialog extends StatelessWidget {
               ),
               Text(
                 "You reached Level ${result.newLevel}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColor.textSecondary,
                 ),
@@ -74,7 +74,7 @@ class _CelebrationDialog extends StatelessWidget {
             ],
             if (result.newAchievements.isNotEmpty) ...[
               if (!result.leveledUp) ...[
-                const Icon(
+                Icon(
                   Icons.emoji_events_rounded,
                   size: 56,
                   color: AppColor.warningColor,
@@ -84,7 +84,7 @@ class _CelebrationDialog extends StatelessWidget {
                   result.newAchievements.length == 1
                       ? "Achievement Unlocked!"
                       : "${result.newAchievements.length} Achievements Unlocked!",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColor.textPrimary,
@@ -100,7 +100,7 @@ class _CelebrationDialog extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.emoji_events_rounded,
                         size: 18,
                         color: AppColor.warningColor,
@@ -109,7 +109,7 @@ class _CelebrationDialog extends StatelessWidget {
                       Flexible(
                         child: Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColor.textPrimary,
