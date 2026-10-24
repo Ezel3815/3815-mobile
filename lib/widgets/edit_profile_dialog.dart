@@ -26,7 +26,7 @@ class EditProfileDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Edit Profile',
                 style: TextStyle(
                   fontSize: 19,
@@ -57,7 +57,7 @@ class EditProfileDialog extends StatelessWidget {
                   cursorColor: AppColor.greenColor,
                   decoration: InputDecoration(
                     hintText: "Username",
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: AppColor.textSecondary,
                       fontSize: 15,
                     ),
@@ -75,7 +75,7 @@ class EditProfileDialog extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                           color: AppColor.greenColor, width: 1.5),
                     ),
                     errorBorder: OutlineInputBorder(
@@ -88,7 +88,7 @@ class EditProfileDialog extends StatelessWidget {
                           color: Colors.redAccent, width: 1.5),
                     ),
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     color: AppColor.textPrimary,
                   ),
@@ -103,7 +103,7 @@ class EditProfileDialog extends StatelessWidget {
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           fontSize: 15,
