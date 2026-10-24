@@ -63,7 +63,7 @@ class DeckWidget extends StatelessWidget {
               child: Text(
                 model.title,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColor.textPrimary,
@@ -78,7 +78,7 @@ class DeckWidget extends StatelessWidget {
             _StatPill(count: getHardCard(), color: const Color(0xFFE8A33D)),
             if (model.locked) ...[
               const SizedBox(width: 10),
-              const Icon(
+              Icon(
                 Icons.lock,
                 size: 18,
                 color: AppColor.textSecondary,
