@@ -71,7 +71,7 @@ class _MosaicScreenState extends State<MosaicScreen> {
       appBar: AppBar(
         backgroundColor: AppColor.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "لوحتك الفسيفسائية",
           style: TextStyle(
             fontSize: 18,
@@ -94,7 +94,7 @@ class _MosaicScreenState extends State<MosaicScreen> {
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
               children: [
-                const Text(
+                Text(
                   "Garden by the Sea",
                   style: TextStyle(
                     fontSize: 22,
@@ -105,7 +105,7 @@ class _MosaicScreenState extends State<MosaicScreen> {
                 const SizedBox(height: 4),
                 Text(
                   "${state.piecesEarned} / ${state.totalPieces}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColor.greenColor,
@@ -165,7 +165,7 @@ class _TodayProgress extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   hint,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     height: 1.35,
                     color: AppColor.textSecondary,
@@ -190,9 +190,9 @@ class _TodayProgress extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDE6D6)),
+        border: Border.all(color: AppColor.pick(0xFFEDE6D6, 0xFF252A58)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,13 +200,13 @@ class _TodayProgress extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "تقدم اليوم",
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColor.textPrimary),
               ),
               Text(
                 "${today.stepsDone} / 3",
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColor.greenColor),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColor.greenColor),
               ),
             ],
           ),
@@ -229,7 +229,7 @@ class _TodayProgress extends StatelessWidget {
             today.challenge,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "أكمل المهام الثلاث لتفتح قطعة جديدة من اللوحة.",
             style: TextStyle(
               fontSize: 12,
@@ -260,7 +260,7 @@ class _ChestRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: chest.claimed ? const Color(0xFFF6F1E7) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEDE6D6)),
+          border: Border.all(color: AppColor.pick(0xFFEDE6D6, 0xFF252A58)),
         ),
         child: Row(
           children: [
@@ -272,18 +272,18 @@ class _ChestRow extends StatelessWidget {
             Expanded(
               child: Text(
                 "صندوق الأسبوع ${chest.index} — يوم ${chest.unlockDay}",
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColor.textPrimary),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColor.textPrimary),
               ),
             ),
             if (chest.claimed)
-              const Text("تم الفتح", style: TextStyle(fontSize: 13, color: AppColor.textSecondary))
+              Text("تم الفتح", style: TextStyle(fontSize: 13, color: AppColor.textSecondary))
             else if (chest.ready)
               TextButton(
                 onPressed: onOpen,
                 child: const Text("افتح", style: TextStyle(fontWeight: FontWeight.w700)),
               )
             else
-              Text("${chest.pieces} قطع", style: const TextStyle(fontSize: 13, color: AppColor.textSecondary)),
+              Text("${chest.pieces} قطع", style: TextStyle(fontSize: 13, color: AppColor.textSecondary)),
           ],
         ),
       ),
