@@ -2,6 +2,7 @@ import 'package:upgrade/screens/follow_list_screen.dart';
 import 'package:upgrade/screens/locale_controller.dart';
 import 'package:upgrade/utils/deep_link_service.dart';
 import 'package:flutter/material.dart';
+import 'package:upgrade/offline/offline_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -71,6 +72,7 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
   sharedPref = await SharedPreferences.getInstance();
+  await OfflineStore.init();
   // Loads the saved language (defaults to Arabic) before the first frame,
   // so GetMaterialApp picks the right locale/direction on the very first
   // build instead of flashing Arabic then flipping.
