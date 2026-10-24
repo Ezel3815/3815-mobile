@@ -77,7 +77,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                 children: [
                   IconButton(
                     onPressed: Get.back,
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
                         size: 20,
                         color: AppColor.textPrimary),
                   ),
@@ -87,7 +87,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                       children: [
                         Text(
                           isFollowers ? 'المتابعون' : 'يتابع',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: AppColor.textPrimary,
@@ -98,7 +98,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                             ownerName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13, color: AppColor.textSecondary),
                           ),
                       ],
@@ -123,10 +123,10 @@ class _FollowListScreenState extends State<FollowListScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_rounded,
+              Icon(Icons.cloud_off_rounded,
                   size: 44, color: AppColor.disabledColor),
               const SizedBox(height: 12),
-              const Text('تعذّر تحميل القائمة',
+              Text('تعذّر تحميل القائمة',
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -143,7 +143,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
           ),
         );
       }
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColor.greenColor),
       );
     }
@@ -154,7 +154,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
           child: Text(
             isFollowers ? 'لا يوجد متابعون بعد' : 'لا يتابع أحداً بعد',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 15, color: AppColor.textSecondary, height: 1.4),
           ),
         ),
@@ -182,7 +182,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
         decoration: BoxDecoration(
           color: AppColor.surfaceColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFDDE4CC), width: 1),
+          border: Border.all(color: AppColor.pick(0xFFDDE4CC, 0xFF252A58), width: 1),
         ),
         child: Row(
           children: [
@@ -196,7 +196,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                     p.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppColor.textPrimary,
@@ -207,7 +207,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                       '@${p.username}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12.5, color: AppColor.textSecondary),
                     ),
                 ],
@@ -240,7 +240,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: busyNow
-            ? const SizedBox(
+            ? SizedBox(
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
@@ -261,7 +261,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
       width: 46,
       height: 46,
       padding: const EdgeInsets.all(2),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColor.lightGreenColor,
       ),
@@ -271,7 +271,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
             : Center(
                 child: Text(
                   p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColor.darkGreenColor,
