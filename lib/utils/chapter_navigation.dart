@@ -70,7 +70,7 @@ class _OpeningDeckLoader extends StatelessWidget {
             height: 64,
             padding: const EdgeInsets.all(19),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.96),
+              color: AppColor.card.withOpacity(0.96),
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
@@ -80,7 +80,7 @@ class _OpeningDeckLoader extends StatelessWidget {
                 ),
               ],
             ),
-            child: const CircularProgressIndicator(
+            child: CircularProgressIndicator(
               strokeWidth: 2.6,
               strokeCap: StrokeCap.round,
               color: AppColor.greenColor,
