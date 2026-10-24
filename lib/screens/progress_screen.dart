@@ -15,7 +15,7 @@ import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_artwork.dart';
 import 'package:upgrade/main.dart' show AppRoutes;
 
-const List<Color> _subjectAccentColors = [
+List<Color> get _subjectAccentColors => [
   AppColor.greenColor,
   AppColor.infoColor,
   AppColor.warningColor,
@@ -272,7 +272,7 @@ class _AchievementsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.achievementsLoading.value) {
-        return const Padding(
+        return Padding(
           padding: EdgeInsets.symmetric(vertical: 60),
           child: Center(
             child: CircularProgressIndicator(color: AppColor.greenColor),
@@ -287,7 +287,7 @@ class _AchievementsBody extends StatelessWidget {
         children: [
           Text(
             AppStrings.unlockedOf(unlockedCount, achievements.length),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColor.textSecondary,
@@ -379,7 +379,7 @@ class _LeaderboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.leaderboardLoading.value) {
-        return const Padding(
+        return Padding(
           padding: EdgeInsets.symmetric(vertical: 60),
           child: Center(
             child: CircularProgressIndicator(color: AppColor.greenColor),
@@ -443,7 +443,7 @@ class _LeaderboardRows extends StatelessWidget {
                   width: 24,
                   child: Text(
                     "${useServerRank ? (entry.rank ?? index + 1) : index + 1}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColor.textSecondary,
@@ -469,7 +469,7 @@ class _LeaderboardRows extends StatelessWidget {
                               entry.name.isNotEmpty
                                   ? entry.name[0].toUpperCase()
                                   : "?",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: AppColor.darkGreenColor,
                               ),
@@ -485,7 +485,7 @@ class _LeaderboardRows extends StatelessWidget {
                       Text(
                         entry.isMe ? "${entry.name} (You)" : entry.name,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColor.textPrimary,
@@ -493,7 +493,7 @@ class _LeaderboardRows extends StatelessWidget {
                       ),
                       Text(
                         "Level ${entry.level}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           color: AppColor.textSecondary,
                         ),
@@ -503,7 +503,7 @@ class _LeaderboardRows extends StatelessWidget {
                 ),
                 Text(
                   "${entry.xp} XP",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColor.greenColor,
@@ -555,7 +555,7 @@ class _StatisticsBody extends StatelessWidget {
                 Container(
                     width: 1,
                     height: 40,
-                    color: Colors.black.withOpacity(0.06)),
+                    color: AppColor.ink.withOpacity(0.06)),
                 Expanded(
                   child: _SummaryStat(
                     icon: Icons.menu_book_rounded,
@@ -607,13 +607,13 @@ class _StatisticsBody extends StatelessWidget {
                         value: controller.masteryPercent / 100,
                         strokeWidth: 8,
                         backgroundColor: AppColor.lightGreenColor,
-                        valueColor: const AlwaysStoppedAnimation(
+                        valueColor: AlwaysStoppedAnimation(
                             AppColor.greenColor),
                       ),
                     ),
                     Text(
                       "${controller.masteryPercent}%",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: AppColor.textPrimary,
@@ -629,7 +629,7 @@ class _StatisticsBody extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               AppStrings.performanceBySubject,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColor.textPrimary,
@@ -686,7 +686,7 @@ class _StatisticsBody extends StatelessWidget {
                               Text(
                                 s.title,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColor.textPrimary,
@@ -700,7 +700,7 @@ class _StatisticsBody extends StatelessWidget {
                                   minHeight: 5,
                                   backgroundColor:
                                       AppColor.scaffoldBackgroundColor,
-                                  valueColor: const AlwaysStoppedAnimation(
+                                  valueColor: AlwaysStoppedAnimation(
                                       AppColor.greenColor),
                                 ),
                               ),
@@ -710,7 +710,7 @@ class _StatisticsBody extends StatelessWidget {
                         const SizedBox(width: 10),
                         Text(
                           "${(s.mastery * 100).round()}%",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColor.greenColor,
@@ -747,7 +747,7 @@ class _SummaryStat extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColor.textPrimary,
@@ -755,7 +755,7 @@ class _SummaryStat extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             color: AppColor.textSecondary,
           ),
