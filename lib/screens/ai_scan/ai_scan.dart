@@ -15,7 +15,7 @@ class AiScan {
   }
 
   /// The "+" menu on a deck: add manually (existing screen) or create with AI.
-  static void showAddMenu({required VoidCallback onManual, required BuildContext context, int? deckId, VoidCallback? onDeckChanged}) {
+  static void showAddMenu({required VoidCallback onManual, required BuildContext context, int? deckId, VoidCallback? onDeckChanged, String? manualLabel}) {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -25,7 +25,7 @@ class AiScan {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: AiC.line, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
-            _Tile(icon: Icons.edit_outlined, text: AiStr.addManual, onTap: () {
+            _Tile(icon: Icons.edit_outlined, text: manualLabel ?? AiStr.addManual, onTap: () {
               Get.back();
               onManual();
             }),
