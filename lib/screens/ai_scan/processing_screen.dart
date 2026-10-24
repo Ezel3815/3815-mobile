@@ -158,7 +158,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> with TickerProvider
                           builder: (_, __) => Container(
                             width: 8 + 4 * math.sin(_ripple.value * 2 * math.pi).abs(),
                             height: 8 + 4 * math.sin(_ripple.value * 2 * math.pi).abs(),
-                            decoration: const BoxDecoration(shape: BoxShape.circle, color: AiC.primary),
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AiC.primary),
                           ),
                         ),
                       )
