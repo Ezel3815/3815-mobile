@@ -38,7 +38,7 @@ class CardWidget extends StatelessWidget {
           const SizedBox(width: 14),
           Text(
             model.type,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               color: AppColor.textPrimary,
               fontWeight: FontWeight.w600,
@@ -65,7 +65,7 @@ class CardWidget extends StatelessWidget {
                   color: AppColor.greenColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.chevron_right,
                   size: 18,
                   color: AppColor.greenColor,
