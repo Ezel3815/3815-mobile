@@ -70,7 +70,7 @@ class _FlashcardsResultScreenState extends State<FlashcardsResultScreen> with Si
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
           decoration: BoxDecoration(color: AiC.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: AiC.line)),
-          child: Text('${_i + 1}/${widget.cards.length}', style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage)),
+          child: Text('${_i + 1}/${widget.cards.length}', style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage)),
         ),
         Expanded(
           child: GestureDetector(
@@ -94,7 +94,7 @@ class _FlashcardsResultScreenState extends State<FlashcardsResultScreen> with Si
                         color: AiC.card,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(color: AiC.line),
-                        boxShadow: [BoxShadow(color: AiC.forest.withOpacity(.08), blurRadius: 20, offset: const Offset(0, 8))],
+                        boxShadow: [BoxShadow(color: AiC.shadow, blurRadius: 20, offset: const Offset(0, 8))],
                       ),
                       child: Transform(
                         alignment: Alignment.center,
@@ -104,11 +104,11 @@ class _FlashcardsResultScreenState extends State<FlashcardsResultScreen> with Si
                             child: SingleChildScrollView(
                               child: Text(showBack ? c.answer : c.question,
                                   textAlign: TextAlign.center,
-                                  style: showBack ? const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 16, color: AiC.forest, height: 1.8) : aiTitle.copyWith(fontSize: 22)),
+                                  style: showBack ? TextStyle(fontFamily: 'ELMESSIRI', fontSize: 16, color: AiC.forest, height: 1.8) : aiTitle.copyWith(fontSize: 22)),
                             ),
                           ),
                           const SizedBox(height: 20),
-                          const Icon(Icons.keyboard_arrow_down, color: AiC.sage),
+                          Icon(Icons.keyboard_arrow_down, color: AiC.sage),
                         ]),
                       ),
                     ),
@@ -126,11 +126,11 @@ class _FlashcardsResultScreenState extends State<FlashcardsResultScreen> with Si
               width: 52,
               height: 52,
               decoration: BoxDecoration(shape: BoxShape.circle, color: AiC.card, border: Border.all(color: AiC.line)),
-              child: const Icon(Icons.refresh, color: AiC.forest),
+              child: Icon(Icons.refresh, color: AiC.forest),
             ),
           ),
           const SizedBox(height: 6),
-          Text(AiStr.flipCard, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage)),
+          Text(AiStr.flipCard, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11.5, color: AiC.sage)),
         ]),
         Padding(
           padding: const EdgeInsets.fromLTRB(40, 10, 40, 22),
@@ -187,7 +187,7 @@ class _McqResultScreenState extends State<McqResultScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(AiStr.quizDone, style: aiCardTitle),
         content: Text(AiStr.score(score, qs.length), style: aiBody.copyWith(fontSize: 16, color: AiC.forest)),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(AiStr.ok, style: const TextStyle(color: AiC.forest, fontFamily: 'ELMESSIRI')))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(AiStr.ok, style: TextStyle(color: AiC.forest, fontFamily: 'ELMESSIRI')))],
       ),
     );
     if (mounted) Navigator.of(context).pop();
@@ -203,7 +203,7 @@ class _McqResultScreenState extends State<McqResultScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
           child: Column(children: [
-            Align(alignment: AlignmentDirectional.centerEnd, child: Text('${_i + 1}/${qs.length}', style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage))),
+            Align(alignment: AlignmentDirectional.centerEnd, child: Text('${_i + 1}/${qs.length}', style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage))),
             const SizedBox(height: 6),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -245,10 +245,10 @@ class _Option extends StatelessWidget {
               border: Border.all(color: selected ? AiC.sage : AiC.line, width: selected ? 1.4 : 1),
             ),
             child: Row(children: [
-              Text('$letter.', style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 14, color: AiC.forest, fontWeight: FontWeight.w700)),
+              Text('$letter.', style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 14, color: AiC.forest, fontWeight: FontWeight.w700)),
               const SizedBox(width: 8),
-              Expanded(child: Text(text, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 14, color: AiC.forest))),
-              if (selected) const Icon(Icons.check_circle, color: AiC.primary, size: 22),
+              Expanded(child: Text(text, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 14, color: AiC.forest))),
+              if (selected) Icon(Icons.check_circle, color: AiC.primary, size: 22),
             ]),
           ),
         ),
