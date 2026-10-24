@@ -56,19 +56,19 @@ class OfflineButton extends StatelessWidget {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        decoration: const BoxDecoration(color: AppColor.surfaceColor, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        decoration: BoxDecoration(color: AppColor.surfaceColor, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         child: SafeArea(
           top: false,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Row(children: [
               Icon(Icons.offline_pin, color: color),
               const SizedBox(width: 10),
-              Expanded(child: Text(OfflineStr.downloaded, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColor.textPrimary))),
+              Expanded(child: Text(OfflineStr.downloaded, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColor.textPrimary))),
             ]),
             const SizedBox(height: 6),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: Text(OfflineStr.cardsMb((info?['cards'] ?? 0) as int, mb), style: const TextStyle(fontSize: 12, color: AppColor.textSecondary)),
+              child: Text(OfflineStr.cardsMb((info?['cards'] ?? 0) as int, mb), style: TextStyle(fontSize: 12, color: AppColor.textSecondary)),
             ),
             const SizedBox(height: 16),
             Row(children: [
@@ -130,7 +130,7 @@ class _ProgressDialog extends StatelessWidget {
           child: ValueListenableBuilder<double>(
             valueListenable: progress,
             builder: (_, p, __) => Column(mainAxisSize: MainAxisSize.min, children: [
-              Text(OfflineStr.downloading, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColor.textPrimary)),
+              Text(OfflineStr.downloading, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColor.textPrimary)),
               const SizedBox(height: 16),
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
@@ -139,7 +139,7 @@ class _ProgressDialog extends StatelessWidget {
               const SizedBox(height: 8),
               Text('${(p * 100).round()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
               const SizedBox(height: 6),
-              Text(OfflineStr.keepOpen, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11.5, color: AppColor.textSecondary)),
+              Text(OfflineStr.keepOpen, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: AppColor.textSecondary)),
               const SizedBox(height: 10),
               TextButton(onPressed: () => cancel.cancel(), child: Text(OfflineStr.cancel)),
             ]),
