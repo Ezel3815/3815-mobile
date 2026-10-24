@@ -18,7 +18,7 @@ class InterCodeDialog extends GetView<InterCodeController> {
       surfaceTintColor: AppColor.surfaceColor,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.fromLTRB(22, 32, 22, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -62,14 +62,14 @@ class InterCodeDialog extends GetView<InterCodeController> {
                   color: AppColor.lightGreenColor.withOpacity(0.6),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock_open_rounded,
                   color: AppColor.darkGreenColor,
                   size: 24,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "Enter your activation code",
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -92,7 +92,7 @@ class InterCodeDialog extends GetView<InterCodeController> {
                 controller: controller.codeController,
                 textAlign: TextAlign.center,
                 keyboardType: TextInputType.text,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 3,
@@ -125,7 +125,7 @@ class InterCodeDialog extends GetView<InterCodeController> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide:
-                        const BorderSide(color: AppColor.greenColor, width: 1.5),
+                        BorderSide(color: AppColor.greenColor, width: 1.5),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
