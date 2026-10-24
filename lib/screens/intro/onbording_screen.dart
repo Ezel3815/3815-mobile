@@ -41,7 +41,7 @@ class OutBoordinagState extends State<OnBording> {
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeInOut),
           child: Text(AppStrings.next,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColor.textPrimary)),
@@ -49,7 +49,7 @@ class OutBoordinagState extends State<OnBording> {
         SmoothPageIndicator(
           controller: controller,
           count: 3,
-          effect: const WormEffect(
+          effect: WormEffect(
             dotWidth: 9,
             dotHeight: 9,
             spacing: 12,
