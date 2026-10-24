@@ -37,7 +37,7 @@ class PreparatoryYear extends StatelessWidget {
                     const SizedBox(width: 10),
                     InkWell(
                       onTap: () => Get.back(),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back,
                         size: 26,
                         color: AppColor.textPrimary,
@@ -56,7 +56,7 @@ class PreparatoryYear extends StatelessWidget {
                 const SizedBox(height: 20),
                 Expanded(
                   child: controller.decks.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             "No Data Found",
                             style: TextStyle(
