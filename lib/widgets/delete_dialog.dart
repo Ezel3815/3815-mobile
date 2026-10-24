@@ -29,9 +29,9 @@ class DeleteDialog extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
-                color: Colors.black,
+                color: AppColor.ink,
                 fontWeight: FontWeight.w700,
               ),
             ),
