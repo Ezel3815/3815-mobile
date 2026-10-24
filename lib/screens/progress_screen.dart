@@ -1,3 +1,4 @@
+import 'package:upgrade/widgets/nocturne_mascot.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
 import 'package:upgrade/widgets/mossad/mossad_view.dart';
 import 'package:upgrade/widgets/quests_view.dart';
@@ -48,6 +49,11 @@ class ProgressScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
               children: [
+                if (AppColor.night)
+                  const Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: NocturneMascot(pose: 'studying', height: 72),
+                  ),
                 Row(
                   children: [
                     InkWell(
