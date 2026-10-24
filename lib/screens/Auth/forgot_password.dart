@@ -152,7 +152,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColor.greenColor, width: 1.5),
+        borderSide: BorderSide(color: AppColor.greenColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -185,7 +185,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           elevation: 0,
           side: filled
               ? null
-              : const BorderSide(color: AppColor.greenColor, width: 1.2),
+              : BorderSide(color: AppColor.greenColor, width: 1.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
@@ -226,7 +226,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            iconTheme: const IconThemeData(color: AppColor.textPrimary),
+            iconTheme: IconThemeData(color: AppColor.textPrimary),
           ),
           body: Form(
             key: _formKey,
@@ -251,7 +251,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            const Text(
+                            Text(
                               'استعادة كلمة المرور',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -275,10 +275,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.35),
+                                color: AppColor.card.withOpacity(0.35),
                                 borderRadius: BorderRadius.circular(26),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: AppColor.line.withOpacity(0.6),
                                   width: 1,
                                 ),
                                 boxShadow: [
@@ -298,7 +298,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                     cursorColor: AppColor.greenColor,
                                     textAlign: TextAlign.right,
                                     readOnly: codeSent && resetting,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -329,7 +329,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                       textDirection: TextDirection.ltr,
                                       autocorrect: false,
                                       enableSuggestions: false,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 20,
                                         letterSpacing: 4,
                                         fontWeight: FontWeight.w700,
@@ -345,7 +345,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                       obscureText: hidePassword,
                                       cursorColor: AppColor.greenColor,
                                       textAlign: TextAlign.right,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         color: AppColor.textPrimary,
                                       ),
