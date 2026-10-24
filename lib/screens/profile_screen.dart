@@ -1,3 +1,4 @@
+import 'package:upgrade/widgets/nocturne_mascot.dart';
 import 'package:upgrade/widgets/edit_profile_dialog.dart';
 import 'package:upgrade/strings.dart';
 import 'package:share_plus/share_plus.dart';
@@ -88,6 +89,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: SafeArea(
                           child: Stack(
                             children: [
+                              const Align(
+                                alignment: Alignment.bottomLeft,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, bottom: 8),
+                                  child: NocturneMascot(
+                                      pose: 'star-hug', height: 72),
+                                ),
+                              ),
                               Align(
                                 alignment: Alignment.topLeft,
                                 child: Padding(
