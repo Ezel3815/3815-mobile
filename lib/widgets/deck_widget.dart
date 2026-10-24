@@ -4,6 +4,7 @@ import 'package:upgrade/entity/deck_entity.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/utils/chapter_navigation.dart';
+import 'package:upgrade/utils/subject_icon.dart';
 import 'package:upgrade/widgets/app_snack_bar.dart';
 
 class DeckWidget extends StatelessWidget {
@@ -40,24 +41,27 @@ class DeckWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColor.surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: AppColor.night
+              ? Border.all(color: AppColor.glowBorder)
+              : null,
+          boxShadow: AppColor.glowShadow,
         ),
         child: Row(
           children: [
-            Container(
-              width: 6,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColor.greenColor,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
+            Builder(builder: (context) {
+              final art = AppColor.night ? nocturneMedicalIcon(model.title) : null;
+              if (art != null) {
+                return Image.asset(art, width: 48, height: 48, fit: BoxFit.contain);
+              }
+              return Container(
+                width: 6,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColor.greenColor,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
