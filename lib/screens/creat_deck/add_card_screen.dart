@@ -48,7 +48,7 @@ class AddCardScreen extends GetView<AddCardController> {
       appBar: AppBar(
         backgroundColor: AppColor.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'إضافة بطاقة',
           style: TextStyle(
             fontSize: 18,
@@ -131,7 +131,7 @@ class AddCardScreen extends GetView<AddCardController> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         'النوع',
                         style: TextStyle(
                           fontSize: 14,
@@ -151,7 +151,7 @@ class AddCardScreen extends GetView<AddCardController> {
                             child: DropdownButtonFormField<String>(
                               decoration:
                                   const InputDecoration.collapsed(hintText: ''),
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                              icon: Icon(Icons.keyboard_arrow_down_rounded,
                                   color: AppColor.textSecondary),
                               value: controller.selectedTypes,
                               items: controller.types
@@ -160,7 +160,7 @@ class AddCardScreen extends GetView<AddCardController> {
                                       value: level,
                                       child: Text(
                                         level,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                           color: AppColor.textPrimary,
@@ -227,7 +227,7 @@ class AddCardScreen extends GetView<AddCardController> {
                             onPressed: controller.goToShapeCreator,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColor.greenColor,
-                              side: const BorderSide(
+                              side: BorderSide(
                                   color: AppColor.greenColor, width: 1.2),
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
@@ -260,14 +260,14 @@ class AddCardScreen extends GetView<AddCardController> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.picture_as_pdf_outlined,
+                            Icon(Icons.picture_as_pdf_outlined,
                                 size: 18, color: AppColor.greenColor),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 controller.fileName,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColor.textPrimary,
@@ -303,7 +303,7 @@ class AddCardScreen extends GetView<AddCardController> {
                           onPressed: controller.pickFile,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColor.greenColor,
-                            side: const BorderSide(
+                            side: BorderSide(
                                 color: AppColor.greenColor, width: 1.2),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
