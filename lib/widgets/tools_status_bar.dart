@@ -84,7 +84,7 @@ class ToolsStatusBar extends GetView<AddCardController> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Divider(height: 1, color: Colors.black.withOpacity(0.06)),
+              child: Divider(height: 1, color: AppColor.ink.withOpacity(0.06)),
             ),
             Obx(
               () => Row(
