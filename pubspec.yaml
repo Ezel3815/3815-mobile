@@ -110,6 +110,8 @@ flutter:
   uses-material-design: true
   assets:
     - lib/assests/images/
+    - lib/assests/nocturne/mascot/
+    - lib/assests/nocturne/medical/
     - lib/assests/images/Mozaik_Expanded_Subject_Icon_Assets/subjects/
     - lib/assests/images/Mozaik_Second_Image_Assets/icons/
     - lib/assests/svgs/
