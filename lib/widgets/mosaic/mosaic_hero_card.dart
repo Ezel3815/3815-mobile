@@ -63,7 +63,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
           color: Colors.transparent,
           child: Ink(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [Color(0xFFFFFDF6), AppColor.surfaceColor],
@@ -104,7 +104,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Garden by the Sea',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -116,7 +116,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'لوحتك الفسيفسائية',
                               style: TextStyle(
                                 fontSize: 13,
@@ -141,7 +141,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                                   Text(
                                     '$earned / $total',
                                     textDirection: TextDirection.ltr,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.w800,
                                       color: AppColor.darkGreenColor,
@@ -162,7 +162,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                                   value: v,
                                   minHeight: 8,
                                   backgroundColor: AppColor.lightGreenColor,
-                                  valueColor: const AlwaysStoppedAnimation(
+                                  valueColor: AlwaysStoppedAnimation(
                                       AppColor.greenColor),
                                 ),
                               ),
@@ -170,7 +170,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_month_rounded,
                                   size: 18,
                                   color: AppColor.darkGreenColor,
@@ -180,7 +180,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                                   child: Text(
                                     dayLine,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color: AppColor.textSecondary,
@@ -200,7 +200,7 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                                   color: _mosaicGold,
                                 ),
                                 const SizedBox(width: 8),
-                                const Flexible(
+                                Flexible(
                                   child: Text(
                                     'Piece by piece, it clicks.',
                                     style: TextStyle(
@@ -242,7 +242,7 @@ class MosaicHeroPlaceholder extends StatelessWidget {
         border: Border.all(color: _mosaicGold.withOpacity(0.35)),
       ),
       alignment: Alignment.center,
-      child: const SizedBox(
+      child: SizedBox(
         width: 24,
         height: 24,
         child: CircularProgressIndicator(
