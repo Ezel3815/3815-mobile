@@ -64,7 +64,7 @@ class _LoginState extends State<Login> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColor.greenColor, width: 1.5),
+        borderSide: BorderSide(color: AppColor.greenColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -133,7 +133,7 @@ class _LoginState extends State<Login> {
                               ),
                             ),
                             const SizedBox(height: 18),
-                            const Text(
+                            Text(
                               "MOZAIK",
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -156,10 +156,10 @@ class _LoginState extends State<Login> {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.35),
+                                color: AppColor.card.withOpacity(0.35),
                                 borderRadius: BorderRadius.circular(26),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: AppColor.line.withOpacity(0.6),
                                   width: 1,
                                 ),
                                 boxShadow: [
@@ -178,7 +178,7 @@ class _LoginState extends State<Login> {
                                     keyboardType: TextInputType.emailAddress,
                                     controller: emailController,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -193,7 +193,7 @@ class _LoginState extends State<Login> {
                                     obscureText: hidePassword,
                                     textAlign: TextAlign.right,
                                     cursorColor: AppColor.greenColor,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -293,7 +293,7 @@ class _LoginState extends State<Login> {
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: AppColor.darkGreenColor,
-                                        side: const BorderSide(
+                                        side: BorderSide(
                                             color: AppColor.greenColor,
                                             width: 1.2),
                                         shape: RoundedRectangleBorder(
@@ -322,7 +322,7 @@ class _LoginState extends State<Login> {
                                 onTap: () {
                                   Get.toNamed(AppRoutes.forgetPassowrdRoute);
                                 },
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 6),
                                   child: Text(
