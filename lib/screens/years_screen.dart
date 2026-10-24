@@ -31,7 +31,7 @@ class _YearsScreenState extends State<YearsScreen> {
         body: SafeArea(
           child: Obx(
             () => controller.loading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(
                       color: AppColor.greenColor,
                     ),
@@ -61,7 +61,7 @@ class _YearsScreenState extends State<YearsScreen> {
                                 const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
                               AppStrings.yourLearningPath,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: AppColor.textPrimary,
@@ -97,7 +97,7 @@ class _Header extends StatelessWidget {
         children: [
           InkWell(
             onTap: () => scaffoldKey.currentState?.openDrawer(),
-            child: const Icon(
+            child: Icon(
               Icons.dehaze,
               size: 26,
               color: AppColor.textPrimary,
@@ -130,7 +130,7 @@ class _Header extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     "$streak",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColor.darkGreenColor,
@@ -153,7 +153,7 @@ class _Header extends StatelessWidget {
               return Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColor.greenColor,
                 ),
@@ -199,7 +199,7 @@ class _GreetingBlock extends StatelessWidget {
               name.isNotEmpty
                   ? "${AppStrings.welcomeBack}، $name"
                   : AppStrings.welcomeBack,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColor.textPrimary,
@@ -208,7 +208,7 @@ class _GreetingBlock extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               AppStrings.continueJourney,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColor.textSecondary,
@@ -236,7 +236,7 @@ class _CurrentSubjectLessons extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Text(
             AppStrings.noSubjectsYet,
-            style: const TextStyle(color: AppColor.textSecondary),
+            style: TextStyle(color: AppColor.textSecondary),
           ),
         );
       }
