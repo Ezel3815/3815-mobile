@@ -64,11 +64,11 @@ class _FeedScreenState extends State<FeedScreen> {
                     children: [
                       InkWell(
                         onTap: () => scaffoldKey.currentState?.openDrawer(),
-                        child: const Icon(Icons.dehaze,
+                        child: Icon(Icons.dehaze,
                             size: 26, color: AppColor.textPrimary),
                       ),
                       const SizedBox(width: 14),
-                      const Text(
+                      Text(
                         'الأخبار',
                         style: TextStyle(
                           fontSize: 20,
@@ -91,7 +91,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget _body() {
     if (c.posts.isEmpty) {
       if (c.loading.value) {
-        return const Center(
+        return Center(
           child: CircularProgressIndicator(color: AppColor.greenColor),
         );
       }
@@ -167,7 +167,7 @@ class _Message extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: AppColor.textPrimary,
@@ -178,7 +178,7 @@ class _Message extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, color: AppColor.textSecondary, height: 1.4),
               ),
             ],
@@ -187,7 +187,7 @@ class _Message extends StatelessWidget {
               onPressed: onAction,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColor.greenColor,
-                side: const BorderSide(color: AppColor.greenColor),
+                side: BorderSide(color: AppColor.greenColor),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -274,7 +274,7 @@ class _PostCard extends StatelessWidget {
                                         post.mine ? 'أنت' : post.userName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
                                           color: AppColor.textPrimary,
@@ -282,7 +282,7 @@ class _PostCard extends StatelessWidget {
                                       ),
                                       Text(
                                         post.timeAgo,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12.5,
                                           color: AppColor.textSecondary,
                                         ),
@@ -296,7 +296,7 @@ class _PostCard extends StatelessWidget {
                           const SizedBox(height: 14),
                           Text(
                             _message,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                               color: AppColor.textPrimary,
@@ -509,7 +509,7 @@ class _CelebrationCount extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColor.darkGreenColor,
@@ -552,7 +552,7 @@ class _PostBadge extends StatelessWidget {
         icon = Icons.auto_awesome_rounded;
         break;
       default: // chapter_completed & others
-        colors = const [AppColor.freshGreenColor, AppColor.greenColor];
+        colors = [AppColor.freshGreenColor, AppColor.greenColor];
         icon = Icons.menu_book_rounded;
     }
     return Container(
@@ -592,7 +592,7 @@ class _FeedAvatar extends StatelessWidget {
       width: size,
       height: size,
       padding: const EdgeInsets.all(2),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColor.lightGreenColor,
       ),
@@ -745,7 +745,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
           padding: EdgeInsets.only(bottom: lift),
           child: Container(
             height: sheetHeight,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColor.scaffoldBackgroundColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
@@ -760,7 +760,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 14),
                   child: Text(
                     'التعليقات',
@@ -802,7 +802,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
-                                borderSide: const BorderSide(
+                                borderSide: BorderSide(
                                     color: AppColor.greenColor, width: 2),
                               ),
                             ),
@@ -814,7 +814,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           child: Container(
                             width: 46,
                             height: 46,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColor.greenColor,
                               shape: BoxShape.circle,
                             ),
@@ -858,12 +858,12 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     }
     final list = comments;
     if (list == null) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColor.greenColor),
       );
     }
     if (list.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'كن أول من يعلّق',
           style: TextStyle(fontSize: 14, color: AppColor.textSecondary),
@@ -893,7 +893,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           cm.userName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: AppColor.textPrimary,
@@ -903,7 +903,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       const SizedBox(width: 8),
                       Text(
                         cm.timeAgo,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11.5, color: AppColor.textSecondary),
                       ),
                     ],
@@ -911,7 +911,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   const SizedBox(height: 3),
                   Text(
                     cm.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14.5,
                         color: AppColor.textPrimary,
                         height: 1.35),
