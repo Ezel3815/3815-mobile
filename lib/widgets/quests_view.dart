@@ -55,7 +55,7 @@ class QuestsBody extends StatelessWidget {
       final q = controller.quests.value;
       if (q == null) {
         if (controller.questsLoading.value) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.symmetric(vertical: 60),
             child: Center(
               child: CircularProgressIndicator(color: AppColor.greenColor),
@@ -90,10 +90,10 @@ class _QuestsError extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 50),
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_rounded,
+          Icon(Icons.cloud_off_rounded,
               size: 44, color: AppColor.disabledColor),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'تعذّر تحميل المهام',
             style: TextStyle(
                 fontSize: 15,
@@ -105,7 +105,7 @@ class _QuestsError extends StatelessWidget {
             onPressed: onRetry,
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColor.greenColor,
-              side: const BorderSide(color: AppColor.greenColor),
+              side: BorderSide(color: AppColor.greenColor),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
@@ -129,19 +129,19 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: AppColor.textPrimary,
             ),
           ),
         ),
-        const Icon(Icons.schedule_rounded,
+        Icon(Icons.schedule_rounded,
             size: 18, color: AppColor.warningColor),
         const SizedBox(width: 4),
         Text(
           _timeLabel(hours),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
             color: AppColor.warningColor,
@@ -173,7 +173,7 @@ class _FriendsCard extends StatelessWidget {
               children: [
                 Text(
                   'أجيبا معاً على ${q.friendsTarget} بطاقة هذا الأسبوع',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: AppColor.textPrimary,
@@ -197,7 +197,7 @@ class _FriendsCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${(q.myCount + q.partnerCount).clamp(0, q.friendsTarget).toInt()} / ${q.friendsTarget}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppColor.disabledColor,
@@ -251,7 +251,7 @@ class _FriendsCard extends StatelessWidget {
           const SizedBox(height: 4),
           TextButton(
             onPressed: () => _showFriendPicker(controller),
-            child: const Text(
+            child: Text(
               'تغيير الشريك',
               style: TextStyle(
                 fontSize: 13,
@@ -270,7 +270,7 @@ class _FriendsCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Column(
         children: [
-          const Text(
+          Text(
             'اختر صديقاً للتحدي',
             style: TextStyle(
               fontSize: 15,
@@ -279,7 +279,7 @@ class _FriendsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'اختر من أصدقائك (تتابعان بعضكما) من تريد أن تنجز معه التحدي الأسبوعي',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -333,13 +333,13 @@ class _TwoToneBar extends StatelessWidget {
             if (a > 0)
               Expanded(
                 flex: a,
-                child: const _BarFill(color: AppColor.greenColor, radius: 0),
+                child: _BarFill(color: AppColor.greenColor, radius: 0),
               ),
             if (b > 0)
               Expanded(
                 flex: b,
                 child:
-                    const _BarFill(color: AppColor.warningColor, radius: 0),
+                    _BarFill(color: AppColor.warningColor, radius: 0),
               ),
             if (r > 0) Expanded(flex: r, child: const SizedBox.shrink()),
           ],
@@ -375,7 +375,7 @@ class _PersonColumn extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w800,
             color: AppColor.textPrimary,
@@ -430,7 +430,7 @@ class _QuestAvatar extends StatelessWidget {
       width: size,
       height: size,
       padding: const EdgeInsets.all(2.5),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColor.lightGreenColor,
       ),
@@ -499,7 +499,7 @@ class _DailyRow extends StatelessWidget {
               children: [
                 Text(
                   _dailyTitle(quest),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: AppColor.textPrimary,
@@ -518,7 +518,7 @@ class _DailyRow extends StatelessWidget {
                           FractionallySizedBox(
                             alignment: AlignmentDirectional.centerStart,
                             widthFactor: frac,
-                            child: const SizedBox(
+                            child: SizedBox(
                               height: 24,
                               child: _BarFill(
                                   color: AppColor.greenColor, radius: 0),
@@ -582,7 +582,7 @@ class _BarFill extends StatelessWidget {
       child: Container(
         height: 4,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.28),
+          color: AppColor.card.withOpacity(0.28),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -646,14 +646,14 @@ class _ChestButton extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColor.greenColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColor.line, width: 2),
                     ),
                     child: const Icon(Icons.check_rounded,
                         size: 11, color: Colors.white),
                   ),
                 ),
               if (busy)
-                const SizedBox(
+                SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
@@ -769,7 +769,7 @@ class _NudgeButton extends StatelessWidget {
           ),
           child: Text(
             '${partner.name} درس اليوم 🎉',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColor.greenColor,
@@ -789,7 +789,7 @@ class _NudgeButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16)),
           ),
           child: busy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
@@ -861,7 +861,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
       alignment: Alignment.bottomCenter,
       child: Container(
         constraints: BoxConstraints(maxHeight: media.size.height * 0.62),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColor.scaffoldBackgroundColor,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -877,7 +877,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
               child: Text(
                 'اختر شريك التحدي',
@@ -888,7 +888,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
                 ),
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: Text(
                 'تظهر هنا فقط الأصدقاء الذين تتابعهم ويتابعونك',
@@ -918,7 +918,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
       );
     }
     if (list == null) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(32),
         child: CircularProgressIndicator(color: AppColor.greenColor),
       );
@@ -929,7 +929,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'لا يوجد أصدقاء متبادلون بعد. تابع صديقاً واطلب منه أن يتابعك.',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -983,7 +983,7 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
                         f.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColor.textPrimary,
@@ -992,24 +992,24 @@ class _FriendPickerSheetState extends State<_FriendPickerSheet> {
                       if (f.username != null && f.username!.isNotEmpty)
                         Text(
                           '@${f.username}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12.5, color: AppColor.textSecondary),
                         ),
                     ],
                   ),
                 ),
                 if (busy)
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2.2, color: AppColor.greenColor),
                   )
                 else if (f.isPartner)
-                  const Icon(Icons.check_circle_rounded,
+                  Icon(Icons.check_circle_rounded,
                       color: AppColor.greenColor)
                 else
-                  const Text(
+                  Text(
                     'اختيار',
                     style: TextStyle(
                       fontSize: 13,
