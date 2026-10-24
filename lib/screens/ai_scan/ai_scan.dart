@@ -19,7 +19,7 @@ class AiScan {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        decoration: const BoxDecoration(color: AiC.ivory, borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+        decoration: BoxDecoration(color: AiC.ivory, borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
         child: SafeArea(
           top: false,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
