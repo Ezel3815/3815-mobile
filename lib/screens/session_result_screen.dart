@@ -1,3 +1,4 @@
+import 'package:upgrade/widgets/nocturne_mascot.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -196,6 +197,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
               child: Column(
                 children: [
                   const Spacer(),
+                  const NocturneMascot(pose: 'jumping', height: 96),
                   ScaleTransition(
                     scale: _badgeScale,
                     child: Container(
