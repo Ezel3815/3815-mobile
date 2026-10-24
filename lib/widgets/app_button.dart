@@ -37,7 +37,7 @@ class AppButton extends StatelessWidget {
             padding ?? const EdgeInsets.symmetric(horizontal: 30, vertical: 4)),
         fixedSize: WidgetStatePropertyAll(
             width != null ? Size.fromWidth(width!) : null),
-        shadowColor: const WidgetStatePropertyAll(AppColor.greenColor),
+        shadowColor: WidgetStatePropertyAll(AppColor.greenColor),
         alignment: alignment ?? AlignmentDirectional.center,
         elevation: WidgetStatePropertyAll(elevation ?? 10),
         shape: WidgetStatePropertyAll(
