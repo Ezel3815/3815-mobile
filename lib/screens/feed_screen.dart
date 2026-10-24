@@ -13,10 +13,8 @@ import 'package:upgrade/widgets/app_image.dart';
 
 // Premium redesign: a barely-visible hairline plus a soft shadow reads as
 // "elevated surface" — the old 2px solid outline read as a wireframe.
-const Color _cardBorder = Color(0xFFEAEFE0);
-const List<BoxShadow> _cardShadow = [
-  BoxShadow(color: Color(0x14243D2E), blurRadius: 22, offset: Offset(0, 8)),
-];
+Color get _cardBorder => AppColor.night ? AppColor.glowBorder : const Color(0xFFEAEFE0);
+List<BoxShadow> get _cardShadow => AppColor.glowShadow;
 
 /// On tablets the feed stays a comfortable reading column instead of
 /// stretching edge to edge.
@@ -771,9 +769,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     ),
                   ),
                 ),
-                const Divider(height: 1, thickness: 1, color: _cardBorder),
+                Divider(height: 1, thickness: 1, color: _cardBorder),
                 Expanded(child: _list()),
-                const Divider(height: 1, thickness: 1, color: _cardBorder),
+                Divider(height: 1, thickness: 1, color: _cardBorder),
                 SafeArea(
                   top: false,
                   child: Padding(
@@ -797,7 +795,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                   horizontal: 16, vertical: 12),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
-                                borderSide: const BorderSide(
+                                borderSide: BorderSide(
                                     color: _cardBorder, width: 1.4),
                               ),
                               focusedBorder: OutlineInputBorder(
