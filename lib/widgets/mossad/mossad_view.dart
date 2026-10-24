@@ -1,3 +1,4 @@
+import 'package:upgrade/resources.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -298,7 +299,7 @@ class _TitleBlock extends StatelessWidget {
                           fontSize: titleSize,
                           fontWeight: FontWeight.w900,
                           height: 1.05,
-                          color: const Color(0xFF0B0B0B),
+                          color: AppColor.pick(0xFF0B0B0B, 0xFFF4F2FF),
                         ),
                       ),
                     ],
@@ -313,7 +314,7 @@ class _TitleBlock extends StatelessWidget {
               angle: -0.03,
               child: CustomPaint(
                 painter: const _TornPainter(color: MossadColors.paper),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
@@ -323,7 +324,7 @@ class _TitleBlock extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF111111),
+                        color: AppColor.pick(0xFF111111, 0xFFF4F2FF),
                       ),
                     ),
                   ),
