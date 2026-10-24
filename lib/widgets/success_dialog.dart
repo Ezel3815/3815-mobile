@@ -11,7 +11,7 @@ class SuccessDownloadDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.card,
       surfaceTintColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 30),
       shape: RoundedRectangleBorder(
@@ -33,7 +33,7 @@ class SuccessDownloadDialog extends StatelessWidget {
             const SizedBox(
               height: 10,
             ),
-            const Icon(
+            Icon(
               Icons.check_circle,
               color: AppColor.greenColor,
               size: 100,
