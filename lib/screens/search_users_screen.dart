@@ -32,7 +32,7 @@ class SearchUsersScreen extends StatelessWidget {
 
           if (results.isEmpty) {
             if (searching) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(color: AppColor.greenColor),
               );
             }
@@ -41,7 +41,7 @@ class SearchUsersScreen extends StatelessWidget {
                 controller.query.value.isEmpty
                     ? "Search for people to follow"
                     : "No users found",
-                style: const TextStyle(color: AppColor.textSecondary),
+                style: TextStyle(color: AppColor.textSecondary),
               ),
             );
           }
@@ -50,7 +50,7 @@ class SearchUsersScreen extends StatelessWidget {
               // Thin bar while a newer search is running, so the list does
               // not disappear on every letter typed.
               if (searching)
-                const LinearProgressIndicator(
+                LinearProgressIndicator(
                   minHeight: 2,
                   color: AppColor.greenColor,
                   backgroundColor: Colors.transparent,
@@ -99,7 +99,7 @@ class SearchUsersScreen extends StatelessWidget {
                                           width: 44,
                                           height: 44,
                                           color: AppColor.lightGreenColor,
-                                          child: const Icon(Icons.person,
+                                          child: Icon(Icons.person,
                                               color: AppColor.greenColor),
                                         ),
                                 ),
@@ -113,7 +113,7 @@ class SearchUsersScreen extends StatelessWidget {
                                         user.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                           color: AppColor.textPrimary,
@@ -122,7 +122,7 @@ class SearchUsersScreen extends StatelessWidget {
                                       if (user.username != null)
                                         Text(
                                           "@${user.username}",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
                                             color: AppColor.textSecondary,
                                           ),
@@ -139,7 +139,7 @@ class SearchUsersScreen extends StatelessWidget {
                                           .withOpacity(0.6),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       "Following",
                                       style: TextStyle(
                                         fontSize: 11.5,
