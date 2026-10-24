@@ -19,7 +19,7 @@ class PageTitleImage extends GetView<AddCardController> {
           children: [
             Text(
               controller.getTitle(type, type2),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColor.textPrimary,
@@ -76,7 +76,7 @@ class PageTitleImage extends GetView<AddCardController> {
                       color: AppColor.lightGreenColor.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.attachment_rounded,
                       color: AppColor.darkGreenColor,
                       size: 18,
