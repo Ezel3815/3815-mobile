@@ -9,7 +9,7 @@ import 'ai_scan_theme.dart';
 /// Shown whenever the free tries are used up.
 /// 7 (offer): subscribe -> 9 -> payment  |  maybe later -> 8 (countdown)  ·  9 -> back to app -> 10
 Future<void> showAiPremiumFlow(BuildContext context, AiScanApi api, {DateTime? nextAt}) async {
-  final go = await showDialog<bool>(context: context, barrierColor: AiC.forest.withOpacity(.82), builder: (_) => _OfferDialog(api: api));
+  final go = await showDialog<bool>(context: context, barrierColor: AiC.deep.withOpacity(.82), builder: (_) => _OfferDialog(api: api));
   if (!context.mounted) return;
   if (go == true) {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PremiumPage(api: api)));
@@ -20,7 +20,7 @@ Future<void> showAiPremiumFlow(BuildContext context, AiScanApi api, {DateTime? n
         t = (await api.status()).nextAvailableAt;
       } catch (_) {}
     }
-    if (context.mounted) await showDialog(context: context, barrierColor: AiC.forest.withOpacity(.82), builder: (_) => _SeeYouDialog(until: t));
+    if (context.mounted) await showDialog(context: context, barrierColor: AiC.deep.withOpacity(.82), builder: (_) => _SeeYouDialog(until: t));
   }
 }
 
@@ -65,15 +65,15 @@ class _PlanBox extends StatelessWidget {
             ),
             child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
               Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(label, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12.5, color: AiC.forest, fontWeight: FontWeight.w600)),
+                Text(label, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12.5, color: AiC.forest, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(price, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 19, color: AiC.forest, fontWeight: FontWeight.w700)),
+                Text(price, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 19, color: AiC.forest, fontWeight: FontWeight.w700)),
                 if (yearly && saving > 0) ...[
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
                     decoration: BoxDecoration(color: AiC.paleSage, borderRadius: BorderRadius.circular(10)),
-                    child: Text(AiStr.save(saving), style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 10.5, color: AiC.primary, fontWeight: FontWeight.w600)),
+                    child: Text(AiStr.save(saving), style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 10.5, color: AiC.primary, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ]),
@@ -130,7 +130,7 @@ class _OfferDialogState extends State<_OfferDialog> {
             const SizedBox(height: 18),
             AiButton(AiStr.subscribe, onTap: () => Navigator.pop(context, true)),
             const SizedBox(height: 10),
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AiStr.maybeLater, style: const TextStyle(color: AiC.forest, fontSize: 13, fontFamily: 'ELMESSIRI'))),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AiStr.maybeLater, style: TextStyle(color: AiC.forest, fontSize: 13, fontFamily: 'ELMESSIRI'))),
           ]),
         ),
       );
@@ -190,11 +190,11 @@ class _SeeYouDialogState extends State<_SeeYouDialog> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(color: AiC.paleSage.withOpacity(.55), borderRadius: BorderRadius.circular(16), border: Border.all(color: AiC.line)),
               child: Column(children: [
-                Text(AiStr.returnsIn, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.forest, fontWeight: FontWeight.w600)),
+                Text(AiStr.returnsIn, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.forest, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Directionality(textDirection: TextDirection.ltr, child: Text(_left, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 30, fontWeight: FontWeight.w700, color: AiC.forest))),
+                Directionality(textDirection: TextDirection.ltr, child: Text(_left, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 30, fontWeight: FontWeight.w700, color: AiC.forest))),
                 const SizedBox(height: 2),
-                if (_clock.isNotEmpty) Text(AiStr.returnsAt(_clock), style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11, color: AiC.sage)),
+                if (_clock.isNotEmpty) Text(AiStr.returnsAt(_clock), style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 11, color: AiC.sage)),
               ]),
             ),
             const SizedBox(height: 18),
@@ -240,7 +240,7 @@ class _PremiumPageState extends State<PremiumPage> {
             child: Container(
               height: MediaQuery.of(context).size.height * .76,
               padding: const EdgeInsets.fromLTRB(24, 26, 24, 14),
-              decoration: const BoxDecoration(color: AiC.ivory, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+              decoration: BoxDecoration(color: AiC.ivory, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
               child: SafeArea(
                 top: false,
                 child: Column(children: [
@@ -262,7 +262,7 @@ class _PremiumPageState extends State<PremiumPage> {
                   const Spacer(),
                   AiButton(AiStr.subscribe, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PaymentScreen(api: widget.api, plan: _yearly ? 'YEARLY' : 'MONTHLY')))),
                   const SizedBox(height: 10),
-                  TextButton(onPressed: _back, child: Text(AiStr.backToApp, style: const TextStyle(color: AiC.forest, fontSize: 13, fontFamily: 'ELMESSIRI'))),
+                  TextButton(onPressed: _back, child: Text(AiStr.backToApp, style: TextStyle(color: AiC.forest, fontSize: 13, fontFamily: 'ELMESSIRI'))),
                 ]),
               ),
             ),
@@ -276,7 +276,7 @@ class _LaterScreen extends StatelessWidget {
   const _LaterScreen();
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AiC.forest,
+        backgroundColor: AiC.deep,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 34),
@@ -345,7 +345,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         padding: const EdgeInsets.symmetric(vertical: 7),
         child: Row(children: [
           Expanded(child: Text(k, style: aiBody)),
-          Directionality(textDirection: TextDirection.ltr, child: SelectableText(v, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 15, fontWeight: FontWeight.w700, color: AiC.forest))),
+          Directionality(textDirection: TextDirection.ltr, child: SelectableText(v, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 15, fontWeight: FontWeight.w700, color: AiC.forest))),
         ]),
       );
 
@@ -370,7 +370,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                   )
                 : _p == null
-                    ? Center(child: _err != null ? Text(_err!, style: aiBody) : const CircularProgressIndicator(color: AiC.primary))
+                    ? Center(child: _err != null ? Text(_err!, style: aiBody) : CircularProgressIndicator(color: AiC.primary))
                     : ListView(padding: const EdgeInsets.fromLTRB(22, 18, 22, 24), children: [
                         Text(AiStr.payHeading, style: aiTitle.copyWith(fontSize: 20)),
                         const SizedBox(height: 14),
@@ -392,7 +392,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             labelText: AiStr.txNumber,
                             filled: true,
                             fillColor: AiC.card,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AiC.line)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AiC.line)),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -402,8 +402,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             if (x != null) setState(() => _proof = File(x.path));
                           },
                           icon: aiSvg('w03_gallery_upload_arrow.svg', w: 20, h: 20),
-                          label: Text(_proof == null ? AiStr.attachProof : AiStr.proofAttached, style: const TextStyle(color: AiC.forest, fontFamily: 'ELMESSIRI')),
-                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48), side: const BorderSide(color: AiC.line), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          label: Text(_proof == null ? AiStr.attachProof : AiStr.proofAttached, style: TextStyle(color: AiC.forest, fontFamily: 'ELMESSIRI')),
+                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48), side: BorderSide(color: AiC.line), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                         ),
                         if (_err != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err!, style: TextStyle(color: Colors.red.shade700, fontSize: 13))),
                         const SizedBox(height: 20),
