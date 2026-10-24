@@ -43,7 +43,7 @@ class CardViewScreen extends GetView<CardViewController> {
         Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColor.scaffoldBackgroundColor,
           ),
         ),
@@ -127,7 +127,7 @@ class CardViewScreen extends GetView<CardViewController> {
                                 Divider(
                                   height: 0,
                                   thickness: 1,
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: AppColor.ink.withOpacity(0.08),
                                 ),
                                 const SizedBox(height: 14),
                                 HtmlWidget(
@@ -148,7 +148,7 @@ class CardViewScreen extends GetView<CardViewController> {
                                 Divider(
                                   height: 0,
                                   thickness: 1,
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: AppColor.ink.withOpacity(0.08),
                                 ),
                                 const SizedBox(height: 14),
                                 HtmlWidget(
@@ -193,7 +193,7 @@ class CardViewScreen extends GetView<CardViewController> {
                               Divider(
                                 height: 0,
                                 thickness: 1,
-                                color: Colors.black.withOpacity(0.08),
+                                color: AppColor.ink.withOpacity(0.08),
                               ),
                               const SizedBox(height: 14),
                               HtmlWidget(
@@ -268,7 +268,7 @@ class CardViewScreen extends GetView<CardViewController> {
                                       ),
                                       TextSpan(
                                         text: controller.cards[index].documentTitle,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColor.greenColor,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 16,
@@ -305,7 +305,7 @@ class CardViewScreen extends GetView<CardViewController> {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColor.greenColor,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(24),
@@ -330,7 +330,7 @@ class CardViewScreen extends GetView<CardViewController> {
               } else {
                 if (controller.showAnswer) {
                   return Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColor.scaffoldBackgroundColor,
                     ),
                     child: Column(
@@ -427,7 +427,7 @@ class CardViewScreen extends GetView<CardViewController> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColor.greenColor,
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(24),
@@ -498,14 +498,14 @@ class _StudyProgress extends StatelessWidget {
                     minHeight: 7,
                     backgroundColor: AppColor.lightGreenColor,
                     valueColor:
-                        const AlwaysStoppedAnimation(AppColor.greenColor),
+                        AlwaysStoppedAnimation(AppColor.greenColor),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 '${index + 1} / $total',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: AppColor.textPrimary,
@@ -514,7 +514,7 @@ class _StudyProgress extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 left == 0 ? AppStrings.lastCard : AppStrings.remaining(left),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: AppColor.textSecondary,
@@ -627,8 +627,8 @@ class _ShapesWidgetState extends State<ShapesWidget> {
                     expands: false,
                     readOnly: true,
                     enabled: false,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColor.ink,
                     ),
                     onTapOutside: (event) => FocusScope.of(context).unfocus(),
                     controller: TextEditingController(text: widget.item.text),
