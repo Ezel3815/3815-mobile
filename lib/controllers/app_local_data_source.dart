@@ -30,7 +30,6 @@ class AppLocalDataSourceImpl extends AppLocalDataSource {
 
   @override
   Future<List<DeckEntity>> getDeckEntityFromLocal() async {
-    await Future.delayed(const Duration(seconds: 1));
     if (deckBox.values.isNotEmpty) {
       return deckBox.values.toList();
     }
@@ -47,7 +46,6 @@ class AppLocalDataSourceImpl extends AppLocalDataSource {
 
   @override
   Future<List<DeckEntity>> getMyDeckEntityFromLocal() async {
-    await Future.delayed(const Duration(seconds: 1));
     if (myDeckBox.values.isNotEmpty) {
       return myDeckBox.values.toList();
     }
@@ -64,7 +62,6 @@ class AppLocalDataSourceImpl extends AppLocalDataSource {
 
   @override
   Future<List<DocumentEntity>> getDocumentEntityFromLocal() async {
-    await Future.delayed(const Duration(seconds: 1));
     if (documentBox.values.isNotEmpty) {
       return documentBox.values.toList();
     }
@@ -81,7 +78,6 @@ class AppLocalDataSourceImpl extends AppLocalDataSource {
 
   @override
   Future<List<CardEntity>> getCardEntityFromLocal(int id) async {
-    await Future.delayed(const Duration(seconds: 1));
     if (cardBox.values.isNotEmpty) {
       return cardBox.values
           .map((e) => e)
