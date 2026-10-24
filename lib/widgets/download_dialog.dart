@@ -129,7 +129,7 @@ class _DownloadDialogState extends State<DownloadDialog> {
     return PopScope(
       canPop: false,
       child: Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.card,
         surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadiusDirectional.circular(10),
