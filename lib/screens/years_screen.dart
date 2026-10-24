@@ -192,7 +192,10 @@ class _GreetingBlock extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Obx(() {
         final name = controller.profile.value?.name ?? "";
-        return Column(
+        return Row(
+          children: [
+            Expanded(
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -214,6 +217,15 @@ class _GreetingBlock extends StatelessWidget {
                 color: AppColor.textSecondary,
               ),
             ),
+          ],
+        ),
+            ),
+            if (AppColor.night)
+              Image.asset(
+                'lib/assests/nocturne/mascot/mozaik-cat-orbiting.png',
+                height: 84,
+                fit: BoxFit.contain,
+              ),
           ],
         );
       }),
