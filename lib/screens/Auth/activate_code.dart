@@ -25,7 +25,7 @@ class _ActivateCodeState extends State<ActivateCode> {
         Container(
           width: double.infinity,
           height: screenHeight,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColor.scaffoldBackgroundColor,
             image: DecorationImage(
               image: AssetImage('lib/assests/images/background_5.jpg'),
@@ -53,13 +53,13 @@ class _ActivateCodeState extends State<ActivateCode> {
                   Image.asset(
                     "lib/assests/images/ddd.png",
                   ),
-                  const Text(
+                  Text(
                     'Forgot Password',
-                    style: TextStyle(fontSize: 30, color: Colors.black),
+                    style: TextStyle(fontSize: 30, color: AppColor.ink),
                   ),
-                  const Text(
+                  Text(
                     'New Password',
-                    style: TextStyle(fontSize: 20, color: Colors.black),
+                    style: TextStyle(fontSize: 20, color: AppColor.ink),
                   ),
                   Row(
                     children: [
@@ -78,14 +78,14 @@ class _ActivateCodeState extends State<ActivateCode> {
                         child: TextFormField(
                           keyboardType: TextInputType.emailAddress,
                           controller: emailController,
-                          cursorColor: Colors.black,
+                          cursorColor: AppColor.ink,
                           textAlign: TextAlign.center,
                           validator: AppValidation.validateEmail,
                           decoration: InputDecoration(
                             hintText: 'Email',
                             hintStyle: TextStyle(
                               fontSize: 18,
-                              color: Colors.black,
+                              color: AppColor.ink,
                             ),
                             fillColor: AppColor.greyColor,
                             filled: true,
@@ -112,9 +112,9 @@ class _ActivateCodeState extends State<ActivateCode> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 0),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
-                            color: Colors.black,
+                            color: AppColor.ink,
                           ),
                         ),
                       ),
@@ -136,14 +136,14 @@ class _ActivateCodeState extends State<ActivateCode> {
                         width: 260,
                         child: TextFormField(
                           controller: codeController,
-                          cursorColor: Colors.black,
+                          cursorColor: AppColor.ink,
                           textAlign: TextAlign.center,
                           validator: AppValidation.validateEmpty,
                           decoration: InputDecoration(
                             hintText: 'Code',
                             hintStyle: TextStyle(
                               fontSize: 18,
-                              color: Colors.black,
+                              color: AppColor.ink,
                             ),
                             fillColor: AppColor.greyColor,
                             filled: true,
@@ -170,9 +170,9 @@ class _ActivateCodeState extends State<ActivateCode> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 0),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
-                            color: Colors.black,
+                            color: AppColor.ink,
                           ),
                         ),
                       ),
@@ -200,12 +200,12 @@ class _ActivateCodeState extends State<ActivateCode> {
                           ),
                           width: 220,
                           height: 40,
-                          child: const Center(
+                          child: Center(
                               child: Text(
                             'Activate',
                             style: TextStyle(
                               fontSize: 20,
-                              color: Colors.black,
+                              color: AppColor.ink,
                             ),
                           )),
                         ),
