@@ -205,7 +205,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                         color: AppColor.lightGreenColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_rounded,
                         color: AppColor.darkGreenColor,
                         size: 46,
@@ -217,7 +217,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                     opacity: _contentFade,
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           "أحسنت!",
                           style: TextStyle(
                             fontSize: 22,
@@ -226,7 +226,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           "لقد أكملت هذه الجلسة",
                           style: TextStyle(
                             fontSize: 13,
@@ -249,14 +249,14 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                                   value: value,
                                   strokeWidth: 9,
                                   backgroundColor: AppColor.lightGreenColor,
-                                  valueColor: const AlwaysStoppedAnimation(
+                                  valueColor: AlwaysStoppedAnimation(
                                       AppColor.greenColor),
                                 ),
                               ),
                             ),
                             Text(
                               "$accuracy%",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w700,
                                 color: AppColor.textPrimary,
@@ -265,7 +265,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                           ],
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           "الدقة",
                           style: TextStyle(
                             fontSize: 12,
@@ -321,14 +321,14 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                               },
                               style: OutlinedButton.styleFrom(
                                 side:
-                                    const BorderSide(color: AppColor.greenColor),
+                                    BorderSide(color: AppColor.greenColor),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
                               child: Text(
                                 "مراجعة ${mistakes.length} بطاقة فائتة",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: AppColor.greenColor,
@@ -426,7 +426,7 @@ class _ConfettiPainter extends CustomPainter {
 
   static List<_ConfettiParticle> _generateParticles() {
     final random = Random(7);
-    const colors = [
+    final colors = [
       AppColor.greenColor,
       AppColor.freshGreenColor,
       AppColor.darkGreenColor,
@@ -517,7 +517,7 @@ class _StatChip extends StatelessWidget {
           curve: Curves.easeOutCubic,
           builder: (context, v, _) => Text(
             '$v',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColor.textPrimary,
@@ -526,7 +526,7 @@ class _StatChip extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             color: AppColor.textSecondary,
           ),
