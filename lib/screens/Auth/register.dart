@@ -64,7 +64,7 @@ class _RegisterState extends State<Register> {
 
   Widget? _usernameSuffix() {
     if (checkingUsername) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(14),
         child: SizedBox(
           width: 16,
@@ -75,7 +75,7 @@ class _RegisterState extends State<Register> {
       );
     }
     if (usernameAvailable == true) {
-      return const Icon(Icons.check_circle_rounded,
+      return Icon(Icons.check_circle_rounded,
           size: 20, color: AppColor.greenColor);
     }
     if (usernameAvailable == false) {
@@ -160,7 +160,7 @@ class _RegisterState extends State<Register> {
                 style: TextStyle(color: Colors.red, fontSize: 12)),
           ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           "طلاب السنة التحضيرية يدخلون مسابقة Mossad تلقائيًا.",
           style: TextStyle(fontSize: 11.5, color: AppColor.textSecondary),
         ),
@@ -174,7 +174,7 @@ class _RegisterState extends State<Register> {
       hintText: hint,
       suffixIcon: suffix,
       helperText: helper,
-      helperStyle: const TextStyle(fontSize: 11.5, color: AppColor.greenColor),
+      helperStyle: TextStyle(fontSize: 11.5, color: AppColor.greenColor),
       errorStyle: const TextStyle(fontSize: 11.5, color: Colors.redAccent),
       hintStyle: TextStyle(
         fontSize: 14,
@@ -194,7 +194,7 @@ class _RegisterState extends State<Register> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColor.greenColor, width: 1.5),
+        borderSide: BorderSide(color: AppColor.greenColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -251,7 +251,7 @@ class _RegisterState extends State<Register> {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            const Text(
+                            Text(
                               "MOZAIK",
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -274,10 +274,10 @@ class _RegisterState extends State<Register> {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.35),
+                                color: AppColor.card.withOpacity(0.35),
                                 borderRadius: BorderRadius.circular(26),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: AppColor.line.withOpacity(0.6),
                                   width: 1,
                                 ),
                                 boxShadow: [
@@ -296,7 +296,7 @@ class _RegisterState extends State<Register> {
                                     cursorColor: AppColor.greenColor,
                                     keyboardType: TextInputType.name,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -314,7 +314,7 @@ class _RegisterState extends State<Register> {
                                     keyboardType: TextInputType.text,
                                     textDirection: TextDirection.ltr,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -349,7 +349,7 @@ class _RegisterState extends State<Register> {
                                     cursorColor: AppColor.greenColor,
                                     controller: emailController,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -364,7 +364,7 @@ class _RegisterState extends State<Register> {
                                     cursorColor: AppColor.greenColor,
                                     controller: confirmEmailController,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -390,7 +390,7 @@ class _RegisterState extends State<Register> {
                                     controller: passwordController,
                                     cursorColor: AppColor.greenColor,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       color: AppColor.textPrimary,
                                     ),
@@ -547,7 +547,7 @@ class _RegisterState extends State<Register> {
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: AppColor.darkGreenColor,
-                                        side: const BorderSide(
+                                        side: BorderSide(
                                             color: AppColor.greenColor,
                                             width: 1.2),
                                         shape: RoundedRectangleBorder(
