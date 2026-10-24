@@ -37,6 +37,7 @@ class AppStrings {
   static String get navLibrary => _t("البطاقات", "Cards");
   static String get navProgress => _t("التقدم", "Progress");
   static String get navProfile => _t("الملف الشخصي", "Profile");
+  static String get navMore => _t("الإشعارات", "Alerts");
 
   // ===== Streak / activity verbs (used in the friends feed) =====
   static String get unlocked => _t("فتح", "unlocked");
