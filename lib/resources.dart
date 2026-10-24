@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/painting.dart';
 
 /// App palette. Values are theme-aware getters: [night] flips the whole
 /// palette to MOZAIK // NOCTURNE (see NocturneController). Names are kept
@@ -39,6 +40,12 @@ class AppColor {
   // Legacy aliases
   static Color get lightRedColor => _p(0xFFF7DCD0, 0xFF3A1B2A);
   static Color get greyColor => _p(0xFFCFCFCF, 0xFF252A58);
+
+  // Nocturne neon glow (matches the design board): violet outline + soft halo.
+  static Color get glowBorder => _p(0xFFDDE4CC, 0xFF252A58);
+  static List<BoxShadow> get glowShadow => night
+      ? const [BoxShadow(color: Color(0x267358FF), blurRadius: 14)]
+      : const [BoxShadow(color: Color(0x14243D2E), blurRadius: 22, offset: Offset(0, 8))];
 
   // Nocturne gradient (primary CTA)
   static const List<Color> nocturneGradient = [
