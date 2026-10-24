@@ -49,7 +49,10 @@ class DeckWidget extends StatelessWidget {
         child: Row(
           children: [
             Builder(builder: (context) {
-              final art = AppColor.night ? nocturneMedicalIcon(model.title) : null;
+              final art = AppColor.night
+                  ? (nocturneMedicalIcon(model.title) ??
+                      'lib/assests/nocturne/icons/icon-flashcard-tile.png')
+                  : null;
               if (art != null) {
                 return Image.asset(art, width: 48, height: 48, fit: BoxFit.contain);
               }
