@@ -161,7 +161,7 @@ class _LessonNode extends StatelessWidget {
                           children: [
                             Text(
                               "${AppStrings.lesson} $index",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.3,
@@ -172,7 +172,7 @@ class _LessonNode extends StatelessWidget {
                             Text(
                               chapter.title,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: AppColor.textPrimary,
@@ -183,14 +183,14 @@ class _LessonNode extends StatelessWidget {
                       ),
                       if (status == _ChapterStatus.completed)
                         Text("✓ ${AppStrings.completed}",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColor.greenColor,
                             ))
                       else if (status == _ChapterStatus.inProgress)
                         Text(AppStrings.inProgress,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColor.darkGreenColor,
