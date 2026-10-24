@@ -7,6 +7,7 @@ import 'package:upgrade/widgets/lesson_path_widget.dart';
 import 'package:upgrade/controllers/main_controller.dart';
 import 'package:upgrade/controllers/years_controller.dart';
 import 'package:upgrade/resources.dart';
+import 'package:upgrade/widgets/nocturne_mascot.dart';
 import 'package:upgrade/screens/app_drawer.dart';
 import 'package:upgrade/widgets/tablet_bounded.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
@@ -220,12 +221,7 @@ class _GreetingBlock extends StatelessWidget {
           ],
         ),
             ),
-            if (AppColor.night)
-              Image.asset(
-                'lib/assests/nocturne/mascot/mozaik-cat-orbiting.png',
-                height: 84,
-                fit: BoxFit.contain,
-              ),
+            const NocturneMascot(pose: 'orbiting', height: 84),
           ],
         );
       }),
