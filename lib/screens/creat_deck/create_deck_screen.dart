@@ -16,7 +16,7 @@ class CreateDeckScreen extends GetView<CreateDeckController> {
         Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColor.scaffoldBackgroundColor,
           ),
         ),
@@ -35,7 +35,7 @@ class CreateDeckScreen extends GetView<CreateDeckController> {
                       InkWell(
                         onTap: () => controller.scaffoldKey.currentState
                             ?.openDrawer(),
-                        child: const Icon(
+                        child: Icon(
                           Icons.dehaze,
                           size: 28,
                           color: AppColor.textPrimary,
@@ -189,7 +189,7 @@ class CreateDeckScreen extends GetView<CreateDeckController> {
                       cursorColor: AppColor.greenColor,
                       decoration: InputDecoration(
                         hintText: AppStrings.deckName,
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           color: AppColor.textSecondary,
                           fontSize: 15,
                         ),
@@ -207,7 +207,7 @@ class CreateDeckScreen extends GetView<CreateDeckController> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                               color: AppColor.greenColor, width: 1.5),
                         ),
                         errorBorder: OutlineInputBorder(
@@ -221,7 +221,7 @@ class CreateDeckScreen extends GetView<CreateDeckController> {
                               color: Colors.redAccent, width: 1.5),
                         ),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         color: AppColor.textPrimary,
                       ),
