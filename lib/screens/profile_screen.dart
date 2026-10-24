@@ -54,13 +54,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Obx(
         () {
           if (controller.loading.value) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColor.greenColor),
             );
           }
           final profile = controller.profile.value;
           if (profile == null) {
-            return const Center(
+            return Center(
               child: Text(
                 "Couldn't load profile",
                 style: TextStyle(color: AppColor.textSecondary),
@@ -82,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Container(
                         width: double.infinity,
                         height: 260,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColor.lightGreenColor,
                         ),
                         child: SafeArea(
@@ -98,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: AppColor.card.withOpacity(0.6),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -121,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: AppColor.card.withOpacity(0.6),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -140,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   height: 152,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.white,
+                                    color: AppColor.card,
                                     border: Border.all(
                                       color: AppColor.greenColor,
                                       width: 3,
@@ -244,7 +244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             profile.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
                               color: AppColor.textPrimary,
@@ -255,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             profile.username != null
                                 ? "@${profile.username} · ${_formatJoined(profile.createdAt)}"
                                 : _formatJoined(profile.createdAt),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               color: AppColor.textSecondary,
                               fontWeight: FontWeight.w400,
@@ -288,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Container(
                                     width: 1,
                                     height: 32,
-                                    color: Colors.black.withOpacity(0.06)),
+                                    color: AppColor.ink.withOpacity(0.06)),
                                 InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () =>
@@ -305,7 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Container(
                                     width: 1,
                                     height: 32,
-                                    color: Colors.black.withOpacity(0.06)),
+                                    color: AppColor.ink.withOpacity(0.06)),
                                 InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () =>
@@ -334,7 +334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               EditProfileDialog(
                                                   controller: controller)),
                                           style: OutlinedButton.styleFrom(
-                                            side: const BorderSide(
+                                            side: BorderSide(
                                                 color: AppColor.greenColor),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
@@ -343,7 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                           child: Text(
                                             AppStrings.editProfile,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
                                               color: AppColor.greenColor,
@@ -360,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     ? Colors.white
                                                     : AppColor.greenColor,
                                             elevation: 0,
-                                            side: const BorderSide(
+                                            side: BorderSide(
                                                 color: AppColor.greenColor),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
@@ -489,7 +489,7 @@ class _LevelCard extends StatelessWidget {
             child: Center(
               child: Text(
                 "${profile.level}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColor.darkGreenColor,
@@ -507,7 +507,7 @@ class _LevelCard extends StatelessWidget {
                   children: [
                     Text(
                       "Level ${profile.level}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColor.textPrimary,
@@ -515,7 +515,7 @@ class _LevelCard extends StatelessWidget {
                     ),
                     Text(
                       "${profile.xpIntoLevel}/${profile.xpForNextLevel} XP",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColor.textSecondary,
                       ),
@@ -530,7 +530,7 @@ class _LevelCard extends StatelessWidget {
                     minHeight: 7,
                     backgroundColor: AppColor.scaffoldBackgroundColor,
                     valueColor:
-                        const AlwaysStoppedAnimation(AppColor.greenColor),
+                        AlwaysStoppedAnimation(AppColor.greenColor),
                   ),
                 ),
               ],
@@ -567,7 +567,7 @@ class _StatItem extends StatelessWidget {
             ],
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: AppColor.textPrimary,
@@ -578,7 +578,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: AppColor.textSecondary,
           ),
