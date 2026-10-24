@@ -20,7 +20,7 @@ import 'package:upgrade/widgets/tablet_bounded.dart';
 /// A small set of accent colors used only to visually distinguish deck
 /// cards in the library grid (not tied to any real "subject category"
 /// data, since that doesn't exist in the backend yet). Cycled by index.
-const List<Color> _deckAccentColors = [
+List<Color> get _deckAccentColors => [
   AppColor.greenColor,
   AppColor.infoColor,
   AppColor.warningColor,
@@ -62,7 +62,7 @@ class LibraryScreen extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: () => scaffoldKey.currentState?.openDrawer(),
-                    child: const Icon(
+                    child: Icon(
                       Icons.dehaze,
                       size: 26,
                       color: AppColor.textPrimary,
@@ -381,11 +381,11 @@ class _SubjectCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.lock,
+                            Icon(Icons.lock,
                                 size: 12, color: AppColor.textSecondary),
                             const SizedBox(width: 3),
                             Text(AppStrings.locked,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 10,
                                     color: AppColor.textSecondary)),
                           ],
@@ -396,7 +396,7 @@ class _SubjectCard extends StatelessWidget {
                         children: [
                           OfflineButton(subject: subject, color: accentColor),
                           const SizedBox(width: 2),
-                          const Icon(
+                          Icon(
                             Icons.chevron_right_rounded,
                             color: AppColor.textSecondary,
                             size: 20,
@@ -410,7 +410,7 @@ class _SubjectCard extends StatelessWidget {
               subject.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColor.textPrimary,
@@ -419,7 +419,7 @@ class _SubjectCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               AppStrings.cardsCount(total),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppColor.textSecondary,
               ),
