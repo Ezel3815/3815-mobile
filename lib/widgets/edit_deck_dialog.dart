@@ -22,11 +22,11 @@ class EditDeckDialog extends GetView<CardController> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 "Edit Deck",
                 style: TextStyle(
                   fontSize: 24,
-                  color: Colors.black,
+                  color: AppColor.ink,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -72,17 +72,17 @@ class EditDeckDialog extends GetView<CardController> {
                           ? const Center(child: CircularProgressIndicator())
                           : ElevatedButton(
                               onPressed: controller.editDeck,
-                              style: const ButtonStyle(
+                              style: ButtonStyle(
                                 backgroundColor: WidgetStatePropertyAll(
                                   AppColor.greenColor,
                                 ),
                                 elevation: WidgetStatePropertyAll(0),
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Edit",
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.black,
+                                  color: AppColor.ink,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
