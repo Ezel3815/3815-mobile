@@ -97,15 +97,13 @@ class _NightNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <(IconData, IconData, String)>[
-      (Icons.home_rounded, Icons.home_outlined, AppStrings.navHome),
-      (Icons.style_rounded, Icons.style_outlined, AppStrings.navLibrary),
-      (Icons.emoji_events_rounded, Icons.emoji_events_outlined,
-          AppStrings.leaderboard),
-      (Icons.person_rounded, Icons.person_outline_rounded,
-          AppStrings.navProfile),
-      (Icons.notifications_rounded, Icons.notifications_none_rounded,
-          AppStrings.navMore),
+    const base = 'lib/assests/nocturne/icons/icon-';
+    final items = <(String, String)>[
+      ('${base}home.png', AppStrings.navHome),
+      ('${base}library.png', AppStrings.navLibrary),
+      ('${base}trophy.png', AppStrings.leaderboard),
+      ('${base}profile.png', AppStrings.navProfile),
+      ('${base}bell.png', AppStrings.navMore),
     ];
     return Container(
       decoration: BoxDecoration(
@@ -128,19 +126,20 @@ class _NightNavBar extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          index == i ? items[i].$1 : items[i].$2,
-                          size: 24,
-                          color: index == i
-                              ? const Color(0xFFA98CFF)
-                              : const Color(0xFF777594),
-                          shadows: index == i
-                              ? const [Shadow(color: Color(0x667358FF), blurRadius: 8)]
-                              : null,
+                        AnimatedScale(
+                          scale: index == i ? 1.12 : 1.0,
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutBack,
+                          child: AnimatedOpacity(
+                            opacity: index == i ? 1.0 : .42,
+                            duration: const Duration(milliseconds: 220),
+                            child: Image.asset(items[i].$1,
+                                width: 26, height: 26),
+                          ),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          items[i].$3,
+                          items[i].$2,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
