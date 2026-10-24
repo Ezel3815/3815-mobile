@@ -26,7 +26,7 @@ class DocumentScreen extends GetView<DocumentController> {
         Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColor.scaffoldBackgroundColor,
             image: DecorationImage(
               image: AssetImage("lib/assests/images/background_6.jpg"),
@@ -74,7 +74,7 @@ class DocumentScreen extends GetView<DocumentController> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black.withOpacity(.4),
+                            color: AppColor.ink.withOpacity(.4),
                           ),
                         )
                       ],
@@ -104,17 +104,17 @@ class DocumentScreen extends GetView<DocumentController> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide:
-                                const BorderSide(color: Colors.black, width: 2),
+                                BorderSide(color: AppColor.ink, width: 2),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide:
-                                const BorderSide(color: Colors.black, width: 2),
+                                BorderSide(color: AppColor.ink, width: 2),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide:
-                                const BorderSide(color: Colors.black, width: 2),
+                                BorderSide(color: AppColor.ink, width: 2),
                           ),
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 16),
@@ -124,9 +124,9 @@ class DocumentScreen extends GetView<DocumentController> {
                     const SizedBox(
                       width: 20,
                     ),
-                    // const Icon(
+                    // Icon(
                     //   Icons.filter_alt,
-                    //   color: Colors.black,
+                    //   color: AppColor.ink,
                     //   size: 35,
                     // ),
                     // const SizedBox(
@@ -189,19 +189,19 @@ class DocumentScreen extends GetView<DocumentController> {
                                               child: Text(
                                                 controller
                                                     .searchList[index].title,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
+                                                  color: AppColor.ink,
                                                 ),
                                               ),
                                             )
                                           ],
                                         ),
                                       ),
-                                      const Divider(
+                                      Divider(
                                         height: 20,
-                                        color: Colors.black,
+                                        color: AppColor.ink,
                                         thickness: 2,
                                       ),
                                     ],
@@ -252,19 +252,19 @@ class DocumentScreen extends GetView<DocumentController> {
                                             Flexible(
                                               child: Text(
                                                 controller.docs[index].title,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
+                                                  color: AppColor.ink,
                                                 ),
                                               ),
                                             )
                                           ],
                                         ),
                                       ),
-                                      const Divider(
+                                      Divider(
                                         height: 20,
-                                        color: Colors.black,
+                                        color: AppColor.ink,
                                         thickness: 2,
                                       ),
                                     ],
