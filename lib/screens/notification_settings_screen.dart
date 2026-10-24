@@ -56,7 +56,7 @@ class _NotificationSettingsScreenState
       appBar: AppBar(
         backgroundColor: AppColor.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "الإشعارات",
           style: TextStyle(
             fontSize: 18,
@@ -110,7 +110,7 @@ class _NotificationSettingsScreenState
           const SizedBox(height: 28),
           const Divider(),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "اختبار",
             style: TextStyle(
               fontSize: 13,
@@ -130,7 +130,7 @@ class _NotificationSettingsScreenState
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColor.greenColor,
-              side: const BorderSide(color: AppColor.greenColor),
+              side: BorderSide(color: AppColor.greenColor),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -145,7 +145,7 @@ class _NotificationSettingsScreenState
             builder: (context, snapshot) {
               final pending = snapshot.data ?? [];
               if (pending.isEmpty) {
-                return const Text(
+                return Text(
                   "لا يوجد شيء مجدول حالياً.",
                   style: TextStyle(fontSize: 12, color: AppColor.textSecondary),
                 );
@@ -157,7 +157,7 @@ class _NotificationSettingsScreenState
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Text(
                             "• ${p.title} (id ${p.id})",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColor.textSecondary,
                             ),
@@ -229,7 +229,7 @@ class _ReminderCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColor.textPrimary,
@@ -256,7 +256,7 @@ class _ReminderCard extends StatelessWidget {
           ),
           if (enabled) ...[
             const SizedBox(height: 4),
-            Divider(color: Colors.black.withOpacity(0.06), height: 1),
+            Divider(color: AppColor.ink.withOpacity(0.06), height: 1),
             InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: onTapTime,
@@ -264,10 +264,10 @@ class _ReminderCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.access_time_rounded,
+                    Icon(Icons.access_time_rounded,
                         size: 16, color: AppColor.textSecondary),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       "وقت التذكير",
                       style: TextStyle(
                         fontSize: 13,
@@ -278,14 +278,14 @@ class _ReminderCard extends StatelessWidget {
                     const Spacer(),
                     Text(
                       time,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColor.greenColor,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right_rounded,
+                    Icon(Icons.chevron_right_rounded,
                         size: 18, color: AppColor.textSecondary),
                   ],
                 ),
