@@ -89,7 +89,7 @@ class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
                     child: SizedBox(width: _cam!.value.previewSize!.height, height: _cam!.value.previewSize!.width, child: CameraPreview(_cam!)),
                   )
                 else
-                  Container(color: AiC.paleSage, child: Center(child: _denied ? aiSvg('w03_camera_permission.svg', w: 80) : const CircularProgressIndicator(color: AiC.primary))),
+                  Container(color: AiC.paleSage, child: Center(child: _denied ? aiSvg('w03_camera_permission.svg', w: 80) : CircularProgressIndicator(color: AiC.primary))),
                 Padding(padding: const EdgeInsets.all(10), child: aiSvg('w03_scan_frame_corners.svg', fit: BoxFit.fill)),
               ]),
             ),
@@ -108,7 +108,7 @@ class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
         const Spacer(),
         InkWell(customBorder: const CircleBorder(), onTap: _shoot, child: aiSvg('w03_capture_shutter.svg', w: 84, h: 84)),
         const SizedBox(height: 10),
-        Text(AiStr.photoHint, style: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage)),
+        Text(AiStr.photoHint, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 12, color: AiC.sage)),
         const SizedBox(height: 22),
       ]),
     );
@@ -126,7 +126,7 @@ class _Seg extends StatelessWidget {
         onTap: onTap,
         child: Container(
           height: 42,
-          decoration: BoxDecoration(color: active ? AiC.forest : Colors.transparent, borderRadius: BorderRadius.circular(22)),
+          decoration: BoxDecoration(color: active ? AiC.accent : Colors.transparent, borderRadius: BorderRadius.circular(22)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             ColorFiltered(colorFilter: ColorFilter.mode(active ? Colors.white : AiC.forest, BlendMode.srcIn), child: aiSvg(icon, w: 20, h: 20)),
             const SizedBox(width: 8),
