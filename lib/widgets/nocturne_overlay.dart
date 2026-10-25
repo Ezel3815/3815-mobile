@@ -41,12 +41,12 @@ class _Run extends StatefulWidget {
 class _RunState extends State<_Run> with SingleTickerProviderStateMixin {
   late final AnimationController _a = AnimationController(
     vsync: this,
-    duration: Duration(milliseconds: widget.full ? 1700 : 380),
+    duration: Duration(milliseconds: widget.full ? 1900 : 420),
   );
   bool _applied = false;
 
   double _iv(double a, double b) =>
-      Curves.easeOut.transform(((_a.value - a) / (b - a)).clamp(0.0, 1.0));
+      Curves.easeInOutCubic.transform(((_a.value - a) / (b - a)).clamp(0.0, 1.0));
 
   @override
   void initState() {
@@ -58,6 +58,35 @@ class _RunState extends State<_Run> with SingleTickerProviderStateMixin {
         widget.c.apply(widget.entering);
       }
     });
+  }
+
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    _begin();
+  }
+
+  /// Decode the artwork first so the cat and logo never pop in half-drawn
+  /// (capped at 450 ms so the 2.6 s failsafe can never be hit).
+  Future<void> _begin() async {
+    if (widget.full) {
+      try {
+        await Future.wait([
+          precacheImage(
+              const AssetImage(
+                  'lib/assests/nocturne/mascot/mozaik-cat-orbiting.png'),
+              context),
+          precacheImage(
+              const AssetImage('lib/assests/brand/mozaik_wordmark.png'),
+              context),
+        ]).timeout(const Duration(milliseconds: 450));
+      } catch (_) {}
+    }
+    if (!mounted) return;
     _a.forward().whenComplete(() {
       if (!_applied) widget.c.apply(widget.entering);
       widget.c.done();
@@ -119,10 +148,30 @@ class _RunState extends State<_Run> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   Opacity(
-                    opacity: stars,
+                    opacity: (stars * (.75 + .25 * math.sin(v * math.pi * 8))).clamp(0.0, 1.0),
                     child: CustomPaint(size: Size.square(s * 1.5), painter: _Stars()),
                   ),
-                  Image.asset('lib/assests/brand/nox_star.png', width: s, filterQuality: FilterQuality.medium),
+                  Align(
+                    alignment: const Alignment(0, .86),
+                    child: ColorFiltered(
+                      colorFilter: const ColorFilter.mode(
+                          Color(0xFFF4F2FF), BlendMode.srcIn),
+                      child: Image.asset(
+                          'lib/assests/brand/mozaik_wordmark.png',
+                          width: s * .85,
+                          filterQuality: FilterQuality.medium),
+                    ),
+                  ),
+                  Transform.translate(
+                    offset: Offset(0, math.sin(v * math.pi * 3) * s * .035),
+                    child: Transform.rotate(
+                      angle: math.sin(v * math.pi * 2) * .035,
+                      child: Image.asset(
+                          'lib/assests/nocturne/mascot/mozaik-cat-orbiting.png',
+                          width: s,
+                          filterQuality: FilterQuality.medium),
+                    ),
+                  ),
                 ]),
               ),
             ),
