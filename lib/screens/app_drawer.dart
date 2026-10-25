@@ -1,100 +1,329 @@
+import 'package:upgrade/strings.dart';
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:upgrade/controllers/api_controller.dart';
+import 'package:upgrade/controllers/main_controller.dart';
+import 'package:upgrade/controllers/theme_controller.dart';
+import 'package:upgrade/main.dart';
+import 'package:upgrade/models/user_model.dart';
 import 'package:upgrade/resources.dart';
+import 'package:upgrade/screens/locale_controller.dart';
+import 'package:upgrade/widgets/inter_code_dialog.dart';
+import 'package:upgrade/widgets/mozaik_mark_icon.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// Palette from the approved design pack, with its night (Nocturne) twin.
-/// Getters, not constants: they follow [AppColor.night] so the AI screens flip with the rest of the app.
-class AiC {
-  static Color _p(int light, int dark) => Color(AppColor.night ? dark : light);
-  static Color get ivory => _p(0xFFF8F6E9, 0xFF070811); // page background
-  static Color get forest => _p(0xFF174F41, 0xFFF4F2FF); // headings / strong text / icons
-  static Color get primary => _p(0xFF286A54, 0xFF7358FF);
-  static Color get sage => _p(0xFF638A76, 0xFFB9B6D5); // secondary text
-  static Color get paleSage => _p(0xFFDDE7D4, 0xFF211A4D);
-  static Color get gold => _p(0xFFC5A34A, 0xFFFFD56A);
-  static Color get card => _p(0xFFFCFBF3, 0xFF11152A);
-  static Color get line => _p(0xFFE3E6D6, 0xFF252A58);
-  static Color get accent => _p(0xFF174F41, 0xFF7358FF); // filled buttons / selected pills
-  static Color get deep => _p(0xFF174F41, 0xFF0D1020); // dark surfaces (window 10, scrims)
-  static Color get shadow => _p(0xFF174F41, 0xFF000000).withOpacity(AppColor.night ? .35 : .08);
-}
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
 
-// single-colour icons that must follow the text colour in night mode
-const _tintable = {
-  'w02_back_button.svg', 'w02_chevron_right.svg', 'w02_info_circle.svg', 'w02_camera_outline.svg',
-  'w02_photo_gallery.svg', 'w03_gallery_upload_arrow.svg', 'w78_close.svg',
-};
-
-Widget aiSvg(String name, {double? w, double? h, BoxFit fit = BoxFit.contain}) {
-  final svg = SvgPicture.asset('lib/assests/ai_scan/$name', width: w, height: h, fit: fit);
-  if (AppColor.night && _tintable.contains(name)) {
-    return ColorFiltered(colorFilter: const ColorFilter.mode(Color(0xFFF4F2FF), BlendMode.srcIn), child: svg);
+  /// Admin-only tools (backup/restore) are hidden from everyone else; the
+  /// server enforces the same rule, this only decides whether to show the item.
+  bool _isAdmin() {
+    try {
+      final raw = sharedPref.getString("user");
+      if (raw == null) return false;
+      return UserModel.fromJson(jsonDecode(raw)).role == "ADMIN";
+    } catch (_) {
+      return false;
+    }
   }
-  return svg;
-}
 
-bool aiRtl(BuildContext c) => Directionality.of(c) == TextDirection.rtl;
-
-TextStyle get aiTitle => TextStyle(fontFamily: 'ELMESSIRI', fontSize: 24, fontWeight: FontWeight.w700, color: AiC.forest, height: 1.3);
-TextStyle get aiBody => TextStyle(fontFamily: 'ELMESSIRI', fontSize: 13, color: AiC.sage, height: 1.6);
-TextStyle get aiCardTitle => TextStyle(fontFamily: 'ELMESSIRI', fontSize: 16, fontWeight: FontWeight.w700, color: AiC.forest);
-
-/// Soft ivory page with the pale geometric mountains at the bottom (windows 2-6).
-class AiPage extends StatelessWidget {
-  final Widget child;
-  final bool mountains;
-  const AiPage({super.key, required this.child, this.mountains = true});
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AiC.ivory,
-        body: Stack(children: [
-          if (mountains && !AppColor.night) Positioned(left: 0, right: 0, bottom: 0, child: Opacity(opacity: .5, child: aiSvg('w78_mountain-landscape.svg', fit: BoxFit.fitWidth))),
-          SafeArea(child: child),
-        ]),
-      );
-}
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final mainController = Get.find<MainController>();
+    final localeController = Get.find<LocaleController>();
+    final nocturne = Get.find<NocturneController>();
 
-class AiButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onTap;
-  final bool light;
-  const AiButton(this.text, {super.key, this.onTap, this.light = false});
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: light ? AiC.ivory : AiC.accent,
-            foregroundColor: light ? AiC.forest : Colors.white,
-            disabledBackgroundColor: AiC.paleSage,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-            textStyle: const TextStyle(fontFamily: 'ELMESSIRI', fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          child: Text(text),
-        ),
-      );
-}
+    TextStyle itemStyle({Color? color}) => TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: color ?? AppColor.textPrimary,
+        );
 
-/// Back arrow on the left edge (as in the design), centered title.
-class AiTopBar extends StatelessWidget {
-  final String title;
-  final VoidCallback? onBack;
-  const AiTopBar(this.title, {super.key, this.onBack});
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: SizedBox(
-          height: 44,
-          child: Stack(alignment: Alignment.center, children: [
-            Text(title, style: TextStyle(fontFamily: 'ELMESSIRI', fontSize: 15, fontWeight: FontWeight.w600, color: AiC.forest)),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(onTap: onBack ?? () => Navigator.of(context).maybePop(), child: aiSvg('w02_back_button.svg', w: 24, h: 24)),
+    void showLanguagePicker() {
+      Get.bottomSheet(
+        SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration:  BoxDecoration(
+              color: AppColor.scaffoldBackgroundColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-          ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    AppStrings.language,
+                    style: itemStyle(),
+                  ),
+                ),
+                Obx(() => Column(
+                      children: [
+                        RadioListTile<String>(
+                          value: "ar",
+                          groupValue: localeController.languageCode.value,
+                          activeColor: AppColor.darkGreenColor,
+                          title: Text(AppStrings.arabic, style: itemStyle()),
+                          onChanged: (code) {
+                            if (code != null) localeController.setLanguage(code);
+                            Get.back();
+                          },
+                        ),
+                        RadioListTile<String>(
+                          value: "en",
+                          groupValue: localeController.languageCode.value,
+                          activeColor: AppColor.darkGreenColor,
+                          title: Text(AppStrings.english, style: itemStyle()),
+                          onChanged: (code) {
+                            if (code != null) localeController.setLanguage(code);
+                            Get.back();
+                          },
+                        ),
+                      ],
+                    )),
+              ],
+            ),
+          ),
         ),
       );
+    }
+
+    Widget iconBadge(IconData icon, {Color? badgeColor}) {
+      return Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: (badgeColor ?? AppColor.greenColor).withOpacity(0.12),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: badgeColor ?? AppColor.darkGreenColor,
+          size: 19,
+        ),
+      );
+    }
+
+    void goToTab(int index) {
+      Get.back();
+      Get.until((route) => Get.currentRoute == AppRoutes.mainRoute);
+      mainController.onChangePage(index);
+    }
+
+    // On tablets, `width * .78` would make the drawer absurdly wide (and
+    // stretch every ListTile with it) — cap it at a sensible phone-like
+    // width instead.
+    final drawerWidth = width >= 600 ? 320.0 : width * .78;
+
+    return Container(
+      width: drawerWidth,
+      color: AppColor.scaffoldBackgroundColor,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Row(
+                  children: [
+                     MozaikMarkIcon(color: AppColor.greenColor, size: 36),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         Text(
+                          "MOZAIK",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                            color: AppColor.darkGreenColor,
+                          ),
+                        ),
+                        Text(
+                          "Flashcards",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColor.textSecondary.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(PhosphorIcons.house(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.drawerHome, style: itemStyle()),
+                onTap: () => goToTab(0),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(Icons.style_rounded),
+                title: Text(AppStrings.drawerFlashcards, style: itemStyle()),
+                onTap: () => goToTab(1),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(Icons.bar_chart_rounded),
+                title: Text(AppStrings.drawerProgress, style: itemStyle()),
+                onTap: () => goToTab(2),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(
+                    PhosphorIcons.userCircle(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.drawerProfile, style: itemStyle()),
+                onTap: () => goToTab(3),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(
+                    PhosphorIcons.cloudArrowUp(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.createDeck, style: itemStyle()),
+                onTap: () {
+                  Get.back();
+                  Get.until((route) => Get.currentRoute == AppRoutes.mainRoute);
+                  Get.toNamed(AppRoutes.createDeckRoute);
+                },
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading:
+                    iconBadge(PhosphorIcons.keyboard(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.enterCode, style: itemStyle()),
+                onTap: () {
+                  Get.back();
+                  Get.dialog(const InterCodeDialog());
+                },
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(Icons.language_rounded),
+                title: Text(AppStrings.language, style: itemStyle()),
+                trailing: Obx(() => Text(
+                      localeController.isEnglish
+                          ? AppStrings.english
+                          : AppStrings.arabic,
+                      style: itemStyle(color: AppColor.textSecondary),
+                    )),
+                onTap: showLanguagePicker,
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(Icons.dark_mode_rounded),
+                title: Text(AppStrings.nightMode, style: itemStyle()),
+                trailing: Obx(() => Switch(
+                      value: nocturne.isNight.value,
+                      activeColor: AppColor.greenColor,
+                      onChanged: (_) {
+                        Get.back();
+                        nocturne.toggle();
+                      },
+                    )),
+                onTap: () {
+                  Get.back();
+                  nocturne.toggle();
+                },
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading:
+                    iconBadge(PhosphorIcons.bell(PhosphorIconsStyle.bold)),
+                title: Text("الإشعارات", style: itemStyle()),
+                onTap: () {
+                  Get.back();
+                  Get.toNamed(AppRoutes.notificationSettingsRoute);
+                },
+              ),
+              Divider(
+                color: AppColor.edge(0.08),
+                thickness: 1,
+                height: 24,
+              ),
+              if (_isAdmin())
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  leading: iconBadge(PhosphorIcons.cloudArrowUp(PhosphorIconsStyle.bold)),
+                  title: Text("نسخ احتياطي للبطاقات", style: itemStyle()),
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.cardsBackupRoute);
+                  },
+                ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading:
+                    iconBadge(PhosphorIcons.thumbsUp(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.shareThisApp, style: itemStyle()),
+                onTap: () {
+                  Share.share("Checkout this app in https://googleplay.com");
+                },
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onTap: () async {
+                  if (!await launchUrl(Uri.parse("https://t.me/Ghalia510"))) {
+                    log('Could not launch https://t.me/Ghalia510');
+                  }
+                },
+                leading:
+                    iconBadge(PhosphorIcons.question(PhosphorIconsStyle.bold)),
+                title: Text(AppStrings.helpFeedback, style: itemStyle()),
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onTap: () {
+                  ApiController.logout();
+                },
+                leading: iconBadge(
+                  PhosphorIcons.signOut(PhosphorIconsStyle.bold),
+                  badgeColor: AppColor.errorColor,
+                ),
+                title: Text(AppStrings.logOut, style: itemStyle(color: AppColor.errorColor)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
