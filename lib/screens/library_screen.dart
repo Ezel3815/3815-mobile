@@ -1,448 +1,435 @@
-import 'package:upgrade/screens/follow_list_screen.dart';
-import 'package:upgrade/screens/locale_controller.dart';
-import 'package:upgrade/utils/deep_link_service.dart';
+import 'package:upgrade/widgets/app_snack_bar.dart';
+import 'package:upgrade/utils/chapter_navigation.dart';
+import 'package:upgrade/strings.dart';
 import 'package:flutter/material.dart';
-import 'package:upgrade/offline/offline_store.dart';
-import 'package:upgrade/controllers/theme_controller.dart';
-import 'package:upgrade/widgets/nocturne_overlay.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:upgrade/controllers/add_card_controller.dart';
-import 'package:upgrade/controllers/card_view_controller.dart';
-import 'package:upgrade/controllers/create_deck_controller.dart';
-import 'package:upgrade/controllers/document_controller.dart';
-import 'package:upgrade/controllers/main_controller.dart';
-import 'package:upgrade/controllers/preparatory_year_controller.dart';
-import 'package:upgrade/controllers/card_controller.dart';
-import 'package:upgrade/controllers/shape_creator_controller.dart';
-import 'package:upgrade/controllers/years_controller.dart';
-import 'package:upgrade/di.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:upgrade/controllers/library_controller.dart';
+import 'package:upgrade/entity/card_entity.dart';
+import 'package:upgrade/entity/deck_entity.dart';
+import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/screens/Auth/activate_code.dart';
-import 'package:upgrade/controllers/api_controller.dart';
-import 'package:upgrade/screens/Auth/forgot_password.dart';
-import 'package:upgrade/screens/Auth/login.dart';
-import 'package:upgrade/screens/Auth/register.dart';
-import 'package:upgrade/screens/Preparatory%20Year/preparatory_year_screen.dart';
-import 'package:upgrade/screens/card_view_screen.dart';
-import 'package:upgrade/screens/creat_deck/add_card_screen.dart';
-import 'package:upgrade/screens/creat_deck/create_deck_screen.dart';
-import 'package:upgrade/screens/creat_deck/shape_creator.dart';
-import 'package:upgrade/screens/creat_deck/card_screen.dart';
-import 'package:upgrade/screens/intro/onbording_screen.dart';
-import 'package:upgrade/screens/main_screen.dart';
-import 'package:upgrade/screens/profile_screen.dart';
-import 'package:upgrade/screens/search_users_screen.dart';
-import 'package:upgrade/screens/session_result_screen.dart';
-import 'package:upgrade/screens/notification_settings_screen.dart';
-import 'package:upgrade/screens/cards_backup_screen.dart';
-import 'package:upgrade/screens/mosaic_screen.dart';
-import 'package:upgrade/services/notification_service.dart';
-import 'package:upgrade/services/push_service.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:upgrade/screens/app_drawer.dart';
+import 'package:upgrade/widgets/mozaik_mark_icon.dart';
+import 'package:upgrade/widgets/tablet_bounded.dart';
 
-late SharedPreferences sharedPref;
+/// A small set of accent colors used only to visually distinguish deck
+/// cards in the library grid (not tied to any real "subject category"
+/// data, since that doesn't exist in the backend yet). Cycled by index.
+final List<Color> _deckAccentColors = [
+  AppColor.greenColor,
+  AppColor.infoColor,
+  AppColor.warningColor,
+  Color(0xFF7C6FA8), // muted plum, for visual variety only
+  AppColor.freshGreenColor,
+];
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // TEMPORARY DIAGNOSTIC: release builds normally hide widget-build
-  // errors behind a blank grey box. This makes the real error message
-  // visible on screen instead, so it can be screenshotted and fixed —
-  // safe to leave in, it only ever shows up when something is already
-  // broken. Remove once the grey-box bug is found and fixed.
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Container(
-      color: const Color(0xFF7A1F1F),
-      padding: const EdgeInsets.all(10),
-      alignment: Alignment.center,
-      child: Text(
-        details.exceptionAsString(),
-        style: const TextStyle(color: Colors.white, fontSize: 11),
-      ),
-    );
-  };
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  // Make the system navigation bar match the app instead of a black strip.
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    systemNavigationBarColor: AppColor.scaffoldBackgroundColor,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
-  sharedPref = await SharedPreferences.getInstance();
-  await OfflineStore.init();
-  // Loads the saved language (defaults to Arabic) before the first frame,
-  // so GetMaterialApp picks the right locale/direction on the very first
-  // build instead of flashing Arabic then flipping.
-  Get.put(LocaleController(), permanent: true);
-  // Night mode (Nocturne): restores the saved choice, then matches the status/navigation bars to it.
-  Get.put(NocturneController(), permanent: true);
-  NocturneController.syncSystemUi();
-  await initAppModule();
-  await ApiController.initDio();
-  await NotificationService.instance.init();
-  try {
-    await Firebase.initializeApp();
-    await PushService.instance.init();
-  } catch (e) {
-    // Missing google-services.json / no Play services on this device —
-    // push notifications are unavailable, everything else still runs.
-  }
-  DeepLinkService.init();
-  runApp(
-    const MyApp(),
-  );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LibraryScreen extends StatelessWidget {
+  const LibraryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final localeController = Get.find<LocaleController>();
-    final nocturne = Get.find<NocturneController>();
-    return Obx(() {
-      final night = nocturne.isNight.value; // rebuild the theme when night mode flips
-      return GetMaterialApp(
-      title: "MOZAIK",
-      debugShowCheckedModeBanner: false,
-      getPages: AppRoutes.pages,
-      // Reactive: follows LocaleController, which defaults to Arabic and
-      // persists whatever the user picks in the drawer. Registering both
-      // locales (rather than just "ar") is what lets Get.updateLocale("en")
-      // actually take, and also what makes Flutter auto-flip text
-      // direction (RTL for ar, LTR for en) via GlobalWidgetsLocalizations.
-      locale: Locale(localeController.languageCode.value),
-      supportedLocales: const [Locale("ar"), Locale("en")],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      // Keep every screen above the system navigation bar (gesture pill or
-      // 3-button bar). Android draws apps edge-to-edge on newer phones, which
-      // slid content underneath it. Screens that already use a SafeArea are
-      // unaffected: nested SafeAreas don't add up.
-      builder: (context, child) => ColoredBox(
-        color: AppColor.scaffoldBackgroundColor,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            SafeArea(
-              top: false,
-              left: false,
-              right: false,
-              child: child ?? const SizedBox.shrink(),
-            ),
-            // the "entering Nocturne" moment; draws nothing the rest of the time
-            const NocturneOverlay(),
-          ],
-        ),
-      ),
-      theme: ThemeData(
-        brightness: night ? Brightness.dark : Brightness.light,
-        fontFamily: "ELMESSIRI",
-        scaffoldBackgroundColor: night ? AppColor.scaffoldBackgroundColor : null,
-        canvasColor: night ? AppColor.scaffoldBackgroundColor : null,
-        cardColor: night ? AppColor.surfaceColor : null,
-        dialogBackgroundColor: night ? AppColor.surfaceColor : null,
-        colorScheme: night
-            ? ColorScheme.dark(
-                primary: AppColor.greenColor,
-                secondary: AppColor.accentColor,
-                surface: AppColor.surfaceColor,
-                error: AppColor.errorColor,
-              )
-            : null,
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Colors.transparent,
-        ),
-        bottomSheetTheme: const BottomSheetThemeData(
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-        ),
-      ),
-      );
-    });
-  }
-}
+    final controller = Get.put(LibraryController());
+    final scaffoldKey = GlobalKey<ScaffoldState>();
 
-class AnimatedLogos extends StatefulWidget {
-  const AnimatedLogos({super.key});
-
-  @override
-  AnimatedLogosState createState() => AnimatedLogosState();
-}
-
-class AnimatedLogosState extends State<AnimatedLogos>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _markScale;
-  late Animation<double> _markOpacity;
-  late Animation<double> _typed;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1400),
-      vsync: this,
-    );
-
-    // Mark scales in with a slight overshoot ("pop"), fading in over the
-    // first half of the animation.
-    _markScale = Tween<double>(begin: 0.7, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 0.65, curve: Curves.easeOutBack),
-    ));
-    _markOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-    ));
-
-    // The name "Mozaik" is typed out letter by letter once the mark settles.
-    _typed = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.45, 1.0, curve: Curves.linear),
-    ));
-
-    _controller.forward();
-
-    Future.delayed(const Duration(milliseconds: 2200), () {
-      if (sharedPref.getString("token") != null) {
-        Get.offNamed(AppRoutes.mainRoute);
-      } else {
-        if (sharedPref.get("onBoarding") != null) {
-          Get.offNamed(AppRoutes.loginRoute);
-        } else {
-          Get.offNamed(AppRoutes.onboardingRoute);
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       backgroundColor: AppColor.scaffoldBackgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      drawer: const AppDrawer(),
+      drawerEnableOpenDragGesture: false,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColor.greenColor,
+        onPressed: () => Get.toNamed(AppRoutes.createDeckRoute),
+        child: const Icon(Icons.add_rounded, color: Colors.white),
+      ),
+      body: SafeArea(
+        child: TabletBounded(
+          child: Column(
           children: [
-            ScaleTransition(
-              scale: _markScale,
-              child: FadeTransition(
-                opacity: _markOpacity,
-                child: Image.asset(
-                  "lib/assests/brand/mozaik_emblem.png",
-                  height: 104,
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => scaffoldKey.currentState?.openDrawer(),
+                    child:  Icon(
+                      Icons.dehaze,
+                      size: 26,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Text(
+                    AppStrings.navLibrary,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: AppColor.surfaceColor,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColor.edge(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      PhosphorIcons.magnifyingGlass(PhosphorIconsStyle.bold),
+                      size: 18,
+                      color: AppColor.textSecondary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        onChanged: (v) => controller.query.value = v,
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          hintText: AppStrings.searchSubjectHint,
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: AppColor.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            AnimatedBuilder(
-              animation: _typed,
-              builder: (context, _) {
-                const name = "Mozaik";
-                final n = (_typed.value * name.length).ceil();
-                const style = TextStyle(
-                  fontFamily: 'ELMESSIRI',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 34,
-                  height: 1.2,
-                  letterSpacing: 2,
-                );
-                const green = Color(0xFF1F5A44);
-                // Untyped letters stay transparent so the layout never shifts.
-                return Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: RichText(
-                    text: TextSpan(
-                      style: style,
-                      children: [
-                        TextSpan(
-                            text: name.substring(0, n),
-                            style: const TextStyle(color: green)),
-                        TextSpan(
-                            text: name.substring(n),
-                            style: const TextStyle(color: Colors.transparent)),
-                      ],
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 34,
+              child: Obx(
+                () => ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    _YearChip(
+                      label: AppStrings.allYears,
+                      selected: controller.selectedYearId.value == null,
+                      onTap: () => controller.selectedYearId.value = null,
                     ),
+                    for (final year in controller.availableYears) ...[
+                      const SizedBox(width: 8),
+                      _YearChip(
+                        label: year.title,
+                        selected: controller.selectedYearId.value == year.id,
+                        onTap: () => controller.selectedYearId.value = year.id,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 36,
+              child: Obx(
+                () => ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    _FilterPill(
+                      label: AppStrings.all,
+                      selected: controller.filter.value == LibraryFilter.all,
+                      onTap: () => controller.filter.value = LibraryFilter.all,
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterPill(
+                      label: AppStrings.myCards,
+                      selected: controller.filter.value == LibraryFilter.mine,
+                      onTap: () =>
+                          controller.filter.value = LibraryFilter.mine,
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterPill(
+                      label: AppStrings.createdByMe,
+                      selected:
+                          controller.filter.value == LibraryFilter.created,
+                      onTap: () =>
+                          controller.filter.value = LibraryFilter.created,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: Obx(() {
+                final subjects = controller.filteredSubjects;
+                if (subjects.isEmpty) {
+                  return Center(
+                    child: Text(
+                      AppStrings.noSubjects,
+                      style: TextStyle(color: AppColor.textSecondary),
+                    ),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 90),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isTabletWidth(context) ? 3 : 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 0.92,
+                  ),
+                  itemCount: subjects.length,
+                  itemBuilder: (context, index) => _SubjectCard(
+                    subject: subjects[index],
+                    accentColor:
+                        _deckAccentColors[index % _deckAccentColors.length],
                   ),
                 );
-              },
+              }),
             ),
           ],
+          ),
         ),
       ),
     );
   }
 }
 
-class AppRoutes {
-  static const String searchUsersRoute = "/searchUsersRoute";
-  static const String viewProfileRoute = "/viewProfileRoute";
-  static const String followListRoute = "/followListRoute";
-  static const String splashRoute = "/";
-  static const String onboardingRoute = "/onbordingRoute";
-  static const String cardRoute = "/cardRoute";
-  static const String activateCodeRoute = "/activateCodeRoute";
-  static const String loginRoute = "/loginRoute";
-  static const String registerRoute = "/registerRoute";
-  static const String forgetPassowrdRoute = "/forgetPassowrdRoute";
-  static const String addCardRoute = "/addCardRoute";
-  static const String shapeCreatorRoute = "/shapeCreatorRoute";
-  static const String preparatoryYearRoute = "/preparatoryYearRoute";
-  static const String cardViewRoute = "/cardViewRoute";
-  static const String mainRoute = "/mainRoute";
-  static const String createDeckRoute = "/createDeckRoute";
-  static const String sessionResultRoute = "/sessionResultRoute";
-  static const String notificationSettingsRoute = "/notificationSettingsRoute";
-  static const String mosaicRoute = "/mosaicRoute";
-  static const String cardsBackupRoute = "/cardsBackupRoute";
+class _YearChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _YearChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
-  static final List<GetPage> pages = [
-    GetPage(name: searchUsersRoute, page: () => const SearchUsersScreen()),
-    GetPage(name: viewProfileRoute, page: () => ProfileScreen(userId: Get.arguments)),
-    GetPage(name: followListRoute, page: () => const FollowListScreen()),
-    GetPage(
-      name: splashRoute,
-      page: () => const AnimatedLogos(),
-    ),
-    GetPage(
-      name: onboardingRoute,
-      page: () => const OnBording(),
-    ),
-    GetPage(
-      name: cardRoute,
-      page: () => const CardScreen(),
-      binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => CardController(),
-        ),
-      ),
-    ),
-    GetPage(
-      name: activateCodeRoute,
-      page: () => const ActivateCode(),
-    ),
-    GetPage(
-      name: loginRoute,
-      page: () => const Login(),
-    ),
-    GetPage(
-      name: registerRoute,
-      page: () => const Register(),
-    ),
-    GetPage(
-      name: forgetPassowrdRoute,
-      page: () => const ForgotPassword(),
-    ),
-    GetPage(
-      name: addCardRoute,
-      page: () => const AddCardScreen(),
-      binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => AddCardController(),
-        ),
-      ),
-    ),
-    GetPage(
-      name: shapeCreatorRoute,
-      page: () => const ShapeCreator(),
-      binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => ShapeCreatorController(),
-        ),
-      ),
-    ),
-   GetPage(
-  name: preparatoryYearRoute,
-  page: () => PreparatoryYear(id: (Get.arguments['id']).toString()), // was: () => const PreparatoryYear()
-  binding: BindingsBuilder(
-    () => Get.lazyPut(
-      () => PreparatoryYearController(),
-      tag: Get.arguments['id'].toString(),
-      fenix: true,
-    ),
-  ),
-),
-    GetPage(
-      name: cardViewRoute,
-      page: () => const CardViewScreen(),
-      binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => CardViewController(),
-        ),
-      ),
-    ),
-    GetPage(
-      // CreateDeckScreen used to be a bottom-nav tab; it's now reached
-      // from a "+" button inside the Library screen instead, so it
-      // needs a real named route. CreateDeckController is already
-      // registered (lazyPut) via mainRoute's bindings below, and
-      // stays alive for the lifetime of the main tab shell, so no
-      // extra binding is needed here.
-      name: createDeckRoute,
-      page: () => const CreateDeckScreen(),
-      binding: BindingsBuilder(() {
-        // Safe no-ops if already registered by mainRoute; recreates
-        // them if the main shell was disposed (fixes "not found" crash).
-        Get.lazyPut(() => YearsController(), fenix: true);
-        Get.lazyPut(() => CreateDeckController(), fenix: true);
-      }),
-    ),
-    GetPage(
-      name: sessionResultRoute,
-      page: () => const SessionResultScreen(),
-    ),
-    GetPage(
-      name: notificationSettingsRoute,
-      page: () => const NotificationSettingsScreen(),
-    ),
-    GetPage(
-      name: cardsBackupRoute,
-      page: () => const CardsBackupScreen(),
-    ),
-    GetPage(
-      name: mosaicRoute,
-      page: () => const MosaicScreen(),
-    ),
-    GetPage(
-      name: mainRoute,
-      page: () => const MainScreen(),
-      binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => MainController(),
-        ),
-      ),
-      bindings: [
-        BindingsBuilder(
-          () => Get.lazyPut(
-            () => YearsController(),
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColor.darkGreenColor.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? AppColor.darkGreenColor
+                : AppColor.edge(0.12),
+            width: 1,
           ),
         ),
-        BindingsBuilder(
-          () => Get.lazyPut(
-            () => CreateDeckController(),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color:
+                selected ? AppColor.darkGreenColor : AppColor.textSecondary,
           ),
         ),
-        BindingsBuilder(
-          () => Get.lazyPut(
-            () => DocumentController(),
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColor.greenColor : AppColor.surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          border: selected
+              ? null
+              : Border.all(color: AppColor.edge(0.06)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : AppColor.textSecondary,
           ),
         ),
-      ],
-    ),
-  ];
+      ),
+    );
+  }
+}
+
+/// Every card inside a deck, however deeply it is nested.
+List<CardEntity> _allCardsIn(DeckEntity deck) {
+  if (deck.type == "CARDS_DECK") return deck.cards;
+  return deck.children.expand(_allCardsIn).toList();
+}
+
+class _SubjectCard extends StatelessWidget {
+  final DeckEntity subject;
+  final Color accentColor;
+  const _SubjectCard({required this.subject, required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
+    // Subjects are folders (PACKAGE_DECK) — their cards live on their
+    // chapter children, not on the subject node itself.
+    final isCardsDeck = subject.type == "CARDS_DECK";
+    final allCards = _allCardsIn(subject);
+    final total = allCards.length;
+    final answered =
+        allCards.where((c) => c.answer.isNotEmpty && c.answer != "NONE").length;
+    final progress = total == 0 ? 0.0 : answered / total;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        if (subject.locked) {
+          showSnackBarWidget(
+              message: AppStrings.subjectLockedHint);
+          return;
+        }
+        if (isCardsDeck) {
+          openChapter(subject);
+          return;
+        }
+        Get.toNamed(
+          AppRoutes.preparatoryYearRoute,
+          arguments: {
+            "id": subject.id,
+            "decks": subject.children,
+          },
+          preventDuplicates: false,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColor.surfaceColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.edge(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Center(
+                    child: MozaikMarkIcon(color: accentColor, size: 40),
+                  ),
+                ),
+                subject.locked
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColor.scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                             Icon(Icons.lock,
+                                size: 12, color: AppColor.textSecondary),
+                            const SizedBox(width: 3),
+                            Text(AppStrings.locked,
+                                style:  TextStyle(
+                                    fontSize: 10,
+                                    color: AppColor.textSecondary)),
+                          ],
+                        ),
+                      )
+                    :  Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColor.textSecondary,
+                        size: 20,
+                      ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              subject.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style:  TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppStrings.cardsCount(total),
+              style:  TextStyle(
+                fontSize: 11,
+                color: AppColor.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                backgroundColor: AppColor.scaffoldBackgroundColor,
+                valueColor: AlwaysStoppedAnimation(accentColor),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "${(progress * 100).round()}%",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: accentColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
