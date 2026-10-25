@@ -58,6 +58,11 @@ class AppStrings {
 
   // ===== Language toggle (drawer) =====
   static String get language => _t("اللغة", "Language");
+  // ===== Night mode (Nocturne) =====
+  static String get nightMode => _t("الوضع الليلي", "Night mode");
+  static String get enteringNocturne => _t("ندخل الوضع الليلي", "Entering Nocturne");
+  static String get studyAfterDark => _t("ادرس بهدوء بعد حلول الظلام", "Study calmly after dark");
+
   static String get arabic => _t("العربية", "Arabic");
   static String get english => _t("الإنجليزية", "English");
 
