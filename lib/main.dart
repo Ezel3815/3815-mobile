@@ -3,6 +3,8 @@ import 'package:upgrade/screens/locale_controller.dart';
 import 'package:upgrade/utils/deep_link_service.dart';
 import 'package:flutter/material.dart';
 import 'package:upgrade/offline/offline_store.dart';
+import 'package:upgrade/controllers/theme_controller.dart';
+import 'package:upgrade/widgets/nocturne_overlay.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -67,7 +69,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   // Make the system navigation bar match the app instead of a black strip.
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     systemNavigationBarColor: AppColor.scaffoldBackgroundColor,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
@@ -77,6 +79,9 @@ void main() async {
   // so GetMaterialApp picks the right locale/direction on the very first
   // build instead of flashing Arabic then flipping.
   Get.put(LocaleController(), permanent: true);
+  // Night mode (Nocturne): restores the saved choice, then matches the status/navigation bars to it.
+  Get.put(NocturneController(), permanent: true);
+  NocturneController.syncSystemUi();
   await initAppModule();
   await ApiController.initDio();
   await NotificationService.instance.init();
@@ -99,7 +104,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeController = Get.find<LocaleController>();
-    return Obx(() => GetMaterialApp(
+    final nocturne = Get.find<NocturneController>();
+    return Obx(() {
+      final night = nocturne.isNight.value; // rebuild the theme when night mode flips
+      return GetMaterialApp(
       title: "MOZAIK",
       debugShowCheckedModeBanner: false,
       getPages: AppRoutes.pages,
@@ -121,15 +129,35 @@ class MyApp extends StatelessWidget {
       // unaffected: nested SafeAreas don't add up.
       builder: (context, child) => ColoredBox(
         color: AppColor.scaffoldBackgroundColor,
-        child: SafeArea(
-          top: false,
-          left: false,
-          right: false,
-          child: child ?? const SizedBox.shrink(),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            SafeArea(
+              top: false,
+              left: false,
+              right: false,
+              child: child ?? const SizedBox.shrink(),
+            ),
+            // the "entering Nocturne" moment; draws nothing the rest of the time
+            const NocturneOverlay(),
+          ],
         ),
       ),
       theme: ThemeData(
+        brightness: night ? Brightness.dark : Brightness.light,
         fontFamily: "ELMESSIRI",
+        scaffoldBackgroundColor: night ? AppColor.scaffoldBackgroundColor : null,
+        canvasColor: night ? AppColor.scaffoldBackgroundColor : null,
+        cardColor: night ? AppColor.surfaceColor : null,
+        dialogBackgroundColor: night ? AppColor.surfaceColor : null,
+        colorScheme: night
+            ? ColorScheme.dark(
+                primary: AppColor.greenColor,
+                secondary: AppColor.accentColor,
+                surface: AppColor.surfaceColor,
+                error: AppColor.errorColor,
+              )
+            : null,
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.transparent,
         ),
@@ -138,7 +166,8 @@ class MyApp extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
       ),
-    ));
+      );
+    });
   }
 }
 
