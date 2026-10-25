@@ -1,5 +1,6 @@
 import 'package:upgrade/widgets/app_snack_bar.dart';
 import 'package:upgrade/utils/chapter_navigation.dart';
+import 'package:upgrade/utils/subject_icon.dart';
 import 'package:upgrade/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -350,17 +351,25 @@ class _SubjectCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.14),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Center(
-                    child: MozaikMarkIcon(color: accentColor, size: 40),
-                  ),
-                ),
+                AppColor.night
+                    ? Image.asset(
+                        nocturneMedicalIcon(subject.title) ??
+                            'lib/assests/nocturne/icons/icon-flashcard-tile.png',
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.contain,
+                      )
+                    : Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: MozaikMarkIcon(color: accentColor, size: 40),
+                        ),
+                      ),
                 subject.locked
                     ? Container(
                         padding: const EdgeInsets.symmetric(
