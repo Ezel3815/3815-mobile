@@ -243,13 +243,39 @@ class AnimatedLogosState extends State<AnimatedLogos>
               scale: _markScale,
               child: FadeTransition(
                 opacity: _markOpacity,
-                child: Image.asset(
-                  "lib/assests/brand/mozaik_emblem.png",
-                  height: 104,
+                child: Container(
+                  decoration: AppColor.night
+                      ? const BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                                color: Color(0x557358FF),
+                                blurRadius: 40,
+                                spreadRadius: 4),
+                          ],
+                        )
+                      : null,
+                  child: Image.asset(
+                    "lib/assests/brand/mozaik_emblem.png",
+                    height: 104,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 18),
+            if (AppColor.night)
+              FadeTransition(
+                opacity: _typed,
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                      Color(0xFFF4F2FF), BlendMode.srcIn),
+                  child: Image.asset(
+                    "lib/assests/brand/mozaik_wordmark.png",
+                    height: 26,
+                  ),
+                ),
+              )
+            else
             AnimatedBuilder(
               animation: _typed,
               builder: (context, _) {
