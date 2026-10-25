@@ -8,6 +8,8 @@ class AppColor {
   static bool night = false;
   static Color _p(int light, int dark) => Color(night ? dark : light);
   static Color pick(int light, int dark) => _p(light, dark);
+  /// Hairline/shadow tint that stays visible in both modes (black in light, white in night).
+  static Color edge(double opacity) => Color(night ? 0xFFFFFFFF : 0xFF000000).withOpacity(opacity);
   static Color get ink => _p(0xFF000000, 0xFFF4F2FF); // was Colors.black text
   static Color get card => _p(0xFFFFFFFF, 0xFF11152A); // was Colors.white fill
   static Color get line => _p(0xFFFFFFFF, 0xFF252A58); // was white border
