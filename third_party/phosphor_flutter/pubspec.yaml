@@ -1,5 +1,5 @@
 name: phosphor_flutter
-description: Local compatibility shim redirecting to phosphoricons_flutter.
+description: Local shim that maps the PhosphorIcons API to Material icons.
 version: 2.1.0
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -7,4 +7,3 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  phosphoricons_flutter: ^1.0.0
