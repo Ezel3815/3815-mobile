@@ -65,7 +65,6 @@ dependencies:
   file_picker: ^11.0.2
   flex_color_picker: ^3.6.0
   phosphor_flutter: ^1.0.0
-  phosphoricons_flutter: ^1.0.0
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
   flutter_timezone: ^3.0.1
