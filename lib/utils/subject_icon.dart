@@ -139,10 +139,10 @@ String? nocturneMedicalIcon(String title) {
     'icon-stethoscope': ['باطن', 'سريري', 'internal', 'clinical', 'medicine'],
     'icon-microscope': ['نسج', 'أنسجة', 'histology', 'physiology', 'فيزيولوجيا', 'وظائف'],
     'icon-first-aid': ['جراح', 'surgery', 'إسعاف', 'emergency', 'first aid'],
-    'icon-dna': ['وراثة', 'جينات', 'genetic', 'dna', 'كيمياء حيوية', 'biochem'],
+    'icon-dna': ['وراثة', 'جينات', 'genetic', 'dna', 'كيمياء', 'chemistry', 'biochem', 'جزيئ', 'molecular'],
     'icon-microbes': ['أحياء دقيقة', 'جراثيم', 'micro', 'مناعة', 'immun'],
     'icon-pill-bottle': ['أدوية', 'صيدل', 'pharma', 'drug'],
-    'icon-mri-scanner': ['أشعة', 'radiology', 'imaging', 'mri'],
+    'icon-mri-scanner': ['أشعة', 'radiology', 'imaging', 'mri', 'فيزياء', 'physics'],
     'icon-iv-bag': ['أمراض', 'pathology', 'تمريض', 'nursing'],
   };
   for (final e in map.entries) {
