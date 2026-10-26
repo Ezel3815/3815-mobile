@@ -358,6 +358,17 @@ class _SubjectCard extends StatelessWidget {
                         width: 72,
                         height: 72,
                         fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.14),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Center(
+                            child: MozaikMarkIcon(color: accentColor, size: 40),
+                          ),
+                        ),
                       )
                     : Container(
                         width: 72,
