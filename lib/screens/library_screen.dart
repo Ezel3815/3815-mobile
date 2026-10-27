@@ -2,6 +2,10 @@ import 'package:upgrade/widgets/app_snack_bar.dart';
 import 'package:upgrade/utils/chapter_navigation.dart';
 import 'package:upgrade/utils/subject_icon.dart';
 import 'package:upgrade/strings.dart';
+import 'package:upgrade/offline/offline_button.dart';
+import 'package:upgrade/screens/ai_scan/ai_scan.dart';
+import 'package:upgrade/screens/ai_scan/ai_scan_strings.dart';
+import 'package:upgrade/controllers/years_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -40,7 +44,12 @@ class LibraryScreen extends StatelessWidget {
       drawerEnableOpenDragGesture: false,
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColor.greenColor,
-        onPressed: () => Get.toNamed(AppRoutes.createDeckRoute),
+        onPressed: () => AiScan.showAddMenu(
+          context: context,
+          onManual: () => Get.toNamed(AppRoutes.createDeckRoute),
+          onDeckChanged: () => Get.find<YearsController>().getAllDeck(),
+          manualLabel: AiStr.newDeck,
+        ),
         child: const Icon(Icons.add_rounded, color: Colors.white),
       ),
       body: SafeArea(
@@ -402,10 +411,17 @@ class _SubjectCard extends StatelessWidget {
                           ],
                         ),
                       )
-                    :  Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColor.textSecondary,
-                        size: 20,
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          OfflineButton(subject: subject, color: accentColor),
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColor.textSecondary,
+                            size: 20,
+                          ),
+                        ],
                       ),
               ],
             ),
