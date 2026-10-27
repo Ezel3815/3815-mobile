@@ -45,6 +45,21 @@ class AiStr {
   static String get ok => _t('حسنًا', 'OK');
   static String savedToDeck(int n) => _t('تمت إضافة $n بطاقة إلى المجموعة', '$n cards added to the deck');
 
+  // review + keep / delete
+  static String keepAsk(int n) => _t('هل تريد الاحتفاظ بهذه البطاقات ($n)؟', 'Keep these $n cards?');
+  static String get keepAskQuiz => _t('هل تريد الاحتفاظ بهذا الاختبار؟', 'Keep this quiz?');
+  static String get keepSub => _t('إذا اخترت الحذف فلن يتم حفظ أي شيء.', 'If you choose Delete, nothing will be saved.');
+  static String get keep => _t('احتفاظ', 'Keep');
+  static String get delete => _t('حذف', 'Delete');
+  static String get saving => _t('جارٍ الحفظ...', 'Saving...');
+  static String get kept => _t('تم الحفظ', 'Saved');
+  static String get discarded => _t('تم الحذف', 'Deleted');
+  static String get correct => _t('إجابة صحيحة', 'Correct!');
+  static String get wrong => _t('إجابة خاطئة', 'Wrong answer');
+  static String get rightWas => _t('الإجابة الصحيحة:', 'The correct answer:');
+  static String get seeResult => _t('عرض النتيجة', 'See result');
+  static String get previous => _t('السابق', 'Previous');
+
   // window 7
   static String get discoverPremium => _t('اكتشف المزيد مع Premium', 'Discover more with Premium');
   static String get usedFree => _t('لقد استخدمتَ جميع المحاولات المجانية. اشترك لمواصلة تحويل صورك إلى بطاقات واختبارات، أو انتظر حتى تتجدد المحاولات.',
