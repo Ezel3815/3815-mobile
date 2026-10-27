@@ -25,6 +25,7 @@ class McqItem {
         options = List<String>.from(j['options']),
         correct = j['correct'],
         explanation = j['explanation'] ?? '';
+  Map<String, dynamic> toJson() => {'question': question, 'options': options, 'correct': correct, 'explanation': explanation};
 }
 
 class FlashItem {
@@ -32,6 +33,7 @@ class FlashItem {
   FlashItem(Map j)
       : question = j['question'],
         answer = j['answer'];
+  Map<String, dynamic> toJson() => {'question': question, 'answer': answer};
 }
 
 class ScanResult {
@@ -127,6 +129,16 @@ class AiScanApi {
         final form = FormData()..fields.add(MapEntry('tx_id', txId));
         if (proof != null) form.files.add(MapEntry('proof', await MultipartFile.fromFile(proof.path, filename: proof.path.split('/').last, contentType: DioMediaType.parse(_mime(proof.path)))));
         _ok(await _d.post('/ai/payments/$id/submit', data: form, options: _o));
+      });
+
+  /// "Keep" on reviewed flashcards: saved as normal cards into [deckId], or into a new deck called [deckTitle].
+  Future<void> keepCards(List<FlashItem> cards, {int? deckId, String? deckTitle}) => _guard(() async {
+        _ok(await _d.post('/ai/flashcards/keep', data: {'items': cards.map((e) => e.toJson()).toList(), if (deckId != null) 'deck_id': deckId, if (deckTitle != null) 'deck_title': deckTitle}, options: _o));
+      });
+
+  /// "Keep" on a finished quiz.
+  Future<void> keepQuiz(List<McqItem> qs, String title) => _guard(() async {
+        _ok(await _d.post('/ai/quizzes/keep', data: {'title': title, 'items': qs.map((e) => e.toJson()).toList()}, options: _o));
       });
 
   Future<void> submitQuiz(int quizId, List<int?> answers) => _guard(() async {
