@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:upgrade/resources.dart';
+import 'ai_scan_icons.dart';
 
 /// Palette from the approved design pack, with its night (Nocturne) twin.
 /// Getters, not constants: they follow [AppColor.night] so the AI screens flip with the rest of the app.
@@ -26,7 +27,7 @@ const _tintable = {
 };
 
 Widget aiSvg(String name, {double? w, double? h, BoxFit fit = BoxFit.contain}) {
-  final svg = SvgPicture.asset('lib/assests/ai_scan/$name', width: w, height: h, fit: fit);
+  final svg = SvgPicture.string(aiScanIcons[name] ?? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>', width: w, height: h, fit: fit);
   if (AppColor.night && _tintable.contains(name)) {
     return ColorFiltered(colorFilter: const ColorFilter.mode(Color(0xFFF4F2FF), BlendMode.srcIn), child: svg);
   }
