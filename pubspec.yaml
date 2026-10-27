@@ -119,7 +119,6 @@ flutter:
     - lib/assests/brand/
     - lib/assests/onboarding/
     - lib/assests/mossad/
-    - lib/assests/ai_scan/
     - lib/assests/mosaic/garden-by-the-sea/
     - lib/assests/mosaic/garden-by-the-sea/pieces/
 
