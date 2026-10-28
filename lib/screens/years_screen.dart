@@ -51,7 +51,7 @@ class _YearsScreenState extends State<YearsScreen> {
                           _Header(scaffoldKey: scaffoldKey),
                           const SizedBox(height: 20),
                           _GreetingBlock(),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 32),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: MosaicHeroCard(),
@@ -221,6 +221,7 @@ class _GreetingBlock extends StatelessWidget {
           ],
         ),
             ),
+            const SizedBox(width: 12),
             const NocturneMascot(pose: 'orbiting', height: 84),
           ],
         );
