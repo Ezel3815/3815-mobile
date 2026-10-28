@@ -4,6 +4,7 @@ import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/main.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_artwork.dart';
+import 'package:upgrade/widgets/polished_bar.dart';
 
 const Color _mosaicGold = Color(0xFFD8B65A);
 
@@ -66,15 +67,21 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFFFFDF6), AppColor.surfaceColor],
+                colors: [
+                  // no cream wash on the dark theme
+                  AppColor.night ? AppColor.surface2Color : const Color(0xFFFFFDF6),
+                  AppColor.surfaceColor,
+                ],
               ),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(color: _mosaicGold.withOpacity(0.55)),
               boxShadow: [
                 BoxShadow(
-                  color: AppColor.darkGreenColor.withOpacity(0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
+                  color: AppColor.night
+                      ? Colors.black.withOpacity(0.35)
+                      : AppColor.darkGreenColor.withOpacity(0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -93,9 +100,18 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                       SizedBox(
                         width: art,
                         height: art,
-                        child: MosaicArtwork(
-                          geometry: geometry,
-                          ownedPieceIds: _c.ownedPieceIds,
+                        child: Container(
+                          // thin gold edge so the painting sits inside the card
+                          foregroundDecoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: _mosaicGold.withOpacity(0.35)),
+                          ),
+                          child: MosaicArtwork(
+                            geometry: geometry,
+                            ownedPieceIds: _c.ownedPieceIds,
+                            radius: 16, // 28 (card) - 12 (padding): corners line up
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -151,20 +167,14 @@ class _MosaicHeroCardState extends State<MosaicHeroCard> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween<double>(begin: 0, end: fraction),
-                                duration: const Duration(milliseconds: 700),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, v, _) =>
-                                    LinearProgressIndicator(
-                                  value: v,
-                                  minHeight: 8,
-                                  backgroundColor: AppColor.lightGreenColor,
-                                  valueColor: AlwaysStoppedAnimation(
-                                      AppColor.greenColor),
-                                ),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0, end: fraction),
+                              duration: const Duration(milliseconds: 700),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, v, _) => PolishedBar(
+                                value: v,
+                                color: AppColor.greenColor,
+                                track: AppColor.lightGreenColor,
                               ),
                             ),
                             const SizedBox(height: 12),
