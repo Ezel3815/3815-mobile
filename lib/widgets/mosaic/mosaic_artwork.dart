@@ -8,11 +8,13 @@ import 'mosaic_geometry.dart';
 class MosaicArtwork extends StatelessWidget {
   final MosaicArtworkGeometry geometry;
   final Set<int> ownedPieceIds;
+  final double radius;
 
   const MosaicArtwork({
     super.key,
     required this.geometry,
     required this.ownedPieceIds,
+    this.radius = 20,
   });
 
   @override
@@ -21,7 +23,7 @@ class MosaicArtwork extends StatelessWidget {
     return AspectRatio(
       aspectRatio: aspect,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(radius),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final scale = constraints.maxWidth / geometry.canvasWidth;
