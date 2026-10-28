@@ -405,6 +405,15 @@ class ApiController {
   static bool lastDecksFailed = false;
   static bool lastMyDecksFailed = false;
 
+  /// While true, getDecks()/getMyDecks() stay silent on errors (background refreshes must never pop up messages).
+  static bool quiet = false;
+
+  /// The decks saved on the phone from the last successful load, so the app can open instantly (also offline).
+  static Future<List<DeckEntity>> cachedDecks() async => [
+        ...await _appLocalDataSource.getDeckEntityFromLocal(),
+        ...await _appLocalDataSource.getMyDeckEntityFromLocal(),
+      ];
+
   static Future<List<DeckEntity>> getDecks() async {
     lastDecksFailed = false;
     if (await _networkInfo.isConnected) {
@@ -434,13 +443,13 @@ class ApiController {
           return data;
         } else {
           lastDecksFailed = true;
-          showSnackBarWidget(message: response.data['message'] ?? "");
+          if (!quiet) showSnackBarWidget(message: response.data['message'] ?? "");
         }
 
         return [];
       } catch (e) {
         lastDecksFailed = true;
-        if(ErrorHandler.handle(e).failure.code != -6) {
+        if(!quiet && ErrorHandler.handle(e).failure.code != -6) {
         showSnackBarWidget(
             message: ErrorHandler.handle(e).failure.message ?? "");
         }
@@ -487,13 +496,13 @@ class ApiController {
           return data;
         } else {
           lastMyDecksFailed = true;
-          showSnackBarWidget(message: response.data['message'] ?? "");
+          if (!quiet) showSnackBarWidget(message: response.data['message'] ?? "");
         }
 
         return [];
       } catch (e) {
         lastMyDecksFailed = true;
-        if(ErrorHandler.handle(e).failure.code != -6) {
+        if(!quiet && ErrorHandler.handle(e).failure.code != -6) {
         showSnackBarWidget(
             message: ErrorHandler.handle(e).failure.message ?? "");
         }
