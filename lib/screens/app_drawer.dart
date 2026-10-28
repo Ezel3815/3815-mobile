@@ -14,6 +14,7 @@ import 'package:upgrade/models/user_model.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/screens/locale_controller.dart';
 import 'package:upgrade/widgets/inter_code_dialog.dart';
+import 'package:upgrade/offline/offline_screen.dart';
 import 'package:upgrade/widgets/mozaik_mark_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -207,6 +208,17 @@ class AppDrawer extends StatelessWidget {
                   Get.back();
                   Get.until((route) => Get.currentRoute == AppRoutes.mainRoute);
                   Get.toNamed(AppRoutes.createDeckRoute);
+                },
+              ),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leading: iconBadge(Icons.download_for_offline_rounded),
+                title: Text(OffUi.title, style: itemStyle()),
+                onTap: () {
+                  Get.back();
+                  Get.to(() => const OfflineScreen());
                 },
               ),
               ListTile(
