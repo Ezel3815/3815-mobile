@@ -110,7 +110,7 @@ class _NightNavBar extends StatelessWidget {
         color: AppColor.elevatedColor,
         border: Border(top: BorderSide(color: AppColor.glowBorder)),
         boxShadow: const [
-          BoxShadow(color: Color(0x1A7358FF), blurRadius: 14, offset: Offset(0, -3)),
+          BoxShadow(color: Color(0x0D7358FF), blurRadius: 10, offset: Offset(0, -2)),
         ],
       ),
       child: SafeArea(
@@ -130,14 +130,23 @@ class _NightNavBar extends StatelessWidget {
                           scale: index == i ? 1.12 : 1.0,
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutBack,
-                          child: AnimatedOpacity(
-                            opacity: index == i ? 1.0 : .42,
-                            duration: const Duration(milliseconds: 220),
-                            child: Image.asset(items[i].$1,
-                                width: 26, height: 26),
+                          child: DecoratedBox(
+                            // glow only on the active destination
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: index == i
+                                  ? const [BoxShadow(color: Color(0x667358FF), blurRadius: 14)]
+                                  : const [],
+                            ),
+                            child: AnimatedOpacity(
+                              opacity: index == i ? 1.0 : .5,
+                              duration: const Duration(milliseconds: 220),
+                              child: Image.asset(items[i].$1,
+                                  width: 26, height: 26),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
                           items[i].$2,
                           maxLines: 1,
