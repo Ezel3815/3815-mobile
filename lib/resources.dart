@@ -46,7 +46,7 @@ class AppColor {
   // Nocturne neon glow (matches the design board): violet outline + soft halo.
   static Color get glowBorder => _p(0xFFDDE4CC, 0xFF252A58);
   static List<BoxShadow> get glowShadow => night
-      ? const [BoxShadow(color: Color(0x267358FF), blurRadius: 14)]
+      ? const [BoxShadow(color: Color(0x147358FF), blurRadius: 12, offset: Offset(0, 4))]
       : const [BoxShadow(color: Color(0x14243D2E), blurRadius: 22, offset: Offset(0, 8))];
 
   // Nocturne gradient (primary CTA)
