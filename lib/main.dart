@@ -85,13 +85,17 @@ void main() async {
   await initAppModule();
   await ApiController.initDio();
   await NotificationService.instance.init();
-  try {
-    await Firebase.initializeApp();
-    await PushService.instance.init();
-  } catch (e) {
-    // Missing google-services.json / no Play services on this device —
-    // push notifications are unavailable, everything else still runs.
-  }
+  // Push setup talks to the network (token request), so it runs in the background:
+  // the app opens at once, online or offline.
+  Future(() async {
+    try {
+      await Firebase.initializeApp();
+      await PushService.instance.init();
+    } catch (e) {
+      // Missing google-services.json / no Play services on this device —
+      // push notifications are unavailable, everything else still runs.
+    }
+  });
   DeepLinkService.init();
   runApp(
     const MyApp(),
