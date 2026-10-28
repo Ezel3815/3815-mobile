@@ -7,7 +7,9 @@ import 'package:upgrade/api.dart';
 import 'package:upgrade/controllers/api_controller.dart';
 import 'package:upgrade/entity/card_entity.dart';
 import 'package:upgrade/entity/deck_entity.dart';
+import 'package:upgrade/di.dart';
 import 'package:upgrade/main.dart' show sharedPref;
+import 'package:upgrade/network_info.dart';
 
 /// Downloaded study material: card text lives in the existing Hive cache (filled by
 /// ApiController.fetchCards); this class makes sure the PICTURES and attached FILES are
@@ -160,6 +162,41 @@ class OfflineStore {
     await sharedPref.setString(_regKey, jsonEncode(_reg));
     changes.value++;
     return failed;
+  }
+
+  static bool _syncing = false;
+  static DateTime? _lastSync;
+
+  /// Quietly re-checks every downloaded subject for new cards / pictures (at most every 20 minutes,
+  /// only with a connection). Already saved pictures are skipped, so only what is new gets downloaded.
+  static Future<void> syncAll(List<DeckEntity> decks) async {
+    if (_syncing || _reg.isEmpty) return;
+    final last = _lastSync;
+    if (last != null && DateTime.now().difference(last) < const Duration(minutes: 20)) return;
+    _syncing = true;
+    try {
+      if (!await instance<NetworkInfo>().isConnected) return;
+      final byId = <int, DeckEntity>{};
+      void walk(DeckEntity d) {
+        byId[d.id] = d;
+        for (final c in d.children) {
+          walk(c);
+        }
+      }
+      for (final d in decks) {
+        walk(d);
+      }
+      for (final key in _reg.keys.toList()) {
+        final s = byId[int.tryParse(key) ?? -1];
+        if (s == null || s.locked) continue;
+        try {
+          await download(s, onProgress: (_) {});
+        } catch (_) {}
+      }
+      _lastSync = DateTime.now();
+    } finally {
+      _syncing = false;
+    }
   }
 
   /// Deletes the downloaded pictures of [subjectId] (unless another downloaded subject still uses them).
