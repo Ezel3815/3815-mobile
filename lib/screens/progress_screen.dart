@@ -1,4 +1,5 @@
 import 'package:upgrade/widgets/nocturne_mascot.dart';
+import 'package:upgrade/widgets/polished_bar.dart';
 import 'package:upgrade/widgets/mosaic/mosaic_hero_card.dart';
 import 'package:upgrade/widgets/mossad/mossad_view.dart';
 import 'package:upgrade/widgets/quests_view.dart';
@@ -699,16 +700,11 @@ class _StatisticsBody extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: LinearProgressIndicator(
-                                  value: s.mastery,
-                                  minHeight: 5,
-                                  backgroundColor:
-                                      AppColor.scaffoldBackgroundColor,
-                                  valueColor: AlwaysStoppedAnimation(
-                                      AppColor.greenColor),
-                                ),
+                              PolishedBar(
+                                value: s.mastery,
+                                height: 6,
+                                track: AppColor.scaffoldBackgroundColor,
+                                color: AppColor.greenColor,
                               ),
                             ],
                           ),
