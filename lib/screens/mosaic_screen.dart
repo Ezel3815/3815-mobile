@@ -258,7 +258,9 @@ class _ChestRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: chest.claimed ? const Color(0xFFF6F1E7) : Colors.white,
+          color: AppColor.night
+              ? (chest.claimed ? AppColor.elevatedColor : AppColor.surfaceColor)
+              : (chest.claimed ? const Color(0xFFF6F1E7) : Colors.white),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColor.pick(0xFFEDE6D6, 0xFF252A58)),
         ),
