@@ -45,11 +45,12 @@ class _ProcessingScreenState extends State<ProcessingScreen> with TickerProvider
     });
     try {
       final title = (widget.mcq ? AiStr.mcq : AiStr.flashcards) + ' ' + DateTime.now().toString().substring(0, 10);
-      final r = await widget.api.scan(widget.images, mcq: widget.mcq, deckId: widget.deckId, title: widget.mcq ? title : null, deckTitle: title);
+      final r = await widget.api.scan(widget.images, mcq: widget.mcq);
       if (!mounted) return;
-      if (!r.mcq && r.savedDeckId != null) widget.onDeckChanged?.call();
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (_) => r.mcq ? McqResultScreen(api: widget.api, result: r) : FlashcardsResultScreen(cards: r.cards, savedToDeck: r.savedDeckId != null)));
+          builder: (_) => r.mcq
+              ? McqResultScreen(api: widget.api, result: r, title: title)
+              : FlashcardsResultScreen(api: widget.api, cards: r.cards, deckId: widget.deckId, deckTitle: title, onDeckChanged: widget.onDeckChanged)));
     } on QuotaExceeded catch (e) {
       if (!mounted) return;
       final nav = Navigator.of(context);
