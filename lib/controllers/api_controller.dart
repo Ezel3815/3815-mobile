@@ -642,11 +642,23 @@ class ApiController {
   /// really empty ([]).
   static Future<List<CardEntity>?> fetchCards(int id) async {
     lastCardsError = null;
+    // Cards saved on the phone (study cache / "Offline" downloads).
+    final saved = await _appLocalDataSource.getCardEntityFromLocal(id);
+    // No connection at all: open the saved copy straight away, don't wait for a request to fail.
+    if (!await _networkInfo.isConnected) {
+      if (saved.isNotEmpty) return saved;
+      lastCardsError = 'لا يوجد اتصال بالإنترنت، وهذا الدرس غير محمّل للاستخدام بدون إنترنت';
+      return null;
+    }
     try {
-      final response = await dio.get(
-        Api.getCards(id),
-        options: GetOptions.getOptions(),
-      );
+      // "Connected" to a Wi-Fi without internet never fails fast: with a saved copy, give the
+      // server a short time and then use the saved cards instead of freezing on the loader.
+      final response = await dio
+          .get(
+            Api.getCards(id),
+            options: GetOptions.getOptions(),
+          )
+          .timeout(saved.isNotEmpty ? const Duration(seconds: 8) : const Duration(seconds: 60));
       // The server answers with a JSON object (not a list) when it refuses the
       // request, e.g. 403 "no access to this deck". Report that — never try to
       // read it as cards, and never fall back to old local cards in that case.
@@ -670,8 +682,7 @@ class ApiController {
           ? (ErrorHandler.handle(e).failure.message ?? 'خطأ في الاتصال')
           : e.toString();
       log('fetchCards($id) failed: $e');
-      final local = await _appLocalDataSource.getCardEntityFromLocal(id);
-      return local.isNotEmpty ? local : null;
+      return saved.isNotEmpty ? saved : null;
     }
   }
 
