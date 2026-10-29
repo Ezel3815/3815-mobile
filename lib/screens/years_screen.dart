@@ -221,8 +221,8 @@ class _GreetingBlock extends StatelessWidget {
           ],
         ),
             ),
-            const SizedBox(width: 12),
-            const NocturneMascot(pose: 'orbiting', height: 84),
+            const SizedBox(width: 4),
+            const NocturneMascot(pose: 'orbiting', height: 62),
           ],
         );
       }),
