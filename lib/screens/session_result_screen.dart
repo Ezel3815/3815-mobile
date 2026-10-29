@@ -197,7 +197,8 @@ class _SessionResultScreenState extends State<SessionResultScreen>
               child: Column(
                 children: [
                   const Spacer(),
-                  const NocturneMascot(pose: 'jumping', height: 96),
+                  const NocturneMascot(pose: 'jumping', height: 84),
+                  const SizedBox(height: 10),
                   ScaleTransition(
                     scale: _badgeScale,
                     child: Container(
