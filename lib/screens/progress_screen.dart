@@ -50,11 +50,6 @@ class ProgressScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
               children: [
-                if (AppColor.night)
-                  const Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: NocturneMascot(pose: 'studying', height: 72),
-                  ),
                 Row(
                   children: [
                     InkWell(
@@ -74,9 +69,12 @@ class ProgressScreen extends StatelessWidget {
                         color: headerColor,
                       ),
                     ),
+                    const Spacer(),
+                    // Night mode: the cat sits in the header, with its own room.
+                    const NocturneMascot(pose: 'studying', height: 46),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 if (!mossadMode) ...[
                   const MosaicHeroCard(),
                   const SizedBox(height: 18),
