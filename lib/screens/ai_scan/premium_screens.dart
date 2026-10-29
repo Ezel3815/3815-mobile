@@ -6,10 +6,14 @@ import 'ai_scan_api.dart';
 import 'ai_scan_strings.dart';
 import 'ai_scan_theme.dart';
 
+/// Set to true to bring the subscribe offer / payment windows back when the free tries run out.
+const bool kShowAiPaymentOffer = false;
+
 /// Shown whenever the free tries are used up.
 /// 7 (offer): subscribe -> 9 -> payment  |  maybe later -> 8 (countdown)  ·  9 -> back to app -> 10
+/// While [kShowAiPaymentOffer] is false, only 8 (countdown) is shown.
 Future<void> showAiPremiumFlow(BuildContext context, AiScanApi api, {DateTime? nextAt}) async {
-  final go = await showDialog<bool>(context: context, barrierColor: AiC.deep.withOpacity(.82), builder: (_) => _OfferDialog(api: api));
+  final go = kShowAiPaymentOffer ? await showDialog<bool>(context: context, barrierColor: AiC.deep.withOpacity(.82), builder: (_) => _OfferDialog(api: api)) : false;
   if (!context.mounted) return;
   if (go == true) {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PremiumPage(api: api)));
