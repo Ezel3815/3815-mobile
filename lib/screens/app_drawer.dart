@@ -127,8 +127,8 @@ class AppDrawer extends StatelessWidget {
       width: drawerWidth,
       color: AppColor.scaffoldBackgroundColor,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
