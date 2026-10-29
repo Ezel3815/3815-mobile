@@ -92,9 +92,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const Align(
                                 alignment: Alignment.bottomLeft,
                                 child: Padding(
-                                  padding: EdgeInsets.only(left: 8, bottom: 8),
+                                  padding: EdgeInsets.only(left: 6, bottom: 14),
                                   child: NocturneMascot(
-                                      pose: 'star-hug', height: 72),
+                                      pose: 'star-hug', height: 56),
                                 ),
                               ),
                               Align(
