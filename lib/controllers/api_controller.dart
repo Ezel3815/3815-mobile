@@ -2,6 +2,7 @@ import 'package:upgrade/services/notification_service.dart';
 import 'package:upgrade/entity/follow_person.dart';
 import 'package:upgrade/entity/feed_entity.dart';
 import 'package:upgrade/entity/quests_entity.dart';
+import 'package:upgrade/failover.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:dio/dio.dart';
@@ -44,6 +45,7 @@ class ApiController {
     dio = Dio(
       BaseOptions(
         baseUrl: Api.baseUrl,
+        connectTimeout: const Duration(seconds: 20),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -55,6 +57,7 @@ class ApiController {
         },
       ),
     );
+    dio.interceptors.insert(0, ServerFailover());
     if (!kReleaseMode) {
       dio.interceptors.add(
         PrettyDioLogger(
