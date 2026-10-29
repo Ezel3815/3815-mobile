@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 class ServerFailover extends Interceptor {
   static const servers = <String>[
     'https://soalix-backend.onrender.com',
+    'https://PUT-RENDER-2-NAME-HERE.onrender.com', // Render 2
     'https://mozaik-backend-e981d.containers.snapdeploy.app',
   ];
   static int _active = 0;
