@@ -1,4 +1,4 @@
-import 'package:upgrade/failover.dart';
+import 'package:upgrade/server_failover.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:upgrade/api.dart';
