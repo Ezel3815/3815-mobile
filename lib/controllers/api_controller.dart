@@ -2,7 +2,7 @@ import 'package:upgrade/services/notification_service.dart';
 import 'package:upgrade/entity/follow_person.dart';
 import 'package:upgrade/entity/feed_entity.dart';
 import 'package:upgrade/entity/quests_entity.dart';
-import 'package:upgrade/failover.dart';
+import 'package:upgrade/server_failover.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:dio/dio.dart';
