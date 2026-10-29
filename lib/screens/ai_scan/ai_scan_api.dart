@@ -1,3 +1,4 @@
+import 'package:upgrade/failover.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:upgrade/api.dart';
@@ -79,7 +80,7 @@ class AiScanApi {
     sendTimeout: const Duration(seconds: 90),
     receiveTimeout: const Duration(seconds: 120),
     validateStatus: (_) => true, // handled in _ok
-  ));
+  ))..interceptors.add(ServerFailover());
 
   Options get _o => Options(headers: {'Accept': 'application/json', 'Authorization': sharedPref.getString('token') ?? ''});
 
