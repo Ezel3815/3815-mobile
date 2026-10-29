@@ -216,7 +216,9 @@ class AnimatedLogosState extends State<AnimatedLogos>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 2200), () {
+    // Night mode holds the logo a bit longer (the glow + wordmark fade-in is slower to read on dark).
+    Future.delayed(Duration(milliseconds: AppColor.night ? 3200 : 2200), () {
+      if (!mounted) return;
       if (sharedPref.getString("token") != null) {
         Get.offNamed(AppRoutes.mainRoute);
       } else {
