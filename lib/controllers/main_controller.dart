@@ -3,6 +3,7 @@ import 'package:upgrade/services/notification_router.dart';
 import 'package:upgrade/widgets/streak_widget_prompt.dart';
 import 'package:upgrade/widgets/study_year_prompt.dart';
 import 'package:upgrade/screens/feed_screen.dart';
+import 'package:upgrade/mcq/screens/mcq_home_screen.dart';
 import 'package:upgrade/utils/deep_link_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -40,11 +41,18 @@ class MainController extends GetxController {
     page = index;
   }
 
+  /// Order of the tabs in the bottom bar (values are indexes into [pages]).
+  /// MCQ sits third, but keeps page index 5 so every existing
+  /// onChangePage(0..4) call (notifications, drawer, profile shortcut)
+  /// still lands on the same screen as before.
+  static const navOrder = [0, 1, 5, 2, 3, 4];
+
   final pages = const [
     YearsScreen(),
     LibraryScreen(),
     ProgressScreen(),
     ProfileScreen(),
     FeedScreen(),
+    McqHomeScreen(),
   ];
 }
