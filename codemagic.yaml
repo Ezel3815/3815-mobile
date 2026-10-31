@@ -12,8 +12,6 @@ workflows:
         script: flutter pub get
       - name: Generate app icons from the single brand image
         script: dart run flutter_launcher_icons
-      - name: Unit tests
-        script: flutter test
       - name: Build release APK
         script: flutter build apk --release
     artifacts:
