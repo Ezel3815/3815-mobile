@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:upgrade/entity/spin_data.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -91,6 +92,7 @@ class OfflineStore {
       for (final c in cards) {
         if (c.frontImageUrl.isNotEmpty) images.add(resolve(c.frontImageUrl));
         if (c.backImageUrl.isNotEmpty) images.add(resolve(c.backImageUrl));
+        for (final f in c.allSpinFrames()) { images.add(resolve(f)); }
         if (c.documentUrl.isNotEmpty) docs.add(c.documentUrl);
       }
       onProgress(.15 * (i + 1) / leaves.length);
