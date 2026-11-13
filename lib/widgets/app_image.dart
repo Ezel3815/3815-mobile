@@ -37,6 +37,16 @@ class AppImage extends StatelessWidget {
     return Api.imageUrl + image;
   }
 
+  /// Same source rules as [build] (offline copy first, else cached network),
+  /// for widgets that need a raw ImageProvider (e.g. the 360° viewer).
+  static ImageProvider providerFor(String image) {
+    final url = image.startsWith("http://") || image.startsWith("https://")
+        ? image
+        : Api.imageUrl + image;
+    final local = OfflineStore.localPath(url);
+    return local != null ? FileImage(File(local)) : CachedNetworkImageProvider(url);
+  }
+
   @override
   Widget build(BuildContext context) {
     // downloaded for offline use: show the saved copy, no network at all
