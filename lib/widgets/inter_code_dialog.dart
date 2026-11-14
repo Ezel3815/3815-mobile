@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:upgrade/controllers/inter_code_controller.dart';
 import 'package:upgrade/resources.dart';
+import 'package:upgrade/strings.dart';
 
 class InterCodeDialog extends GetView<InterCodeController> {
   const InterCodeDialog({super.key});
@@ -9,7 +10,11 @@ class InterCodeDialog extends GetView<InterCodeController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => InterCodeController());
-    return Obx(() => controller.success.value ? _successView() : _form());
+    return Obx(() => controller.success.value
+        ? _successView()
+        : controller.loading
+            ? _activatingView()
+            : _form());
   }
 
   Widget _successView() {
@@ -27,7 +32,7 @@ class InterCodeDialog extends GetView<InterCodeController> {
                 color: AppColor.greenColor, size: 84),
             SizedBox(height: 14),
             Text(
-              "Code activated!",
+              AppStrings.codeActivated,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -35,6 +40,43 @@ class InterCodeDialog extends GetView<InterCodeController> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _activatingView() {
+    return PopScope(
+      canPop: false, // can't be dismissed while the code is being activated
+      child: Dialog(
+        backgroundColor: AppColor.surfaceColor,
+        surfaceTintColor: AppColor.surfaceColor,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 36, 22, 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: CircularProgressIndicator(
+                  strokeWidth: 4,
+                  color: AppColor.greenColor,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                AppStrings.codeActivating,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColor.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -88,8 +130,13 @@ class InterCodeDialog extends GetView<InterCodeController> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              Obx(() => TextFormField(
                 controller: controller.codeController,
+                onChanged: (_) {
+                  if (controller.errorText.value.isNotEmpty) {
+                    controller.errorText.value = '';
+                  }
+                },
                 textAlign: TextAlign.center,
                 keyboardType: TextInputType.text,
                 style: TextStyle(
@@ -105,6 +152,16 @@ class InterCodeDialog extends GetView<InterCodeController> {
                   return null;
                 },
                 decoration: InputDecoration(
+                  errorText: controller.errorText.value.isEmpty
+                      ? null
+                      : controller.errorText.value,
+                  errorMaxLines: 3,
+                  errorStyle: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
+                  suffixIcon: controller.errorText.value.isEmpty
+                      ? null
+                      : const Icon(Icons.error_outline_rounded,
+                          color: Colors.redAccent),
                   filled: true,
                   fillColor: AppColor.scaffoldBackgroundColor,
                   hintText: "••••••",
@@ -132,8 +189,13 @@ class InterCodeDialog extends GetView<InterCodeController> {
                     borderSide:
                         const BorderSide(color: Colors.redAccent, width: 1.2),
                   ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide:
+                        const BorderSide(color: Colors.redAccent, width: 1.2),
+                  ),
                 ),
-              ),
+              )),
               const SizedBox(height: 22),
               Obx(
                 () => SizedBox(
