@@ -526,30 +526,32 @@ class ApiController {
     return [];
   }
 
-  static Future<bool> enterCode(String code) async {
+  /// Activates a code. Returns null when it worked, otherwise the message to show the user.
+  static Future<String?> enterCode(String code) async {
+    String? messageOf(dynamic data) {
+      if (data is Map) {
+        final d = data['details'];
+        if (d is List && d.isNotEmpty) return d.join('\n'); // the server's real reason
+        if (data['message'] != null) return data['message'].toString();
+      }
+      return null;
+    }
+
     try {
       final response = await dio.post(
         Api.enterCode,
-        data: {
-          "code": code,
-        },
+        data: {"code": code},
         options: GetOptions.getOptions(),
       );
-      if(response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        showSnackBarWidget(message: response.data['message'] ?? "");
-      }
-      return false;
+      if (response.statusCode == 200 || response.statusCode == 201) return null;
+      return messageOf(response.data) ?? "Something went wrong";
     } catch (e) {
-      if(ErrorHandler.handle(e).failure.code != -6) {
-        showSnackBarWidget(message: ErrorHandler
-            .handle(e)
-            .failure
-            .message ?? "");
-      }
       log(e.toString());
-      return false;
+      if (e is DioException) {
+        final m = messageOf(e.response?.data);
+        if (m != null && m != "Bad Request") return m;
+      }
+      return ErrorHandler.handle(e).failure.message ?? "Something went wrong";
     }
   }
 
