@@ -137,6 +137,9 @@ class AppStrings {
   static String get drawerProgress => _t("التقدم", "Progress");
   static String get drawerProfile => _t("الملف الشخصي", "Profile");
   static String get enterCode => _t("إدخال الكود", "Enter Code");
+  static String get codeActivating => _t("جاري تفعيل الكود...", "Activating your code...");
+  static String get codeActivated => _t("تم تفعيل الكود!", "Code activated!");
+  static String get codeAlreadyEntered => "لقد ادخلت الكود بالفعل";
   static String get shareThisApp => _t("شارك التطبيق", "Share This App");
   static String get helpFeedback => _t("المساعدة والملاحظات", "Help & Feedback");
   static String get logOut => _t("تسجيل الخروج", "Log Out");
