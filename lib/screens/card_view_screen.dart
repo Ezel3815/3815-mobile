@@ -10,9 +10,9 @@ import 'package:upgrade/api.dart';
 import 'package:upgrade/controllers/card_view_controller.dart';
 import 'package:upgrade/entity/shape_creator_entity.dart';
 import 'package:upgrade/resources.dart';
-import 'package:upgrade/entity/spin_data.dart';
+import 'package:upgrade/entity/model_data.dart';
 import 'package:upgrade/widgets/app_image.dart';
-import 'package:upgrade/widgets/spin_viewer.dart';
+import 'package:upgrade/widgets/model_3d_viewer.dart';
 import 'package:upgrade/widgets/download_dialog.dart';
 
 import 'document_screen.dart';
@@ -70,9 +70,14 @@ class CardViewScreen extends GetView<CardViewController> {
             child: Obx(
               () => PageView.builder(
                 itemBuilder: (context, index) {
-                  return SingleChildScrollView(
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: controller.scrollLocked,
+                    builder: (context, locked, child) => SingleChildScrollView(
+                    physics: locked ? const NeverScrollableScrollPhysics() : null,
                     padding: EdgeInsets.symmetric(
                         horizontal: hPad, vertical: 20),
+                    child: child,
+                  ),
                     child: Obx(
                       () => Column(
                         children: [
@@ -181,10 +186,11 @@ class CardViewScreen extends GetView<CardViewController> {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            if (controller.cards[index].spinFor(back: false) != null)
-                              SpinViewer(
-                                key: ValueKey('spin-f-${controller.cards[index].id}'),
-                                spin: controller.cards[index].spinFor(back: false)!,
+                            if (controller.cards[index].modelUrlFront() != null)
+                              Model3DViewer(
+                                key: ValueKey('m3d-f-${controller.cards[index].id}'),
+                                url: controller.cards[index].modelUrlFront()!,
+                                onTouching: (v) => controller.scrollLocked.value = v,
                               )
                             else if (controller
                                 .cards[index].frontImageUrl.isNotEmpty)
@@ -215,10 +221,11 @@ class CardViewScreen extends GetView<CardViewController> {
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              if (controller.cards[index].spinFor(back: true) != null)
-                                SpinViewer(
-                                  key: ValueKey('spin-b-${controller.cards[index].id}'),
-                                  spin: controller.cards[index].spinFor(back: true)!,
+                              if (controller.cards[index].modelUrlBack() != null)
+                                Model3DViewer(
+                                  key: ValueKey('m3d-b-${controller.cards[index].id}'),
+                                  url: controller.cards[index].modelUrlBack()!,
+                                  onTouching: (v) => controller.scrollLocked.value = v,
                                 )
                               else if (controller
                                   .cards[index].backImageUrl.isNotEmpty)
