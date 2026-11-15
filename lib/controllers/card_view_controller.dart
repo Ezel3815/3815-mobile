@@ -21,12 +21,38 @@ import 'package:upgrade/models/shape_creator_model.dart';
 import 'package:upgrade/resources.dart';
 import 'package:upgrade/widgets/celebration.dart';
 import 'package:upgrade/services/notification_service.dart';
+import 'package:upgrade/entity/model_data.dart';
+import 'package:upgrade/utils/model_cache.dart';
 
 class CardViewController extends GetxController {
   late bool isView;
 
   /// True while a finger is on a 3D model: the card must not scroll then.
   final ValueNotifier<bool> scrollLocked = ValueNotifier<bool>(false);
+
+  /// True while the deck's 3D models are being downloaded before the first card shows.
+  final RxBool preparing = false.obs;
+  final RxInt prepDone = 0.obs;
+  final RxInt prepTotal = 0.obs;
+
+  Future<void> _prepareModels() async {
+    final urls = <String>[
+      for (final c in cards) ...[
+        if (c.modelUrlFront() != null) c.modelUrlFront()!,
+        if (c.modelUrlBack() != null) c.modelUrlBack()!,
+      ],
+    ];
+    if (urls.every((u) => ModelCache.readyPath(u) != null)) return;
+    preparing.value = true;
+    try {
+      await ModelCache.prefetch(urls, onProgress: (d, t) {
+        prepDone.value = d;
+        prepTotal.value = t;
+      });
+    } finally {
+      preparing.value = false;
+    }
+  }
 
   // Session tracking — additive only, does not change the existing
   // grading buttons, the answerCard API call, or OCCLUSION logic.
@@ -433,6 +459,7 @@ class CardViewController extends GetxController {
     if (cards[pageViewIndex].type == "OCCLUSION") {
       getOCCData();
     }
+    unawaited(_prepareModels());
 
     super.onInit();
   }
