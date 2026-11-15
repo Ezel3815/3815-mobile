@@ -475,6 +475,26 @@ class CardViewScreen extends GetView<CardViewController> {
             },
           ),
         ),
+        Obx(() => controller.preparing.value
+            ? Positioned.fill(
+                child: Container(
+                  color: AppColor.scaffoldBackgroundColor,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AppColor.greenColor),
+                        const SizedBox(height: 14),
+                        Text(
+                          '${AppStrings.model3dPreparing} ${controller.prepDone.value}/${controller.prepTotal.value}',
+                          style: TextStyle(color: AppColor.textSecondary, decoration: TextDecoration.none, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            : const SizedBox.shrink()),
       ],
     );
   }
