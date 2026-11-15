@@ -140,6 +140,7 @@ class AppStrings {
   static String get codeActivating => _t("جاري تفعيل الكود...", "Activating your code...");
   static String get codeActivated => _t("تم تفعيل الكود!", "Code activated!");
   static String get codeAlreadyEntered => "لقد ادخلت الكود بالفعل";
+  static String get model3dPreparing => _t("جاري تجهيز النماذج ثلاثية الأبعاد", "Preparing 3D models");
   static String get model3dLoading => _t("جاري تحميل النموذج ثلاثي الأبعاد...", "Loading 3D model...");
   static String get model3dError => _t("تعذر تحميل النموذج", "Couldn't load the 3D model");
   static String get model3dRetry => _t("إعادة المحاولة", "Retry");
