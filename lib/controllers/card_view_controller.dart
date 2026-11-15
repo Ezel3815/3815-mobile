@@ -1,218 +1,439 @@
+import 'package:upgrade/controllers/progress_controller.dart';
+import 'package:upgrade/services/resume_position.dart';
+import 'package:upgrade/services/streak_widget_service.dart';
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-import 'package:upgrade/entity/model_data.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:upgrade/api.dart';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:upgrade/controllers/api_controller.dart';
+import 'package:upgrade/controllers/card_controller.dart';
+import 'package:upgrade/controllers/years_controller.dart';
+import 'package:upgrade/controllers/mosaic_controller.dart';
 import 'package:upgrade/entity/card_entity.dart';
-import 'package:upgrade/entity/deck_entity.dart';
-import 'package:upgrade/di.dart';
-import 'package:upgrade/main.dart' show sharedPref;
-import 'package:upgrade/network_info.dart';
+import 'package:upgrade/entity/mosaic_entity.dart';
+import 'package:upgrade/controllers/session_rewards.dart';
+import 'package:upgrade/entity/shape_creator_entity.dart';
+import 'package:upgrade/extension.dart';
+import 'package:upgrade/main.dart';
+import 'package:upgrade/mapper/app_mapper.dart';
+import 'package:upgrade/models/shape_creator_model.dart';
+import 'package:upgrade/resources.dart';
+import 'package:upgrade/widgets/celebration.dart';
+import 'package:upgrade/services/notification_service.dart';
 
-/// Downloaded study material: card text lives in the existing Hive cache (filled by
-/// ApiController.fetchCards); this class makes sure the PICTURES and attached FILES are
-/// saved on the phone for good, and remembers which subjects the user downloaded.
-class OfflineStore {
-  static const _regKey = 'offline_registry_v1';
-  static late Directory _mediaDir;
-  static late Directory _docsDir;
-  static final Set<String> _files = {};
-  static Map<String, dynamic> _reg = {};
+class CardViewController extends GetxController {
+  late bool isView;
 
-  /// Bumps whenever a download is added/removed, so buttons can rebuild.
-  static final ValueNotifier<int> changes = ValueNotifier(0);
+  /// True while a finger is on a 3D model: the card must not scroll then.
+  final ValueNotifier<bool> scrollLocked = ValueNotifier<bool>(false);
 
-  static Future<void> init() async {
-    _docsDir = await getApplicationDocumentsDirectory();
-    _mediaDir = Directory('${_docsDir.path}/offline_media');
-    if (!await _mediaDir.exists()) await _mediaDir.create(recursive: true);
-    _files
-      ..clear()
-      ..addAll(_mediaDir.listSync().whereType<File>().map((f) => f.path.split(Platform.pathSeparator).last));
+  // Session tracking — additive only, does not change the existing
+  // grading buttons, the answerCard API call, or OCCLUSION logic.
+  DateTime _sessionStart = DateTime.now();
+  int sessionCorrect = 0;
+  int sessionWrong = 0;
+  final List<CardEntity> sessionMistakes = [];
+
+  /// Every mosaic piece earned by ANY answer during this session, collected
+  /// silently — never shown to the user until the session actually ends.
+  /// The backend can release pieces incrementally (one per daily-step
+  /// crossed), so a single session's reward can arrive across several
+  /// answerCard() responses; the ceremony must represent the whole session
+  /// as one moment, not each individual crossing.
+  /// Everything the server awarded this session (streak + mosaic pieces),
+  /// handed to the result screen, which reads it once the answers settle.
+  final SessionRewards _rewards = SessionRewards();
+
+  /// Set the first time _finishSession() runs, so a rapid double-tap on the
+  /// last card can't queue the reward or navigate twice. Lives on this
+  /// controller instance, so a new study session (a new controller) starts
+  /// with it false again.
+  bool _sessionFinished = false;
+
+  void _recordAnswer(String answer, CardEntity card) {
+    if (answer == "GOOD" || answer == "EASY") {
+      sessionCorrect += 1;
+    } else if (answer == "AGAIN" || answer == "HARD") {
+      sessionWrong += 1;
+      if (!sessionMistakes.any((c) => c.id == card.id)) {
+        sessionMistakes.add(card);
+      }
+    }
+  }
+
+  void _goToSessionResult() {
+    NotificationService.instance.onSessionFinished();
+    StreakWidgetService.instance.sync(streak: _rewards.streak, studiedToday: true);
+    _rewards.settled = _answerChain;
+    Get.offNamed(
+      AppRoutes.sessionResultRoute,
+      arguments: {
+        'correct': sessionCorrect,
+        'wrong': sessionWrong,
+        'minutes': DateTime.now().difference(_sessionStart).inMinutes,
+        'mistakes': sessionMistakes,
+        'isView': isView,
+        'rewards': _rewards,
+      },
+    );
+  }
+
+  /// Submits one card's answer and folds its effects into the running
+  /// session state. Never navigates — callers decide when the session ends.
+  /// Safe to call without awaiting for any card except the session's last
+  /// one, where the caller MUST await this before flushing/navigating so
+  /// that card's mosaic pieces (if any) are never lost to the navigation
+  /// race described below.
+  Future<void> _submitAnswer(String answer, CardEntity card) {
+    // One answer request at a time: concurrent answers starve the small DB
+    // pool and race the server's once-a-day streak update (which is what
+    // produced the "Streak saved!" spam and the slow finish).
+    final next = _answerChain.then((_) => _sendAnswer(answer, card));
+    _answerChain = next.catchError((_) {});
+    return next;
+  }
+
+  Future<void> _answerChain = Future<void>.value();
+
+  Future<void> _sendAnswer(String answer, CardEntity card) async {
     try {
-      _reg = Map<String, dynamic>.from(jsonDecode(sharedPref.getString(_regKey) ?? '{}'));
+      final result =
+          await ApiController.answerCard(cardID: card.id, answer: answer);
+      if (result != null) showCelebration(result);
+      if (result != null) {
+        _rewards.answered = true;
+        // Server-confirmed answer → STUDIED_TODAY: stops the day's reminders.
+        NotificationService.instance.onCardAnswered();
+      }
+      if (result != null && result.streakSaved && result.newStreak != null) {
+        _rewards.streak = result.newStreak;
+      }
+      if (result?.mosaic?.newPieces.isNotEmpty ?? false) {
+        _rewards.pieces.addAll(result!.mosaic!.newPieces);
+      }
     } catch (_) {
-      _reg = {};
+      // Never let an answer failure break the study flow.
     }
   }
 
-  // ---------- lookups ----------
-  static String _name(String url) {
-    // FNV-1a 64-bit: stable across runs and app updates (String.hashCode is not guaranteed to be)
-    var h = BigInt.parse('cbf29ce484222325', radix: 16);
-    final prime = BigInt.parse('100000001b3', radix: 16);
-    final mask = (BigInt.one << 64) - BigInt.one;
-    for (final c in url.codeUnits) {
-      h = ((h ^ BigInt.from(c)) * prime) & mask;
+  /// Once per session (not once per card): refresh the lists that changed.
+  void _refreshAfterSession() {
+    if (Get.isRegistered<CardController>()) {
+      Get.find<CardController>().getCard().catchError((_) {});
     }
-    final dot = url.split('?').first.lastIndexOf('.');
-    final ext = dot > url.lastIndexOf('/') && url.length - dot <= 6 ? url.split('?').first.substring(dot) : '';
-    return h.toRadixString(16) + ext;
+    if (Get.isRegistered<YearsController>()) {
+      Get.find<YearsController>().getAllDeck().catchError((_) {});
+    }
+    if (Get.isRegistered<ProgressController>()) {
+      Get.find<ProgressController>().loadQuests().catchError((_) {});
+    }
   }
 
-  /// Local file path for a picture that was downloaded for offline use, or null.
-  static String? localPath(String resolvedUrl) {
-    final n = _name(resolvedUrl);
-    return _files.contains(n) ? '${_mediaDir.path}/$n' : null;
+  /// Waits briefly for the last answer, never longer than a few seconds, so
+  /// the Session Complete screen opens promptly even on a slow server. Anything
+  /// still in flight is picked up by the result screen via SessionRewards.settled.
+  Future<void> _awaitFinalAnswer(String answer, CardEntity card) async {
+    await _submitAnswer(answer, card)
+        .timeout(const Duration(seconds: 3), onTimeout: () {});
   }
 
-  static bool isDownloaded(int subjectId) => _reg.containsKey('$subjectId');
-  static Map<String, dynamic>? info(int subjectId) => _reg['$subjectId'] == null ? null : Map<String, dynamic>.from(_reg['$subjectId']);
+  /// Navigates to the session result screen, which builds the ONE daily
+  /// reward batch from SessionRewards once the answers have settled.
+  /// This is called ONLY after the final card's _submitAnswer has already
+  /// been awaited, so it can never fire before that card's pieces (if any)
+  /// have been collected — that ordering is what actually prevents the
+  /// race, rather than any timing/delay workaround.
+  int? _resumeDeckId;
 
-  static String resolve(String image) => image.startsWith('http://') || image.startsWith('https://') ? image : Api.imageUrl + image;
-
-  // ---------- download ----------
-  static List<DeckEntity> _leaves(DeckEntity d) {
-    if (d.type == 'CARDS_DECK') return [d];
-    return d.children.expand(_leaves).toList();
+  void _finishSession() {
+    if (_sessionFinished) return;
+    _sessionFinished = true;
+    // Deck finished: the next visit starts from card 1 again.
+    if (_resumeDeckId != null) ResumePosition.clear(_resumeDeckId!);
+    _goToSessionResult();
+    _refreshAfterSession();
   }
 
-  /// Downloads every lesson of [subject]: card text (into Hive), pictures and attached files.
-  /// Returns how many media files could not be downloaded (0 = complete).
-  static Future<int> download(
-    DeckEntity subject, {
-    required void Function(double progress) onProgress,
-    CancelToken? cancel,
-  }) async {
-    final leaves = _leaves(subject);
-    if (leaves.isEmpty) throw Exception('empty');
+  final Rx<ShapeCreatorEntity> _data = ShapeCreatorModel().toDomain().obs;
+  late PageController pageController;
 
-    // 1) cards (0% - 15%)
-    final images = <String>{};
-    final docs = <String>{};
-    var cardCount = 0;
-    for (var i = 0; i < leaves.length; i++) {
-      if (cancel?.isCancelled == true) throw DioException.requestCancelled(requestOptions: RequestOptions(), reason: 'cancel');
-      final List<CardEntity>? cards = await ApiController.fetchCards(leaves[i].id);
-      if (cards == null) throw Exception(ApiController.lastCardsError ?? 'error');
-      cardCount += cards.length;
-      for (final c in cards) {
-        if (c.frontImageUrl.isNotEmpty) images.add(resolve(c.frontImageUrl));
-        if (c.backImageUrl.isNotEmpty) images.add(resolve(c.backImageUrl));
-        final m3d = c.anyModelUrl();
-        if (m3d != null) images.add(resolve(m3d)); // 3D models go with the subject
-        if (c.documentUrl.isNotEmpty) docs.add(c.documentUrl);
+  final RxBool _showAnswer = false.obs;
+  final RxBool _toggleMask = false.obs;
+  final RxInt _currentIndex = 0.obs;
+  final RxInt _pageViewIndex = 0.obs;
+  final RxList<CardEntity> _cards = <CardEntity>[].obs;
+
+  bool get showAnswer => _showAnswer.value;
+
+  bool get toggleMask => _toggleMask.value;
+
+  int get currentIndex => _currentIndex.value;
+
+  int get pageViewIndex => _pageViewIndex.value;
+
+  List<CardEntity> get cards => _cards;
+
+  ShapeCreatorEntity get data => _data.value;
+
+  set showAnswer(value) => _showAnswer.value = value;
+
+  set toggleMask(value) => _toggleMask.value = value;
+
+  set currentIndex(value) => _currentIndex.value = value;
+
+  set data(ShapeCreatorEntity value) => _data.value = value;
+
+  set cards(List<CardEntity> value) => _cards.value = value;
+
+  set pageViewIndex(value) => _pageViewIndex.value = value;
+
+  toggleAnswer() {
+    showAnswer = !showAnswer;
+    if (cards[pageViewIndex].type == "OCCLUSION" && isView) {
+      changeToggleMask();
+    }
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      onTapOnShowAnswer();
+    }
+  }
+
+  changeToggleMask() {
+    toggleMask = !toggleMask;
+
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      for (var element in data.shapes) {
+        element.isShow = !toggleMask;
       }
-      onProgress(.15 * (i + 1) / leaves.length);
-    }
 
-    // 2) pictures + files (15% - 100%), 4 at a time
-    final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 30), receiveTimeout: const Duration(seconds: 90)));
-    final jobs = <Future<bool> Function()>[];
-    final myFiles = <String>[];
-    for (final url in images) {
-      final name = _name(url);
-      myFiles.add(name);
-      if (_files.contains(name)) continue;
-      jobs.add(() async {
-        final tmp = '${_mediaDir.path}/$name.part';
-        try {
-          await dio.download(url, tmp, cancelToken: cancel);
-          await File(tmp).rename('${_mediaDir.path}/$name');
-          _files.add(name);
-          return true;
-        } catch (_) {
-          try { await File(tmp).delete(); } catch (_) {}
-          if (cancel?.isCancelled == true) rethrow;
-          return false;
-        }
-      });
+      _data.refresh();
     }
-    for (final d in docs) {
-      // same place and name the app's own "open attached file" uses, so it opens offline too
-      final path = '${_docsDir.path}/${d.split("/").last}';
-      if (File(path).existsSync()) continue;
-      final url = d.startsWith('http') ? d : '${Api.imageUrl}/$d';
-      jobs.add(() async {
-        try {
-          await dio.download(url, path, cancelToken: cancel);
-          return true;
-        } catch (_) {
-          try { await File(path).delete(); } catch (_) {}
-          if (cancel?.isCancelled == true) rethrow;
-          return false;
-        }
-      });
-    }
-    var done = 0, failed = 0, next = 0;
-    Future<void> worker() async {
-      while (next < jobs.length) {
-        final job = jobs[next++];
-        if (!await job()) failed++;
-        done++;
-        onProgress(.15 + .85 * done / jobs.length);
-      }
-    }
-    await Future.wait(List.generate(4, (_) => worker()));
-    onProgress(1);
-
-    var bytes = 0;
-    for (final n in myFiles) {
-      final f = File('${_mediaDir.path}/$n');
-      if (f.existsSync()) bytes += f.lengthSync();
-    }
-    _reg['${subject.id}'] = {
-      'title': subject.title,
-      'cards': cardCount,
-      'files': myFiles,
-      'bytes': bytes,
-      'failed': failed,
-      'at': DateTime.now().toIso8601String(),
-    };
-    await sharedPref.setString(_regKey, jsonEncode(_reg));
-    changes.value++;
-    return failed;
   }
 
-  static bool _syncing = false;
-  static DateTime? _lastSync;
-
-  /// Quietly re-checks every downloaded subject for new cards / pictures (at most every 20 minutes,
-  /// only with a connection). Already saved pictures are skipped, so only what is new gets downloaded.
-  static Future<void> syncAll(List<DeckEntity> decks) async {
-    if (_syncing || _reg.isEmpty) return;
-    final last = _lastSync;
-    if (last != null && DateTime.now().difference(last) < const Duration(minutes: 20)) return;
-    _syncing = true;
+  getData() {
     try {
-      if (!await instance<NetworkInfo>().isConnected) return;
-      final byId = <int, DeckEntity>{};
-      void walk(DeckEntity d) {
-        byId[d.id] = d;
-        for (final c in d.children) {
-          walk(c);
-        }
-      }
-      for (final d in decks) {
-        walk(d);
-      }
-      for (final key in _reg.keys.toList()) {
-        final s = byId[int.tryParse(key) ?? -1];
-        if (s == null || s.locked) continue;
-        try {
-          await download(s, onProgress: (_) {});
-        } catch (_) {}
-      }
-      _lastSync = DateTime.now();
-    } finally {
-      _syncing = false;
+      return jsonDecode(cards[pageViewIndex].data);
+    } catch (_) {
+      // Corrupt/legacy data must not crash the card (same fix as getOCCData).
+      return {};
     }
   }
 
-  /// Deletes the downloaded pictures of [subjectId] (unless another downloaded subject still uses them).
-  static Future<void> remove(int subjectId) async {
-    final mine = List<String>.from((_reg['$subjectId']?['files'] ?? const []) as List);
-    _reg.remove('$subjectId');
-    final stillUsed = <String>{for (final v in _reg.values) ...List<String>.from(v['files'] as List)};
-    for (final n in mine) {
-      if (stillUsed.contains(n)) continue;
-      _files.remove(n);
-      try { await File('${_mediaDir.path}/$n').delete(); } catch (_) {}
+  String getFrontText() {
+    if (getData()['front'] != null && getData()['front']['text'] != null) {
+      String text = getData()['front']['text'].toString();
+
+      if (cards[pageViewIndex].type == "BASIC" ||
+          cards[pageViewIndex].type == "OCCLUSION") {
+        return text;
+      }
+
+      RegExp regex = RegExp(r"\{(.*?)\}");
+      return text.replaceAllMapped(regex, (match) {
+        String insideText = match.group(1) ?? "";
+
+        if (showAnswer) {
+          String color =
+              AppColor.greenColor.value.toRadixString(16).substring(2);
+          return '<span style="color: #$color;">$insideText</span>';
+        } else {
+          return "{....}";
+        }
+      });
     }
-    await sharedPref.setString(_regKey, jsonEncode(_reg));
-    changes.value++;
+    return '';
+  }
+
+  double getFrontSize() {
+    if (getData()['front'] != null && getData()['front']['size'] != null) {
+      return (getData()['front']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getFrontAlign() {
+    if (getData()['front'] != null && getData()['front']['align'] != null) {
+      return getData()['front']['align'] == "center"
+          ? 'center'
+          : getData()['front']['align'] == "start"
+              ? 'left'
+              : 'right';
+    }
+    return 'center';
+  }
+
+  String getBackText() {
+    if (getData()['back'] != null && getData()['back']['text'] != null) {
+      return getData()['back']['text'];
+    }
+    return '';
+  }
+
+  double getBackSize() {
+    if (getData()['back'] != null && getData()['back']['size'] != null) {
+      return (getData()['back']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getBackAlign() {
+    if (getData()['back'] != null && getData()['back']['align'] != null) {
+      return getData()['back']['align'] == "center"
+          ? "center"
+          : getData()['back']['align'] == "start"
+              ? "left"
+              : "right";
+    }
+    return "center";
+  }
+
+  String getCommentText() {
+    if (getData()['comment'] != null && getData()['comment']['text'] != null) {
+      return getData()['comment']['text'];
+    }
+    return '';
+  }
+
+  double getCommentSize() {
+    if (getData()['comment'] != null && getData()['comment']['size'] != null) {
+      return (getData()['comment']['size'] as num).toDouble();
+    }
+    return 14.0;
+  }
+
+  String getCommentAlign() {
+    if (getData()['comment'] != null && getData()['comment']['align'] != null) {
+      return getData()['comment']['align'] == "center"
+          ? "center"
+          : getData()['comment']['align'] == "start"
+              ? "left"
+              : "right";
+    }
+    return "center";
+  }
+
+  getOCCData({bool resetIndex = true}) {
+    if (resetIndex) currentIndex = 0;
+    try {
+      final shapes = getData()['shapes'];
+      if (shapes != null) {
+        data = ShapeCreatorModel.fromJson(jsonDecode(shapes)).toDomain();
+      } else {
+        data = ShapeCreatorModel().toDomain();
+      }
+    } catch (_) {
+      // Corrupt/legacy data (e.g. missing image) must not freeze the card.
+      data = ShapeCreatorModel().toDomain();
+    }
+  }
+
+  onTapOnStatusButton(String answer) async {
+    _recordAnswer(answer, cards[pageViewIndex]);
+    Get.find<YearsController>().rememberSubjectForDeck(cards[pageViewIndex].deckId);
+    final answeredCard = cards[pageViewIndex];
+
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      if(answer == "AGAIN") {
+        showAnswer = false;
+        getOCCData(resetIndex: false);
+        return;
+      }
+      for (var element in data.shapes) {
+        element.isShow = true;
+      }
+      if (currentIndex < data.shapes.length - 1) {
+        showAnswer = false;
+        currentIndex += 1;
+        unawaited(_submitAnswer(answer, answeredCard));
+      } else {
+        if (pageViewIndex < cards.length - 1) {
+          showAnswer = false;
+          await pageController.animateToPage(
+            pageViewIndex + 1,
+            curve: Curves.linear,
+            duration: const Duration(milliseconds: 300),
+          );
+          getOCCData();
+
+          _cards.refresh();
+          unawaited(_submitAnswer(answer, answeredCard));
+        } else {
+          // Last card of the session: this answer's mosaic pieces (if any)
+          // must be collected BEFORE we flush and navigate, or they'd be
+          // lost to the exact race this restructuring exists to prevent.
+          await _awaitFinalAnswer(answer, answeredCard);
+          _finishSession();
+        }
+      }
+    } else {
+      if(answer == "AGAIN") {
+        showAnswer = false;
+        return;
+      }
+      if (pageViewIndex < cards.length - 1) {
+        showAnswer = false;
+        await pageController.animateToPage(
+          pageViewIndex + 1,
+          curve: Curves.linear,
+          duration: const Duration(milliseconds: 300),
+        );
+        if (cards[pageViewIndex].type == "OCCLUSION") {
+          getOCCData();
+        }
+        unawaited(_submitAnswer(answer, answeredCard));
+      } else {
+        // Same reasoning as above: await the final answer before finishing.
+        await _awaitFinalAnswer(answer, answeredCard);
+        _finishSession();
+      }
+    }
+  }
+
+  bool isArabic(String text) {
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+    return arabicRegex.hasMatch(text);
+  }
+
+  onTapOnShape(index) {
+    data.shapes[index].isShow = !data.shapes[index].isShow;
+    _data.refresh();
+  }
+
+  onTapOnShowAnswer() {
+    if (currentIndex < 0 || currentIndex >= data.shapes.length) return;
+    data.shapes[currentIndex].isShow = false;
+    _data.refresh();
+  }
+
+  onChangePageViewIndex(value) {
+    pageViewIndex = value;
+  }
+
+  @override
+  void onInit() {
+    final List<CardEntity> arg = Get.arguments['cards'];
+    for (var element in arg) {
+      cards.add(element);
+    }
+    isView = Get.arguments['isView'];
+    if (!isView) NotificationService.instance.onSessionStarted();
+    pageViewIndex = Get.arguments['initalIndex'];
+    pageController = PageController(initialPage: pageViewIndex);
+    // Remember the card the student is on, so leaving and coming back continues
+    // here. Only for a normal full-deck session (not mistakes review / editing).
+    if (!isView && Get.arguments['resume'] == true && cards.isNotEmpty) {
+      _resumeDeckId = cards.first.deckId;
+      ResumePosition.save(_resumeDeckId!, cards[pageViewIndex].id);
+      ever(_pageViewIndex, (int i) {
+        if (i >= 0 && i < cards.length) {
+          ResumePosition.save(_resumeDeckId!, cards[i].id);
+        }
+      });
+    }
+    if (cards[pageViewIndex].type == "OCCLUSION") {
+      getOCCData();
+    }
+
+    super.onInit();
   }
 }
