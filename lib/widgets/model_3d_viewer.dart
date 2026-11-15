@@ -5,19 +5,18 @@ import 'package:upgrade/strings.dart';
 import 'package:upgrade/utils/model_cache.dart';
 
 /// A 3D model the student can turn with one finger and zoom with two.
+/// It has no frame, corners or background, so it blends into the card like an image.
 /// [onTouching] tells the card screen to stop scrolling while a finger is on the model,
 /// otherwise the page would scroll instead of the model turning.
 class Model3DViewer extends StatefulWidget {
   final String url;
   final ValueChanged<bool>? onTouching;
   final double aspectRatio;
-  final double radius;
   const Model3DViewer({
     super.key,
     required this.url,
     this.onTouching,
     this.aspectRatio = 1,
-    this.radius = 16,
   });
 
   @override
@@ -46,55 +45,49 @@ class _Model3DViewerState extends State<Model3DViewer> {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: widget.aspectRatio,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.radius),
-        child: ColoredBox(
-          color: AppColor.surfaceColor,
-          child: FutureBuilder<String>(
-            future: _file,
-            builder: (context, snap) {
-              if (snap.hasError) return _error();
-              if (!snap.hasData) return _loading();
-              return Listener(
-                onPointerDown: (_) => _down(),
-                onPointerUp: (_) => _up(),
-                onPointerCancel: (_) => _up(),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ModelViewer(
-                      key: ValueKey(snap.data),
-                      src: 'file://${snap.data}',
-                      alt: '3D model',
-                      cameraControls: true,
-                      autoRotate: false,
-                      ar: false,
-                      disableZoom: false,
-                      backgroundColor: AppColor.surfaceColor,
-                    ),
-                    IgnorePointer(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            AppStrings.model3dHint,
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
-                          ),
+      child: FutureBuilder<String>(
+        future: _file,
+        initialData: ModelCache.readyPath(widget.url),
+        builder: (context, snap) {
+          if (snap.hasError) return _error();
+          if (!snap.hasData) return _loading();
+          return Listener(
+            onPointerDown: (_) => _down(),
+            onPointerUp: (_) => _up(),
+            onPointerCancel: (_) => _up(),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ModelViewer(
+                  key: ValueKey(snap.data),
+                  src: 'file://${snap.data}',
+                  alt: '3D model',
+                  cameraControls: true,
+                  autoRotate: false,
+                  ar: false,
+                  disableZoom: false,
+                  backgroundColor: Colors.transparent,
+                ),
+                IgnorePointer(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        AppStrings.model3dHint,
+                        style: TextStyle(
+                          color: AppColor.textSecondary,
+                          fontSize: 11,
+                          decoration: TextDecoration.none,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
