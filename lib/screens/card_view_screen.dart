@@ -193,7 +193,8 @@ class CardViewScreen extends GetView<CardViewController> {
                                 onTouching: (v) => controller.scrollLocked.value = v,
                               )
                             else if (controller
-                                .cards[index].frontImageUrl.isNotEmpty)
+                                    .cards[index].frontImageUrl.isNotEmpty &&
+                                controller.cards[index].anyModelUrl() == null)
                               AspectRatio(
                                 aspectRatio: 4 / 3,
                                 child: AppImage(
@@ -228,7 +229,8 @@ class CardViewScreen extends GetView<CardViewController> {
                                   onTouching: (v) => controller.scrollLocked.value = v,
                                 )
                               else if (controller
-                                  .cards[index].backImageUrl.isNotEmpty)
+                                      .cards[index].backImageUrl.isNotEmpty &&
+                                  controller.cards[index].anyModelUrl() == null)
                                 AspectRatio(
                                   aspectRatio: 4 / 3,
                                   child: AppImage(
